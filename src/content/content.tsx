@@ -1,24 +1,120 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import "./bootstrap.css";
+import { ConfigManager } from '../util/config/ConfigManager';
 import { Course } from '../util/egela/Course';
+import "./bootstrap.css";
 
 const COURSE_VIEW_HREF = "https://egela.ehu.eus/course/view.php?id=";
 
-// Componente que se renderiza en la página
+interface ChatMessage {
+    role: 'user' | 'assistant';
+    content: string;
+    id: string;
+}
+
 const ExtensionContent: React.FC = () => {
     const [isVisible, setIsVisible] = useState(true);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [course, setCourse] = useState<Course | null>(null);
+    const [courseName, setCourseName] = useState<string>('Cargando...');
+    const [providerName, setProviderName] = useState<string>('');
+    const [modelName, setModelName] = useState<string>('');
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [inputValue, setInputValue] = useState<string>('');
+    const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-    if (!window.location.href.includes(COURSE_VIEW_HREF)) return null;
-    let courseId: string = window.location.href.replace(COURSE_VIEW_HREF, "");
-    courseId = courseId.substring(0, courseId.includes("&") ? courseId.indexOf("&") : undefined);
-    let courseData = JSON.parse(sessionStorage.getItem("-651322457/course/" + courseId + "/staticState") || "");
-    let course: Course;
-    chrome.runtime.sendMessage({ action: "getCourseData", courseData: courseData }).then(res => course = res);
-    //chrome.runtime.sendMessage({ action: "getModelList" }, (response) => { console.log(response) });
-    //chrome.runtime.sendMessage({ action: "generateSimpleResponse", prompt: "Hola! ¿Cómo te llamas?" }, (response) => { console.log(response) });
+    const courseId = React.useMemo(() => {
+        if (!globalThis.location.href.includes(COURSE_VIEW_HREF)) return null;
+        let id = globalThis.location.href.replace(COURSE_VIEW_HREF, "");
+        return id.substring(0, id.includes("&") ? id.indexOf("&") : undefined);
+    }, []);
+
+    useEffect(() => {
+        if (!courseId) return;
+
+        const loadCourseData = async () => {
+            try {
+                const courseData = JSON.parse(sessionStorage.getItem("-651322457/course/" + courseId + "/staticState") || "{}");
+                const courseObj : Course = await chrome.runtime.sendMessage({ action: "getCourseData", courseData: courseData });
+                setCourse(courseObj);
+                
+                // Obtener el nombre del curso desde la página
+                const courseTitle = document.querySelector('.page-header-headings h1')?.textContent || 'Curso sin nombre';
+                setCourseName(courseTitle);
+                
+                console.log('Datos del curso cargados:', courseObj);
+
+            } catch (error) {
+                console.error('Error loading course data:', error);
+                setCourseName('Error al cargar curso');
+            }
+        };
+
+        const loadConfig = async () => {
+            try {
+                await ConfigManager.loadConfig();
+                const provider = ConfigManager.getSelectedProvider();
+                const model = ConfigManager.getSelectedModel();
+                setProviderName(provider.name);
+                setModelName(model || 'No seleccionado');
+            } catch (error) {
+                console.error('Error loading config:', error);
+            }
+        };
+
+        loadCourseData();
+        loadConfig();
+    }, [courseId]);
+
+    if (!courseId) return null;
+
+    const handleSendMessage = async () => {
+        if (!inputValue.trim() || !course || isGenerating) return;
+
+        const userMessage: ChatMessage = {
+            role: 'user',
+            content: inputValue,
+            id: `user-${Date.now()}`
+        };
+
+        setMessages(prev => [...prev, userMessage]);
+        setInputValue('');
+        setIsGenerating(true);
+
+        try {
+            const response = await chrome.runtime.sendMessage({ 
+                action: "generateResponse",
+                userMessage: inputValue,
+                resetHistory: messages.length === 0 // Resetear solo en el primer mensaje
+            });
+
+            const assistantMessage: ChatMessage = {
+                role: 'assistant',
+                content: response,
+                id: `assistant-${Date.now()}`
+            };
+
+            setMessages(prev => [...prev, assistantMessage]);
+        } catch (error) {
+            console.error('Error generating response:', error);
+            const errorMessage: ChatMessage = {
+                role: 'assistant',
+                content: 'Error al generar la respuesta. Por favor, inténtalo de nuevo.',
+                id: `error-${Date.now()}`
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    };
 
     if (!isVisible) return null;
 
@@ -67,86 +163,85 @@ const ExtensionContent: React.FC = () => {
             </button>
 
             {/* Header de la barra lateral */}
-            <div
-                style={{
-                    padding: '16px',
-                    borderBottom: '1px solid #dee2e6',
-                    backgroundColor: '#f8f9fa'
-                }}
-            >
-                <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '600', color: '#212529' }}>
-                    Asistente IA
-                </h3>
-                <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6c757d' }}>
-                    Curso ID: {courseId}
+            <div className="card-header bg-light border-bottom">
+                <h3 className="h5 mb-2">🤖 Asistente IA</h3>
+                <p className="small text-muted mb-1">
+                    <strong>Curso:</strong> {courseName}
+                </p>
+                <p className="small text-muted mb-0">
+                    <strong>Proveedor:</strong> {providerName} | <strong>Modelo:</strong> {modelName}
                 </p>
             </div>
 
-            {/* Contenido principal de la barra lateral */}
+            {/* Área de chat */}
             <div
                 style={{
                     flex: '1',
+                    overflowY: 'auto',
                     padding: '16px',
-                    overflowY: 'auto'
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
                 }}
             >
-                <div style={{ marginBottom: '16px' }}>
-                    <h4 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '500', color: '#212529' }}>
-                        Herramientas
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <button
-                            className="btn btn-outline-primary btn-sm"
-                            style={{ textAlign: 'left' }}
-                            onClick={e => chrome.runtime.sendMessage({ action: "generateSimpleResponse", prompt: "Eres un asistente en una extensión de Chrome cuyo objetivo es resumir el contenido de la página para estudiantes de una universidad. A continuación tienes la estructura del curso para el que tienes que hacer un resumen para el estudiante. Haz el resumen directamente, sin saludar al usuari ni decir nada más.\n" + JSON.stringify(course) }).then((response) => { console.log(response) })}
-                        >
-                            📝 Resumir contenido
-                        </button>
-                        <button
-                            className="btn btn-outline-secondary btn-sm"
-                            style={{ textAlign: 'left' }}
-                        >
-                            💬 Hacer pregunta
-                        </button>
-                        <button
-                            className="btn btn-outline-success btn-sm"
-                            style={{ textAlign: 'left' }}
-                        >
-                            🔍 Analizar recursos
-                        </button>
+                {messages.length === 0 ? (
+                    <div className="alert alert-info" role="alert">
+                        👋 ¡Hola! Pregúntame sobre el curso y te ayudaré.
                     </div>
-                </div>
+                ) : (
+                    messages.map((message) => (
+                        <div
+                            key={message.id}
+                            className={`card ${message.role === 'user' ? 'bg-primary text-white' : ''}`}
+                        >
+                            <div className="card-body p-2">
+                                <div className="small mb-1">
+                                    <strong>{message.role === 'user' ? '👤 Tú' : '🤖 Asistente'}</strong>
+                                </div>
+                                <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>
+                            </div>
+                        </div>
+                    ))
+                )}
 
-                <div>
-                    <h4 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '500', color: '#212529' }}>
-                        Estado
-                    </h4>
-                    <div
-                        style={{
-                            padding: '12px',
-                            backgroundColor: '#f8f9fa',
-                            borderRadius: '4px',
-                            fontSize: '14px',
-                            color: '#6c757d'
-                        }}
-                    >
-                        Extensión cargada correctamente
+                {isGenerating && (
+                    <div className="card border-secondary">
+                        <div className="card-body p-2">
+                            <div className="d-flex align-items-center">
+                                <div className="spinner-border spinner-border-sm me-2" aria-label="Generando respuesta">
+                                    <span className="visually-hidden">Cargando...</span>
+                                </div>
+                                <span className="small">Generando respuesta...</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
-            {/* Footer */}
-            <div
-                style={{
-                    padding: '16px',
-                    borderTop: '1px solid #dee2e6',
-                    backgroundColor: '#f8f9fa'
-                }}
-            >
+            {/* Input de chat */}
+            <div className="card-footer bg-light border-top">
+                <div className="input-group">
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Escribe tu pregunta..."
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        disabled={isGenerating}
+                    />
+                    <button
+                        className="btn btn-primary"
+                        type="button"
+                        onClick={handleSendMessage}
+                        disabled={isGenerating || !inputValue.trim()}
+                    >
+                        Enviar
+                    </button>
+                </div>
                 <button
                     onClick={() => setIsVisible(false)}
-                    className="btn btn-outline-danger btn-sm"
-                    style={{ width: '100%' }}
+                    className="btn btn-outline-danger btn-sm w-100 mt-2"
                 >
                     Cerrar extensión
                 </button>
@@ -158,7 +253,7 @@ const ExtensionContent: React.FC = () => {
 // Componente principal que maneja la inyección
 const ContentApp: React.FC = () => {
     useEffect(() => {
-        console.log('Extensión de Chrome cargada en:', window.location.href);
+        console.log('Extensión de Chrome cargada en:', globalThis.location.href);
 
         return () => {
             console.log('Extensión de Chrome descargada');

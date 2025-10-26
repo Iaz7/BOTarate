@@ -1,6 +1,6 @@
-import { CourseResource } from "./CourseResource"
+import { CourseResource } from "./CourseResource";
 
-export { CourseSection }
+export { CourseSection };
 
 class CourseSection {
     id: string;
