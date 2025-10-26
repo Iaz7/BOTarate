@@ -1,0 +1,94 @@
+export interface AIProvider {
+    name: string;
+    baseUrl: string;
+    key: string;
+}
+
+interface StorageConfig {
+    providerKeys: string[];
+    selectedProvider: number;
+    selectedModel?: string;
+}
+
+export class ConfigManager {
+    private static readonly STORAGE_KEY = 'config';
+
+    private static readonly providers: AIProvider[] = [
+        { name: "OpenAI", baseUrl: "https://api.openai.com/v1/", key: "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" },
+        { name: "Google", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/", key: "AIzaSyDSeG899Oq9za0NHnyEBdRstlfoqupEUNE" }
+    ];
+
+    static readonly COMPATIBLE_MODELS: string[] = ["gpt-3.5-turbo", "gpt-4.1", "gemini-2.5-flash", "gemini-2.5-pro"]
+
+    private static selectedProvider: number = 0;
+    private static selectedModel: string;
+
+    static async loadConfig(): Promise<void> {
+        try {
+            const result = await chrome.storage.local.get(this.STORAGE_KEY);
+            const config: StorageConfig | undefined = result[this.STORAGE_KEY];
+
+            if (config) {
+                if (config.providerKeys) {
+                    for (let index = 0; index < config.providerKeys.length; index++) {
+                        if (index < this.providers.length) {
+                            this.providers[index].key = config.providerKeys[index];
+                        }
+                    }
+                }
+                if (config.selectedProvider !== undefined) {
+                    this.selectedProvider = config.selectedProvider;
+                }
+                if (config.selectedModel !== undefined) {
+                    this.selectedModel = config.selectedModel;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading config from storage:', error);
+        }
+    }
+
+    private static async saveConfig(): Promise<void> {
+        try {
+            const config: StorageConfig = {
+                providerKeys: this.providers.map(p => p.key),
+                selectedProvider: this.selectedProvider,
+                selectedModel: this.selectedModel
+            };
+            await chrome.storage.local.set({ [this.STORAGE_KEY]: config });
+        } catch (error) {
+            console.error('Error saving config to storage:', error);
+        }
+    }
+
+    static getProviderList(): string[] {
+        return this.providers.map(p => p.name)
+    }
+
+    static getSelectedProvider(): AIProvider {
+        return this.providers[this.selectedProvider];
+    }
+
+    static getProvider(index: number): AIProvider {
+        return this.providers[index];
+    }
+
+    static setProviderKey(provider: number, key: string) {
+        this.providers[provider].key = key;
+        this.saveConfig();
+    }
+
+    static selectProvider(provider: number) {
+        this.selectedProvider = provider;
+        this.saveConfig();
+    }
+
+    static selectModel(model: string) {
+        this.selectedModel = model;
+        this.saveConfig();
+    }
+
+    static getSelectedModel(): string {
+        return this.selectedModel;
+    }
+}
