@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Chrome Extension",
+      "type": "chrome",
+      "request": "launch",
+      "url": "https://egela.ehu.eus/",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack://chrome-extension-vite/./src/*": "${webRoot}/src/*",
+        "webpack:///./src/*": "${webRoot}/src/*",
+        "webpack:///*": "${webRoot}/*"
+      },
+      "trace": true
+    }
+  ]
+}

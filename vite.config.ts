@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite';
+import { crx } from '@crxjs/vite-plugin';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
-import { crx } from '@crxjs/vite-plugin';
+import { defineConfig } from 'vite';
 
 import manifest from './public/manifest.json';
 
@@ -20,6 +20,16 @@ export default defineConfig({
     global: 'globalThis',
   },
   server: {
-    open: true,
+    port: 5173,
+    strictPort: true,
+    hmr: {
+      port: 5173,
+    },
+    // No abrir navegador automáticamente
+    open: false,
+  },
+  build: {
+    sourcemap: 'inline',
+    outDir: 'dist',
   },
 });

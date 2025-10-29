@@ -2,6 +2,39 @@
 
 Este proyecto es una extensión de Chrome moderna construida con **React**, **TypeScript** y **Vite**. La extensión modifica dinámicamente páginas web específicas (https://egela.ehu.eus/*) inyectando componentes React interactivos. Incluye una arquitectura completa con background script, content script, popup y página de opciones.
 
+## 🚀 Inicio Rápido
+
+### Instalación
+
+```bash
+npm install
+```
+
+### Desarrollo
+
+1. **Inicia el servidor de desarrollo** (mantén esta terminal abierta):
+   ```bash
+   npm run dev
+   ```
+
+2. **Carga la extensión en Chrome**:
+   - Abre Chrome y ve a `chrome://extensions/`
+   - Activa el "Modo de desarrollador" (esquina superior derecha)
+   - Haz clic en "Cargar extensión sin empaquetar"
+   - Selecciona la carpeta `dist/` del proyecto
+
+3. **Depuración desde VS Code**:
+   - Presiona `F5` en VS Code
+   - Chrome se abrirá con la extensión cargada
+   - Coloca breakpoints en tu código TypeScript/TSX
+   - Los cambios se reflejan automáticamente (hot reload)
+
+### Compilación para Producción
+
+```bash
+npm run build
+```
+
 ## 🏗️ Estructura del Proyecto
 
 ```
