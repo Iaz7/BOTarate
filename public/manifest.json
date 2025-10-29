@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Mi Extensión de Chrome",
+  "name": "eGela Extension",
   "version": "1.0.0",
-  "description": "Una extensión de Chrome que modifica dinámicamente una página PHP utilizando React.",
+  "description": "Una extensión de Chrome para eGela",
   "permissions": [
     "activeTab",
     "scripting",
