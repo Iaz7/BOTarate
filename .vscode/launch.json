@@ -14,6 +14,21 @@
         "webpack:///*": "${webRoot}/*"
       },
       "trace": true
+    },
+    {
+      "name": "Debug Brave Extension",
+      "type": "chrome",
+      "request": "launch",
+      "runtimeExecutable": "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+      "url": "https://egela.ehu.eus/",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack://chrome-extension-vite/./src/*": "${webRoot}/src/*",
+        "webpack:///./src/*": "${webRoot}/src/*",
+        "webpack:///*": "${webRoot}/*"
+      },
+      "trace": true
     }
   ]
 }
