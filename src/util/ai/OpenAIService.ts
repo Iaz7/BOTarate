@@ -56,19 +56,10 @@ class OpenAIService {
         return modelList;
     }
 
-    /**
-     * Resetea el historial de conversación
-     */
     static resetConversation(): void {
         this.conversationHistory = [];
     }
 
-    /**
-     * Genera una respuesta del LLM con soporte para tool calls
-     * @param userMessage - Mensaje del usuario (opcional si ya hay historial)
-     * @param systemPrompt - Prompt del sistema (opcional)
-     * @returns Promise con la respuesta final del LLM o información de tool calls
-     */
     static async generateResponseWithTools(
         userMessage?: string,
         systemPrompt?: string
@@ -96,7 +87,7 @@ class OpenAIService {
             messages: this.conversationHistory as any,
             tools: TOOLS as any,
             tool_choice: 'auto',
-            max_tokens: 100000
+            max_tokens: 1000000
         });
 
         const choice = response.choices[0];
@@ -128,18 +119,33 @@ class OpenAIService {
         };
     }
 
-    /**
-     * Agrega el resultado de una tool call al historial
-     * @param toolCallId - ID de la tool call
-     * @param toolName - Nombre de la herramienta
-     * @param result - Resultado de la ejecución
-     */
     static addToolResult(toolCallId: string, toolName: string, result: string): void {
         this.conversationHistory.push({
             role: 'tool',
             tool_call_id: toolCallId,
             name: toolName,
             content: result
+        });
+    }
+
+    static addFileMessage(filename: string, dataUrl: string, mimeType: string): void {
+        const isPdf = mimeType === 'application/pdf';
+        
+        this.conversationHistory.push({
+            role: 'user',
+            content: [
+                {
+                    type: 'text',
+                    text: `Archivo adjunto: ${filename} (${mimeType}). ${isPdf ? 'Por favor analiza el contenido de este PDF.' : ''}`
+                },
+                {
+                    type: 'image_url',
+                    image_url: {
+                        url: dataUrl,
+                        detail: 'high'
+                    }
+                }
+            ]
         });
     }
 }

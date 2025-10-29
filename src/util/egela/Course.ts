@@ -167,12 +167,6 @@ class Course {
         }
     }
 
-    /**
-     * Obtiene el archivo de un recurso descargable
-     * @param resourceId - ID del recurso
-     * @returns Información del archivo descargado
-     * @throws Error si el recurso no existe o no es descargable
-     */
     async getResourceFile(resourceId: string): Promise<{
         blob: Blob;
         filename: string;
@@ -221,9 +215,31 @@ class Course {
                 throw new Error(`No se pudo acceder al recurso. Status: ${viewResponse.status}`);
             }
             
-            // 2. Obtener la URL real de descarga desde la respuesta
+            // 2. Obtener la URL real de descarga
             let downloadUrl = viewResponse.url;
             console.log(`[getResourceFile] URL de descarga inicial: ${downloadUrl}`);
+            
+            // Si no hubo redirección, puede ser una página intermedia con un enlace
+            if (!viewResponse.redirected) {
+                console.log(`[getResourceFile] No hubo redirección, buscando enlace en HTML...`);
+                const htmlText = await viewResponse.text();
+                
+                // Parsear el HTML para buscar el enlace en resourceworkaround
+                const { document: doc } = parseHTML(htmlText);
+                const workaroundDiv = doc.querySelector('.resourceworkaround a');
+                
+                if (workaroundDiv) {
+                    const href = workaroundDiv.getAttribute('href');
+                    if (href) {
+                        downloadUrl = href;
+                        console.log(`[getResourceFile] Enlace encontrado en HTML: ${downloadUrl}`);
+                    } else {
+                        console.warn(`[getResourceFile] Elemento encontrado pero sin href`);
+                    }
+                } else {
+                    console.warn(`[getResourceFile] No se encontró elemento .resourceworkaround, usando URL original`);
+                }
+            }
             
             // 3. Descargar el archivo
             const fileResponse = await fetch(downloadUrl);

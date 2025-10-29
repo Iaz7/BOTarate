@@ -160,15 +160,17 @@ INSTRUCCIONES IMPORTANTES:
                                 
                                 console.log(`[getResourceContent] PDF/Imagen convertido a base64, tamaño: ${base64.length} caracteres`);
                                 
-                                toolResult = JSON.stringify({
-                                    type: 'file_supported',
-                                    resourceName: fileData.resourceName,
-                                    filename: fileData.filename,
-                                    mimeType: fileData.mimeType,
-                                    size: fileData.size,
-                                    dataUrl: dataUrl,
-                                    message: 'Archivo adjunto para análisis'
-                                });
+                                // Para PDFs e imágenes, devolver un objeto especial que indica que hay que adjuntar el archivo
+                                toolResult = {
+                                    type: 'file',
+                                    data: {
+                                        resourceName: fileData.resourceName,
+                                        filename: fileData.filename,
+                                        mimeType: fileData.mimeType,
+                                        size: fileData.size,
+                                        dataUrl: dataUrl
+                                    }
+                                };
                             } else if (isSupported) {
                                 // Para texto/HTML, extraer contenido
                                 const text = await fileData.blob.text();
@@ -189,10 +191,26 @@ INSTRUCCIONES IMPORTANTES:
                         }
 
                         console.log(`Resultado de ${call.function.name}:`, 
-                            typeof toolResult === 'string' ? toolResult.substring(0, 200) + '...' : '[Archivo]');
+                            typeof toolResult === 'string' ? toolResult : '[Archivo]');
 
                         // Agregar resultado al historial
-                        OpenAIService.addToolResult(call.id, call.function.name, toolResult as string);
+                        if (typeof toolResult === 'object' && toolResult.type === 'file') {
+                            // Para archivos (PDFs/imágenes), agregar el resultado del tool y luego el archivo como mensaje de usuario
+                            OpenAIService.addToolResult(
+                                call.id, 
+                                call.function.name, 
+                                `Archivo adjuntado: ${toolResult.data.filename} (${toolResult.data.mimeType}, ${(toolResult.data.size / 1024).toFixed(2)} KB)`
+                            );
+                            
+                            // Agregar el archivo como un mensaje multimodal del usuario
+                            OpenAIService.addFileMessage(
+                                toolResult.data.filename,
+                                toolResult.data.dataUrl,
+                                toolResult.data.mimeType
+                            );
+                        } else {
+                            OpenAIService.addToolResult(call.id, call.function.name, toolResult as string);
+                        }
                     } catch (error) {
                         console.error(`Error ejecutando ${call.function.name}:`, error);
                         OpenAIService.addToolResult(
