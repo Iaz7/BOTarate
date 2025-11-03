@@ -9,11 +9,16 @@
       "webRoot": "${workspaceFolder}",
       "sourceMaps": true,
       "sourceMapPathOverrides": {
+        "../src/*": "${webRoot}/src/*",
+        "../../src/*": "${webRoot}/src/*",
         "webpack://chrome-extension-vite/./src/*": "${webRoot}/src/*",
-        "webpack:///./src/*": "${webRoot}/src/*",
-        "webpack:///*": "${webRoot}/*"
+        "webpack:///./src/*": "${webRoot}/src/*"
       },
-      "trace": true
+      "skipFiles": [
+        "<node_internals>/**",
+        "**/node_modules/**"
+      ],
+      "urlFilter": "*"
     },
     {
       "name": "Debug Brave Extension",
@@ -24,11 +29,16 @@
       "webRoot": "${workspaceFolder}",
       "sourceMaps": true,
       "sourceMapPathOverrides": {
+        "../src/*": "${webRoot}/src/*",
+        "../../src/*": "${webRoot}/src/*",
         "webpack://chrome-extension-vite/./src/*": "${webRoot}/src/*",
-        "webpack:///./src/*": "${webRoot}/src/*",
-        "webpack:///*": "${webRoot}/*"
+        "webpack:///./src/*": "${webRoot}/src/*"
       },
-      "trace": true
+      "skipFiles": [
+        "<node_internals>/**",
+        "**/node_modules/**"
+      ],
+      "urlFilter": "*"
     }
   ]
 }

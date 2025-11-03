@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import { ConfigManager } from '../util/config/ConfigManager';
 import { Course } from '../util/egela/Course';
+// @ts-ignore: allow importing CSS as a side-effect in this content script
 import "./bootstrap.css";
 
 const COURSE_VIEW_HREF = "https://egela.ehu.eus/course/view.php?id=";
@@ -35,7 +36,7 @@ const ExtensionContent: React.FC = () => {
 
         const loadCourseData = async () => {
             try {
-                const courseData = JSON.parse(sessionStorage.getItem("-651322457/course/" + courseId + "/staticState") || "{}");
+                const courseData = JSON.parse(sessionStorage.getItem("-716233041/course/" + courseId + "/staticState") || "{}");
                 const courseObj : Course = await chrome.runtime.sendMessage({ action: "getCourseData", courseData: courseData });
                 setCourse(courseObj);
                 
@@ -164,7 +165,7 @@ const ExtensionContent: React.FC = () => {
 
             {/* Header de la barra lateral */}
             <div className="card-header bg-light border-bottom">
-                <h3 className="h5 mb-2">🤖 Asistente IA</h3>
+                <h3 className="h5 mb-2">Asistente IA</h3>
                 <p className="small text-muted mb-1">
                     <strong>Curso:</strong> {courseName}
                 </p>

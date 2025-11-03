@@ -29,7 +29,8 @@ export default defineConfig({
     open: false,
   },
   build: {
-    sourcemap: 'inline',
+    sourcemap: true,
     outDir: 'dist',
+    minify: false,
   },
 });
