@@ -1,9 +1,9 @@
 /// <reference types="chrome"/>
 
+import { CourseAssistant } from "../util/ai/CourseAssistant";
 import { OpenAIService } from "../util/ai/OpenAIService";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
-import { CourseAssistant } from "../util/ai/CourseAssistant";
 
 const courseAssistant = new CourseAssistant();
 let isConfigLoaded = false;
@@ -66,10 +66,24 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             }
             return false;
         case "getCourseData": {
-            const course = new Course(request.courseData);
-            courseAssistant.setCourse(course);
-            sendResponse(course);
-            console.log(course);
+            // Nuevo: el content script pasa href y sessionStorage
+            const { href, sessionStorageData } = request;
+            
+            Course.fromHrefAndStorage(href, sessionStorageData)
+                .then(course => {
+                    if (course) {
+                        courseAssistant.setCourse(course);
+                        sendResponse({ success: true, course: course });
+                        console.log('[background] Curso cargado:', course);
+                    } else {
+                        sendResponse({ success: false, error: 'No se pudo cargar el curso' });
+                        console.error('[background] No se pudo crear el curso desde href y storage');
+                    }
+                })
+                .catch(error => {
+                    console.error('[background] Error al cargar curso:', error);
+                    sendResponse({ success: false, error: error.message });
+                });
             
             return true;
         }
@@ -86,6 +100,23 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
                 .catch(error => {
                     console.error('Error en generateResponse:', error);
                     sendResponse(`Error: ${error.message}`);
+                });
+
+            return true;
+        }
+        case "getExerciseList": {
+            const { pageId } = request;
+
+            console.log(`Identificando ejercicios en página: ${pageId}`);
+
+            courseAssistant.identifyExercises(pageId)
+                .then(exercises => {
+                    console.log(`Ejercicios identificados:`, exercises);
+                    sendResponse({ success: true, exercises: exercises });
+                })
+                .catch(error => {
+                    console.error('Error en getExerciseList:', error);
+                    sendResponse({ success: false, error: error.message });
                 });
 
             return true;

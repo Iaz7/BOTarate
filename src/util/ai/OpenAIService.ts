@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 export { OpenAIService };
 
@@ -226,5 +228,72 @@ class OpenAIService {
 
         // Llamar recursivamente para obtener la respuesta final
         return this.processResponseWithTools(toolExecutor);
+    }
+
+    /**
+     * Genera una respuesta estructurada usando Zod para validación
+     * @param schema Esquema Zod para validar la respuesta
+     * @param schemaName Nombre descriptivo del esquema
+     * @param userMessage Mensaje del usuario
+     * @param systemPrompt Prompt del sistema
+     * @returns El objeto parseado y validado según el esquema
+     */
+    static async generateStructuredResponse<T extends z.ZodTypeAny>(
+        schema: T,
+        schemaName: string,
+        userMessage: string,
+        systemPrompt: string
+    ): Promise<z.infer<T>> {
+        this.loadProviderConfig();
+
+        console.log(`[generateStructuredResponse] Generando respuesta estructurada: ${schemaName}`);
+
+        // Convertir el esquema Zod a JSON Schema para incluirlo en el prompt
+        const jsonSchema = zodToJsonSchema(schema, schemaName);
+        const schemaDescription = JSON.stringify(jsonSchema, null, 2);
+
+        // Modificar el system prompt para incluir el esquema
+        const enhancedSystemPrompt = `${systemPrompt}
+
+FORMATO DE RESPUESTA REQUERIDO:
+Debes responder ÚNICAMENTE con un objeto JSON válido que cumpla con el siguiente esquema:
+
+${schemaDescription}
+
+IMPORTANTE:
+- Responde SOLO con el JSON, sin texto adicional antes o después
+- No uses bloques de código markdown (\`\`\`json)
+- Asegúrate de que el JSON sea válido y cumpla con el esquema`;
+
+        const response = await this.openai.chat.completions.create({
+            model: ConfigManager.getSelectedModel(),
+            messages: [
+                {
+                    role: 'system',
+                    content: enhancedSystemPrompt
+                },
+                {
+                    role: 'user',
+                    content: userMessage
+                }
+            ],
+            response_format: {
+                type: "json_object"
+            },
+        });
+
+        const content = response.choices[0]?.message?.content;
+
+        if (!content) {
+            throw new Error('No se recibió respuesta del modelo');
+        }
+
+        console.log(`[generateStructuredResponse] Respuesta recibida, parseando...`);
+        
+        // Parsear y validar con Zod
+        const parsed = schema.parse(JSON.parse(content));
+
+        console.log(`[generateStructuredResponse] Respuesta parseada exitosamente`);
+        return parsed;
     }
 }

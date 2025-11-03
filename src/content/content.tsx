@@ -1,53 +1,78 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import ChatSidebar from '../components/ChatSidebar';
+import ExerciseList from '../components/ExerciseList';
+import LoadingMessage from '../components/LoadingMessage';
+import NoExercisesMessage from '../components/NoExercisesMessage';
 import { ConfigManager } from '../util/config/ConfigManager';
 import { Course } from '../util/egela/Course';
 // @ts-ignore: allow importing CSS as a side-effect in this content script
 import "./bootstrap.css";
 
-const COURSE_VIEW_HREF = "https://egela.ehu.eus/course/view.php?id=";
+const PAGE_VIEW_HREF = "https://egela.ehu.eus/mod/page/view.php";
 
-interface ChatMessage {
-    role: 'user' | 'assistant';
-    content: string;
-    id: string;
+interface Exercise {
+    name: string;
+    statement: string;
 }
 
+type ViewState = 'loading' | 'exercises' | 'no-exercises' | 'chat' | 'hidden';
+
 const ExtensionContent: React.FC = () => {
-    const [isVisible, setIsVisible] = useState(true);
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [viewState, setViewState] = useState<ViewState>('chat');
     const [course, setCourse] = useState<Course | null>(null);
     const [courseName, setCourseName] = useState<string>('Cargando...');
     const [providerName, setProviderName] = useState<string>('');
     const [modelName, setModelName] = useState<string>('');
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [inputValue, setInputValue] = useState<string>('');
-    const [isGenerating, setIsGenerating] = useState<boolean>(false);
-
-    const courseId = React.useMemo(() => {
-        if (!globalThis.location.href.includes(COURSE_VIEW_HREF)) return null;
-        let id = globalThis.location.href.replace(COURSE_VIEW_HREF, "");
-        return id.substring(0, id.includes("&") ? id.indexOf("&") : undefined);
-    }, []);
+    const [exercises, setExercises] = useState<Exercise[]>([]);
 
     useEffect(() => {
-        if (!courseId) return;
-
         const loadCourseData = async () => {
             try {
-                const courseData = JSON.parse(sessionStorage.getItem("-716233041/course/" + courseId + "/staticState") || "{}");
-                const courseObj : Course = await chrome.runtime.sendMessage({ action: "getCourseData", courseData: courseData });
-                setCourse(courseObj);
-                
-                // Obtener el nombre del curso desde la página
-                const courseTitle = document.querySelector('.page-header-headings h1')?.textContent || 'Curso sin nombre';
-                setCourseName(courseTitle);
-                
-                console.log('Datos del curso cargados:', courseObj);
+                // Serializar sessionStorage completo a un objeto
+                const sessionStorageData: Record<string, string> = {};
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
+                    if (key) {
+                        sessionStorageData[key] = sessionStorage.getItem(key) || '';
+                    }
+                }
+
+                // Enviar href y sessionStorage al background
+                const response = await chrome.runtime.sendMessage({ 
+                    action: "getCourseData",
+                    href: globalThis.location.href,
+                    sessionStorageData: sessionStorageData
+                });
+
+                if (response.success && response.course) {
+                    setCourse(response.course);
+                    
+                    // Obtener el nombre del curso desde la página
+                    const courseTitle = document.querySelector('.page-header-headings h1')?.textContent || 'Curso sin nombre';
+                    setCourseName(courseTitle);
+                    
+                    console.log('[content] Datos del curso cargados:', response.course);
+
+                    // Detectar si estamos en una página de ejercicios
+                    if (globalThis.location.href.includes(PAGE_VIEW_HREF)) {
+                        const urlParams = new URLSearchParams(globalThis.location.search);
+                        const pageId = urlParams.get('id');
+                        
+                        if (pageId) {
+                            console.log(`[content] Detectada página de Egela, ID: ${pageId}`);
+                            setViewState('loading');
+                            await identifyExercisesInPage(pageId);
+                        }
+                    }
+                } else {
+                    console.error('[content] No se pudo cargar el curso:', response.error);
+                    setCourseName('Error al cargar curso');
+                }
 
             } catch (error) {
-                console.error('Error loading course data:', error);
+                console.error('[content] Error loading course data:', error);
                 setCourseName('Error al cargar curso');
             }
         };
@@ -60,195 +85,84 @@ const ExtensionContent: React.FC = () => {
                 setProviderName(provider.name);
                 setModelName(model || 'No seleccionado');
             } catch (error) {
-                console.error('Error loading config:', error);
+                console.error('[content] Error loading config:', error);
             }
         };
 
         loadCourseData();
         loadConfig();
-    }, [courseId]);
+    }, []);
 
-    if (!courseId) return null;
-
-    const handleSendMessage = async () => {
-        if (!inputValue.trim() || !course || isGenerating) return;
-
-        const userMessage: ChatMessage = {
-            role: 'user',
-            content: inputValue,
-            id: `user-${Date.now()}`
-        };
-
-        setMessages(prev => [...prev, userMessage]);
-        setInputValue('');
-        setIsGenerating(true);
-
+    const identifyExercisesInPage = async (pageId: string) => {
         try {
+            console.log('[content] Enviando solicitud para identificar ejercicios...');
             const response = await chrome.runtime.sendMessage({ 
-                action: "generateResponse",
-                userMessage: inputValue,
-                resetHistory: messages.length === 0 // Resetear solo en el primer mensaje
+                action: "getExerciseList",
+                pageId: pageId
             });
 
-            const assistantMessage: ChatMessage = {
-                role: 'assistant',
-                content: response,
-                id: `assistant-${Date.now()}`
-            };
-
-            setMessages(prev => [...prev, assistantMessage]);
+            if (response.success) {
+                console.log(`[content] Se han identificado ${response.exercises.length} ejercicios:`, response.exercises);
+                
+                if (response.exercises.length > 0) {
+                    setExercises(response.exercises);
+                    setViewState('exercises');
+                } else {
+                    setViewState('no-exercises');
+                }
+            } else {
+                console.error('[content] Error al identificar ejercicios:', response.error);
+                setViewState('chat');
+            }
         } catch (error) {
-            console.error('Error generating response:', error);
-            const errorMessage: ChatMessage = {
-                role: 'assistant',
-                content: 'Error al generar la respuesta. Por favor, inténtalo de nuevo.',
-                id: `error-${Date.now()}`
-            };
-            setMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsGenerating(false);
+            console.error('[content] Error al solicitar identificación de ejercicios:', error);
+            setViewState('chat');
         }
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSendMessage();
-        }
+    const handleCloseExtension = () => {
+        setViewState('hidden');
     };
 
-    if (!isVisible) return null;
+    const handleNoExercisesTimeout = () => {
+        setViewState('chat');
+    };
 
-    return (
-        <div
-            className="extension-sidebar"
-            style={{
-                position: 'fixed',
-                top: '0',
-                right: isCollapsed ? '-580px' : '0',
-                width: '600px',
-                height: '100vh',
-                backgroundColor: '#ffffff',
-                borderLeft: '1px solid #dee2e6',
-                boxShadow: '-2px 0 8px rgba(0,0,0,0.1)',
-                zIndex: '9999',
-                transition: 'right 0.3s ease-in-out',
-                display: 'flex',
-                flexDirection: 'column',
-                fontFamily: 'Inter, sans-serif'
-            }}
-        >
-            {/* Botón para colapsar/expandir */}
-            <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                style={{
-                    position: 'absolute',
-                    left: '-40px',
-                    top: '20px',
-                    width: '40px',
-                    height: '40px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px 0 0 4px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '16px',
-                    boxShadow: '-2px 0 8px rgba(0,0,0,0.1)'
-                }}
-                title={isCollapsed ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
-            >
-                {isCollapsed ? '◀' : '▶'}
-            </button>
+    // No mostrar nada si está oculto o si no hay curso
+    if (viewState === 'hidden' || !course) return null;
 
-            {/* Header de la barra lateral */}
-            <div className="card-header bg-light border-bottom">
-                <h3 className="h5 mb-2">Asistente IA</h3>
-                <p className="small text-muted mb-1">
-                    <strong>Curso:</strong> {courseName}
-                </p>
-                <p className="small text-muted mb-0">
-                    <strong>Proveedor:</strong> {providerName} | <strong>Modelo:</strong> {modelName}
-                </p>
-            </div>
-
-            {/* Área de chat */}
-            <div
-                style={{
-                    flex: '1',
-                    overflowY: 'auto',
-                    padding: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px'
-                }}
-            >
-                {messages.length === 0 ? (
-                    <div className="alert alert-info" role="alert">
-                        👋 ¡Hola! Pregúntame sobre el curso y te ayudaré.
-                    </div>
-                ) : (
-                    messages.map((message) => (
-                        <div
-                            key={message.id}
-                            className={`card ${message.role === 'user' ? 'bg-primary text-white' : ''}`}
-                        >
-                            <div className="card-body p-2">
-                                <div className="small mb-1">
-                                    <strong>{message.role === 'user' ? '👤 Tú' : '🤖 Asistente'}</strong>
-                                </div>
-                                <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>
-                            </div>
-                        </div>
-                    ))
-                )}
-
-                {isGenerating && (
-                    <div className="card border-secondary">
-                        <div className="card-body p-2">
-                            <div className="d-flex align-items-center">
-                                <div className="spinner-border spinner-border-sm me-2" aria-label="Generando respuesta">
-                                    <span className="visually-hidden">Cargando...</span>
-                                </div>
-                                <span className="small">Generando respuesta...</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Input de chat */}
-            <div className="card-footer bg-light border-top">
-                <div className="input-group">
-                    <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Escribe tu pregunta..."
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        disabled={isGenerating}
-                    />
-                    <button
-                        className="btn btn-primary"
-                        type="button"
-                        onClick={handleSendMessage}
-                        disabled={isGenerating || !inputValue.trim()}
-                    >
-                        Enviar
-                    </button>
-                </div>
-                <button
-                    onClick={() => setIsVisible(false)}
-                    className="btn btn-outline-danger btn-sm w-100 mt-2"
-                >
-                    Cerrar extensión
-                </button>
-            </div>
-        </div>
-    );
+    // Renderizar según el estado
+    switch (viewState) {
+        case 'loading':
+            return <LoadingMessage />;
+        
+        case 'exercises':
+            return (
+                <ExerciseList 
+                    exercises={exercises}
+                    onClose={handleCloseExtension}
+                />
+            );
+        
+        case 'no-exercises':
+            return (
+                <NoExercisesMessage 
+                    onTimeout={handleNoExercisesTimeout}
+                    duration={3000}
+                />
+            );
+        
+        case 'chat':
+        default:
+            return (
+                <ChatSidebar
+                    courseName={courseName}
+                    providerName={providerName}
+                    modelName={modelName}
+                    onClose={handleCloseExtension}
+                />
+            );
+    }
 };
 
 // Componente principal que maneja la inyección

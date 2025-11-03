@@ -1,5 +1,7 @@
-import { OpenAIService } from "./OpenAIService";
 import { Course } from "../egela/Course";
+import { Exercise } from "../egela/Exercise";
+import { OpenAIService } from "./OpenAIService";
+import { ExerciseListSchema } from "./schemas";
 
 export { CourseAssistant };
 
@@ -152,5 +154,70 @@ ${courseContext}`;
             userMessage,
             systemPrompt
         );
+    }
+
+    /**
+     * Identifica los ejercicios en una página usando el LLM con respuestas estructuradas
+     * @param pageId ID de la página de Egela
+     * @returns Array de ejercicios identificados (vacío si no hay ejercicios)
+     */
+    async identifyExercises(pageId: string): Promise<Exercise[]> {
+        if (!this.course) {
+            throw new Error('No hay curso cargado');
+        }
+
+        console.log(`[identifyExercises] Identificando ejercicios en página: ${pageId}`);
+
+        try {
+            // 1. Obtener el contenido de la página en formato Markdown
+            const pageContent = await this.course.getPageContent(pageId);
+            console.log(`[identifyExercises] Contenido de la página obtenido (${pageContent.length} caracteres)`);
+
+            // 2. Construir el prompt para el LLM
+            const systemPrompt = `Eres un asistente experto en identificar ejercicios académicos en páginas educativas.
+
+TU TAREA:
+Analiza el contenido de la página proporcionado y identifica todos los ejercicios presentes.
+
+CRITERIOS PARA IDENTIFICAR EJERCICIOS:
+- La página puede no contener ejercicios. Es posible que la página solo tenga material de lectura para los alumnos. En este caso devuelve un array vacío.
+- Busca patrones como "EJERCICIO", "Ejercicio", "Pregunta", etc.
+- Un ejercicio típicamente tiene un identificador (número o nombre) y un enunciado
+- El enunciado puede incluir tablas, descripciones, o preguntas específicas
+- Si hay tablas asociadas a un ejercicio, inclúyelas en el enunciado en formato Markdown
+
+IMPORTANTE:
+- Si NO hay ejercicios en la página, devuelve un array vacío en el campo "exercises"
+- Si SÍ hay ejercicios, incluye cada uno con su "name" (identificador) y "statement" (enunciado completo)`;
+
+const userPrompt = `Analiza el siguiente contenido de una página educativa e identifica los ejercicios:
+
+${pageContent}`;
+
+            // 3. Generar respuesta estructurada usando Zod
+            const response = await OpenAIService.generateStructuredResponse(
+                ExerciseListSchema,
+                "exercise_list",
+                userPrompt,
+                systemPrompt
+            );
+
+            console.log(`[identifyExercises] Respuesta estructurada recibida:`, response);
+
+            // 4. Convertir a objetos Exercise
+            const exercises: Exercise[] = response.exercises.map(
+                (ex) => new Exercise(ex.name, ex.statement)
+            );
+
+            console.log(`[identifyExercises] Se identificaron ${exercises.length} ejercicios`);
+            return exercises;
+
+        } catch (error) {
+            console.error(`[identifyExercises] Error:`, error);
+            if (error instanceof Error) {
+                throw new Error(`Error al identificar ejercicios: ${error.message}`);
+            }
+            throw new Error('Error desconocido al identificar ejercicios');
+        }
     }
 }

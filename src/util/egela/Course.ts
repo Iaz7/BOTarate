@@ -18,27 +18,106 @@ export async function fetchSectionHtml(courseId: string, sectionNumber: number):
     return await response.text();
 }
 
+/**
+ * Función auxiliar para obtener el HTML de una página
+ */
+export async function fetchPageHtml(pageId: string): Promise<string> {
+    const url = `https://egela.ehu.eus/mod/page/view.php?id=${pageId}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.text();
+}
+
 class Course {
     id: string;
-    //numSections: number;
     baseUrl: string;
     highlighted: string;
-    //editMode: boolean;
     sections: CourseSection[];
-    //stateKey: string;
 
     constructor(data: any) {
         const courseInfo = data.course;
         this.id = courseInfo.id;
-        //this.numSections = courseInfo.numsections;
         this.baseUrl = courseInfo.baseurl;
         this.highlighted = courseInfo.highlighted;
-        //this.editMode = courseInfo.editmode;
-        //this.stateKey = courseInfo.statekey;
 
         this.sections = data.section.map((sectionData: any) =>
             new CourseSection(sectionData, data.cm, this.baseUrl)
         );
+    }
+
+    /**
+     * Crea una instancia de Course desde un href y el sessionStorage
+     * @param href URL actual de la página
+     * @param sessionStorageData Objeto con todos los datos de sessionStorage
+     * @returns Una instancia de Course o null si no se encuentra
+     */
+    static async fromHrefAndStorage(href: string, sessionStorageData: Record<string, string>): Promise<Course | null> {
+        console.log('[Course.fromHrefAndStorage] Analizando URL:', href);
+        console.log('[Course.fromHrefAndStorage] Datos de sessionStorage recibidos:', Object.keys(sessionStorageData));
+        
+        // Caso 1: Estamos en una vista de curso (course/view.php?id=...)
+        if (href.includes('egela.ehu.eus/course/view.php?id=')) {
+            const courseId = new URL(href).searchParams.get('id');
+            if (!courseId) return null;
+
+            console.log('[Course.fromHrefAndStorage] Detectado courseId:', courseId);
+            
+            // Buscar datos del curso en sessionStorage
+            const courseKey = `-716233041/course/${courseId}/staticState`;
+            const courseDataStr = sessionStorageData[courseKey];
+            
+            if (!courseDataStr) {
+                console.error('[Course.fromHrefAndStorage] No se encontraron datos del curso en sessionStorage');
+                return null;
+            }
+
+            try {
+                const courseData = JSON.parse(courseDataStr);
+                return new Course(courseData);
+            } catch (error) {
+                console.error('[Course.fromHrefAndStorage] Error al parsear datos del curso:', error);
+                return null;
+            }
+        }
+
+        // Caso 2: Estamos en una página/recurso (mod/page/view.php?id=...)
+        if (href.includes('egela.ehu.eus/mod/')) {
+            const resourceId = new URL(href).searchParams.get('id');
+            if (!resourceId) return null;
+
+            console.log('[Course.fromHrefAndStorage] Detectado resourceId:', resourceId);
+            console.log('[Course.fromHrefAndStorage] Buscando curso que contenga este recurso...');
+
+            // Buscar en todos los cursos del sessionStorage
+            for (const [key, value] of Object.entries(sessionStorageData)) {
+                if (!key.includes('-716233041/course/') || !key.endsWith('/staticState')) continue;
+
+                try {
+                    const courseData = JSON.parse(value);
+                    
+                    // Verificar si este curso contiene el recurso
+                    const hasResource = courseData.cm?.some((cm: any) => cm.id === resourceId);
+                    
+                    if (hasResource) {
+                        console.log('[Course.fromHrefAndStorage] Curso encontrado!');
+                        return new Course(courseData);
+                    }
+                } catch (error) {
+                    // Ignorar errores de parsing para otros datos
+                    continue;
+                }
+            }
+
+            console.error('[Course.fromHrefAndStorage] No se encontró ningún curso con el recurso:', resourceId);
+            return null;
+        }
+
+        console.log('[Course.fromHrefAndStorage] URL no reconocida como curso o recurso de Egela');
+        return null;
     }
 
     getSectionById(sectionId: string): CourseSection | undefined {
@@ -294,5 +373,182 @@ class Course {
             }
             throw new Error('Error desconocido al descargar el recurso');
         }
+    }
+
+    /**
+     * Obtiene el contenido de una página de ejercicios parseado en formato Markdown
+     * @param pageId ID de la página (por ejemplo: "9210914")
+     * @returns El contenido de la página en formato Markdown
+     */
+    async getPageContent(pageId: string): Promise<string> {
+        console.log(`[getPageContent] Obteniendo contenido de la página: ${pageId}`);
+        
+        try {
+            // 1. Obtener el HTML de la página
+            const html = await fetchPageHtml(pageId);
+            console.log(`[getPageContent] HTML obtenido, longitud: ${html.length}`);
+
+            // 2. Parsear el HTML usando linkedom
+            const { document: doc } = parseHTML(html);
+
+            // 3. Buscar el contenedor principal de contenido
+            const mainContent = doc.querySelector('div[role="main"]');
+            
+            if (!mainContent) {
+                throw new Error('No se encontró el contenido principal de la página');
+            }
+
+            // 4. Parsear el contenido a Markdown
+            const markdown = this.parseHtmlToMarkdown(mainContent);
+            
+            console.log(`[getPageContent] Contenido parseado exitosamente, longitud: ${markdown.length}`);
+            return markdown;
+
+        } catch (error) {
+            console.error(`[getPageContent] Error al obtener el contenido de la página:`, error);
+            if (error instanceof Error) {
+                throw error;
+            }
+            throw new Error('Error desconocido al obtener el contenido de la página');
+        }
+    }
+
+    /**
+     * Parsea un elemento HTML a formato Markdown
+     * Maneja texto, encabezados, párrafos y tablas
+     */
+    private parseHtmlToMarkdown(element: any): string {
+        const lines: string[] = [];
+        
+        // Función auxiliar para limpiar texto
+        const cleanText = (text: string): string => {
+            return text
+                .replace(/\s+/g, ' ')  // Normalizar espacios
+                .replace(/&nbsp;/g, ' ')
+                .trim();
+        };
+
+        // Función auxiliar para parsear una tabla
+        const parseTable = (table: any): string[] => {
+            const tableLines: string[] = [];
+            const rows = Array.from(table.querySelectorAll('tr'));
+            
+            if (rows.length === 0) return tableLines;
+
+            // Procesar cada fila
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i] as any;
+                const cells = Array.from(row.querySelectorAll('td, th'));
+                const cellTexts = cells.map((cell: any) => cleanText(cell.textContent || ''));
+                
+                // Crear fila de tabla en Markdown
+                tableLines.push('| ' + cellTexts.join(' | ') + ' |');
+                
+                // Agregar línea separadora después de la primera fila (header)
+                if (i === 0) {
+                    tableLines.push('| ' + cellTexts.map(() => '---').join(' | ') + ' |');
+                }
+            }
+            
+            return tableLines;
+        };
+
+        // Función recursiva para procesar nodos
+        const processNode = (node: any): void => {
+            const tagName = node.tagName?.toLowerCase();
+
+            // Saltar elementos que no nos interesan
+            if (
+                tagName === 'script' ||
+                tagName === 'style' ||
+                tagName === 'noscript' ||
+                node.classList?.contains('ally-actions') ||
+                node.classList?.contains('ally-image-cover') ||
+                node.getAttribute?.('aria-hidden') === 'true'
+            ) {
+                return;
+            }
+
+            // Procesar según el tipo de elemento
+            switch (tagName) {
+                case 'h1':
+                    lines.push('\n# ' + cleanText(node.textContent));
+                    break;
+                case 'h2':
+                    lines.push('\n## ' + cleanText(node.textContent));
+                    break;
+                case 'h3':
+                    lines.push('\n### ' + cleanText(node.textContent));
+                    break;
+                case 'h4':
+                    lines.push('\n#### ' + cleanText(node.textContent));
+                    break;
+                case 'h5':
+                    lines.push('\n##### ' + cleanText(node.textContent));
+                    break;
+                case 'h6':
+                    lines.push('\n###### ' + cleanText(node.textContent));
+                    break;
+                case 'table':
+                    lines.push('\n');
+                    lines.push(...parseTable(node));
+                    lines.push('\n');
+                    break;
+                case 'p':
+                case 'div':
+                case 'span': {
+                    // Solo agregar si tiene contenido de texto directo
+                    const text = cleanText(node.textContent || '');
+                    
+                    // Evitar duplicados y contenido vacío
+                    if (text && text.length > 0 && !lines.includes(text)) {
+                        // Si el nodo no tiene hijos relevantes o solo texto, agregarlo
+                        const hasRelevantChildren = Array.from(node.children || []).some(
+                            (child: any) => {
+                                const childTag = child.tagName?.toLowerCase();
+                                return ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'p'].includes(childTag);
+                            }
+                        );
+                        
+                        if (!hasRelevantChildren && text !== '&nbsp;') {
+                            lines.push(text);
+                        }
+                    }
+                    
+                    // Procesar hijos
+                    for (const child of Array.from(node.children || [])) {
+                        processNode(child);
+                    }
+                    break;
+                }
+                default:
+                    // Para otros elementos, procesar sus hijos
+                    for (const child of Array.from(node.children || [])) {
+                        processNode(child);
+                    }
+                    break;
+            }
+        };
+
+        // Iniciar el procesamiento
+        processNode(element);
+
+        // Filtrar líneas vacías consecutivas y limpiar
+        const filteredLines: string[] = [];
+        let lastWasEmpty = false;
+        
+        for (const line of lines) {
+            const isEmpty = line.trim().length === 0;
+            
+            if (!isEmpty) {
+                filteredLines.push(line);
+                lastWasEmpty = false;
+            } else if (!lastWasEmpty) {
+                filteredLines.push('');
+                lastWasEmpty = true;
+            }
+        }
+
+        return filteredLines.join('\n').trim();
     }
 }
