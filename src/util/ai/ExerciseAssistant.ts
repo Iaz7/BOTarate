@@ -1,4 +1,5 @@
 import { Exercise } from "../egela/Exercise";
+import { AssistantStorageManager } from "../storage/AssistantStorageManager";
 import { BaseAssistant } from "./BaseAssistant";
 import { OpenAIService } from "./OpenAIService";
 import { ExerciseListSchema } from "./schemas";
@@ -27,7 +28,7 @@ class ExerciseAssistant extends BaseAssistant {
 
         try {
             // 1. Obtener el contenido de la página en formato Markdown + archivos detectados
-            const pageResult = await this.course.getPageContent(pageId);
+            const pageResult = await this.course!.getPageContent(pageId);
             const pageContent = pageResult.markdown;
             const attachedFiles = pageResult.files;
             console.log(`[identifyExercises] Contenido de la página obtenido (${pageContent.length} caracteres), archivos: ${attachedFiles.length}`);
@@ -130,6 +131,17 @@ ${pageContent}`;
             console.log(`[identifyExercises] Se identificaron ${exercises.length} ejercicios, db_schema presente: ${!!response.db_schema}`);
             console.log(`[identifyExercises] Instrucciones SQL: ${response.sql_instructions?.join(', ') || 'N/A'}`);
             console.log(`[identifyExercises] Objetivos de aprendizaje: ${response.learning_objectives || 'N/A'}`);
+            
+            // 6. Guardar los datos en el storage para uso futuro
+            const exerciseDataToStore = exercises.map(ex => ({ name: ex.name, statement: ex.statement }));
+            await AssistantStorageManager.saveExerciseData(
+                pageId,
+                exerciseDataToStore,
+                response.db_schema,
+                response.sql_instructions,
+                response.learning_objectives
+            );
+            console.log(`[identifyExercises] Datos guardados en storage para página ${pageId}`);
             
             return { 
                 exercises, 

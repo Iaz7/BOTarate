@@ -6,6 +6,8 @@ import { OpenAIService } from "../util/ai/OpenAIService";
 import { SqlTutorAssistant } from "../util/ai/SqlTutorAssistant";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
+import { Exercise } from "../util/egela/Exercise";
+import { AssistantStorageManager } from "../util/storage/AssistantStorageManager";
 
 let isConfigLoaded = false;
 
@@ -116,25 +118,53 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
 
             console.log(`Identificando ejercicios en página: ${pageId}, recurso: ${resourceId || 'N/A'}`);
 
-            exerciseAssistant.identifyExercises(pageId, resourceId)
-                .then(result => {
-                    // result: { exercises, dbSchema?, sqlInstructions?, learningObjectives? }
+            // Primero intentamos obtener los datos del storage
+            (async () => {
+                try {
+                    const cachedData = await AssistantStorageManager.getExerciseData(pageId);
+                    
+                    if (cachedData) {
+                        // Datos encontrados en cache
+                        console.log(`Ejercicios recuperados del storage (${cachedData.exercises.length} ejercicios)`);
+                        
+                        // Convertir los datos a objetos Exercise
+                        const exercises = cachedData.exercises.map(
+                            ex => new Exercise(ex.name, ex.statement)
+                        );
+                        
+                        sendResponse({ 
+                            success: true, 
+                            exercises: exercises, 
+                            db_schema: cachedData.dbSchema,
+                            sql_instructions: cachedData.sqlInstructions,
+                            learning_objectives: cachedData.learningObjectives,
+                            fromCache: true
+                        });
+                        return;
+                    }
+                    
+                    // No hay datos en cache, llamar al asistente
+                    console.log('No hay datos en cache, llamando al asistente...');
+                    const result = await exerciseAssistant.identifyExercises(pageId, resourceId);
+                    
                     console.log(`Ejercicios identificados:`, result.exercises);
                     console.log(`DB Schema presente:`, !!result.dbSchema);
                     console.log(`Instrucciones SQL:`, result.sqlInstructions);
                     console.log(`Objetivos de aprendizaje:`, result.learningObjectives);
+                    
                     sendResponse({ 
                         success: true, 
                         exercises: result.exercises, 
                         db_schema: result.dbSchema,
                         sql_instructions: result.sqlInstructions,
-                        learning_objectives: result.learningObjectives
+                        learning_objectives: result.learningObjectives,
+                        fromCache: false
                     });
-                })
-                .catch(error => {
+                } catch (error: any) {
                     console.error('Error en getExerciseList:', error);
                     sendResponse({ success: false, error: error.message });
-                });
+                }
+            })();
 
             return true;
         }

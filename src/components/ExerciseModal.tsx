@@ -64,11 +64,16 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
             if (response.success) {
                 setExplanation(response.explanation);
             } else {
-                setExplanationError(response.error || 'Error al generar la explicación');
+                const errorMessage = response.error || 'Error desconocido al generar la explicación';
+                console.error('Error al generar explicación:', errorMessage);
+                setExplanationError(errorMessage);
             }
         } catch (error) {
             console.error('Error al generar explicación:', error);
-            setExplanationError('Error de comunicación con el asistente');
+            const errorMessage = error instanceof Error 
+                ? `Error de comunicación: ${error.message}` 
+                : 'Error de comunicación con el asistente de IA';
+            setExplanationError(errorMessage);
         } finally {
             setIsLoadingExplanation(false);
         }
@@ -202,14 +207,23 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                 )}
 
                                 {explanationError && (
-                                    <div className="alert alert-danger">
-                                        <strong>Error:</strong> {explanationError}
-                                        <button
-                                            onClick={handleGenerateExplanation}
-                                            className="btn btn-sm btn-danger mt-2"
-                                        >
-                                            Reintentar
-                                        </button>
+                                    <div className="d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '200px' }}>
+                                        <div className="alert alert-danger w-100" role="alert">
+                                            <h5 className="alert-heading d-flex align-items-center">
+                                                Error al analizar los ejercicios
+                                            </h5>
+                                            <hr />
+                                            <p className="mb-3">{explanationError}</p>
+                                            <div className="d-flex gap-2">
+                                                <button
+                                                    onClick={handleGenerateExplanation}
+                                                    className="btn btn-danger"
+                                                >
+                                                    <span className="me-2">🔄</span>
+                                                    Reintentar
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
 
