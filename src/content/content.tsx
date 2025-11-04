@@ -28,6 +28,8 @@ const ExtensionContent: React.FC = () => {
     const [modelName, setModelName] = useState<string>('');
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [dbSchema, setDbSchema] = useState<string | undefined>(undefined);
+    const [sqlInstructions, setSqlInstructions] = useState<string[] | undefined>(undefined);
+    const [learningObjectives, setLearningObjectives] = useState<string | undefined>(undefined);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
     useEffect(() => {
@@ -98,10 +100,17 @@ const ExtensionContent: React.FC = () => {
 
     const identifyExercisesInPage = async (pageId: string) => {
         try {
+            // Extraer el resourceId de la URL (parámetro 'id' es el resourceId en páginas de Egela)
+            const urlParams = new URLSearchParams(globalThis.location.search);
+            const resourceId = urlParams.get('id'); // El ID del recurso (página) actual
+            
             console.log('[content] Enviando solicitud para identificar ejercicios...');
+            console.log('[content] PageId:', pageId, 'ResourceId:', resourceId);
+            
             const response = await chrome.runtime.sendMessage({ 
                 action: "getExerciseList",
-                pageId: pageId
+                pageId: pageId,
+                resourceId: resourceId || undefined
             });
 
             if (response.success) {
@@ -110,6 +119,20 @@ const ExtensionContent: React.FC = () => {
                     setDbSchema(response.db_schema);
                 } else {
                     setDbSchema(undefined);
+                }
+
+                if (response.sql_instructions) {
+                    setSqlInstructions(response.sql_instructions);
+                    console.log('[content] Instrucciones SQL:', response.sql_instructions);
+                } else {
+                    setSqlInstructions(undefined);
+                }
+
+                if (response.learning_objectives) {
+                    setLearningObjectives(response.learning_objectives);
+                    console.log('[content] Objetivos de aprendizaje:', response.learning_objectives);
+                } else {
+                    setLearningObjectives(undefined);
                 }
 
                 if (response.exercises.length > 0) {
@@ -168,6 +191,8 @@ const ExtensionContent: React.FC = () => {
                     <ExerciseModal 
                         exercises={exercises}
                         dbSchema={dbSchema}
+                        sqlInstructions={sqlInstructions}
+                        learningObjectives={learningObjectives}
                         isOpen={isModalOpen}
                         onClose={handleCloseModal}
                     />

@@ -110,15 +110,24 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return true;
         }
         case "getExerciseList": {
-            const { pageId } = request;
+            const { pageId, resourceId } = request;
 
-            console.log(`Identificando ejercicios en página: ${pageId}`);
+            console.log(`Identificando ejercicios en página: ${pageId}, recurso: ${resourceId || 'N/A'}`);
 
-            exerciseAssistant.identifyExercises(pageId)
+            exerciseAssistant.identifyExercises(pageId, resourceId)
                 .then(result => {
-                    // result: { exercises, dbSchema? }
-                    console.log(`Ejercicios identificados:`, result.exercises, 'db_schema present:', !!result.dbSchema);
-                    sendResponse({ success: true, exercises: result.exercises, db_schema: result.dbSchema });
+                    // result: { exercises, dbSchema?, sqlInstructions?, learningObjectives? }
+                    console.log(`Ejercicios identificados:`, result.exercises);
+                    console.log(`DB Schema presente:`, !!result.dbSchema);
+                    console.log(`Instrucciones SQL:`, result.sqlInstructions);
+                    console.log(`Objetivos de aprendizaje:`, result.learningObjectives);
+                    sendResponse({ 
+                        success: true, 
+                        exercises: result.exercises, 
+                        db_schema: result.dbSchema,
+                        sql_instructions: result.sqlInstructions,
+                        learning_objectives: result.learningObjectives
+                    });
                 })
                 .catch(error => {
                     console.error('Error en getExerciseList:', error);
@@ -129,11 +138,11 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
         }
 
         case "generateExplanation": {
-            const { exerciseName, exerciseStatement, db_schema } = request;
+            const { exerciseName, exerciseStatement, db_schema, sql_instructions, learning_objectives } = request;
 
             console.log(`Generando explicación para ejercicio: ${exerciseName}`);
 
-            sqlTutorAssistant.generateExplanation(exerciseName, exerciseStatement, db_schema)
+            sqlTutorAssistant.generateExplanation(exerciseName, exerciseStatement, db_schema, sql_instructions, learning_objectives)
                 .then(explanation => {
                     console.log(`Explicación generada:`, explanation);
                     sendResponse({ success: true, explanation: explanation });

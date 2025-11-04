@@ -62,17 +62,50 @@ class OpenAIService {
         this.conversationHistory = [];
     }
 
-    static async generateResponseWithTools(
-        userMessage?: string,
-        systemPrompt?: string
-    ): Promise<{ type: 'message'; content: string } | { type: 'tool_calls'; calls: ToolCall[] }> {
+    /**
+     * Función unificada para generar respuestas con o sin tools, con o sin schema estructurado
+     * @param options Opciones de configuración para la generación
+     * @returns Respuesta del modelo (puede ser mensaje, tool calls o structured)
+     */
+    private static async generateResponse<T extends z.ZodTypeAny>(options: {
+        userMessage?: string;
+        systemPrompt?: string;
+        schema?: T;
+        schemaName?: string;
+        files?: Array<{ filename: string; mimeType?: string; dataUrl?: string; text?: string; url?: string }>;
+        useTools?: boolean;
+    }): Promise<
+        { type: 'message'; content: string } | 
+        { type: 'tool_calls'; calls: ToolCall[] } |
+        { type: 'structured'; data: z.infer<T> }
+    > {
         this.loadProviderConfig();
 
+        const { userMessage, systemPrompt, schema, schemaName, files, useTools = false } = options;
+
+        // Construir system prompt (incluyendo schema si es necesario)
+        let finalSystemPrompt = systemPrompt || '';
+        if (schema && schemaName) {
+            const jsonSchema = zodToJsonSchema(schema, schemaName);
+            const schemaDescription = JSON.stringify(jsonSchema, null, 2);
+            
+            finalSystemPrompt += `
+
+FORMATO DE RESPUESTA REQUERIDO:
+Debes responder ÚNICAMENTE con un objeto JSON válido que cumpla con el siguiente esquema:
+
+${schemaDescription}
+
+IMPORTANTE:
+- Responde SOLO con el JSON, sin texto adicional antes o después
+- Asegúrate de que el JSON sea válido y cumpla con el esquema`;
+        }
+
         // Agregar mensaje del sistema si se proporciona y el historial está vacío
-        if (systemPrompt && this.conversationHistory.length === 0) {
+        if (finalSystemPrompt && this.conversationHistory.length === 0) {
             this.conversationHistory.push({
                 role: 'system',
-                content: systemPrompt
+                content: finalSystemPrompt
             });
         }
 
@@ -84,13 +117,27 @@ class OpenAIService {
             });
         }
 
-        const response = await this.openai.chat.completions.create({
+        // Añadir archivos adjuntos si existen
+        if (files && Array.isArray(files) && files.length > 0) {
+            for (const f of files) {
+                this.addFileMessage(f.filename, f.dataUrl, f.mimeType, f.text);
+            }
+        }
+
+        // Preparar parámetros de la llamada a la API
+        const apiParams: any = {
             model: ConfigManager.getSelectedModel(),
             messages: this.conversationHistory as any,
-            tools: TOOLS as any,
-            tool_choice: 'auto',
             max_tokens: 1000000
-        });
+        };
+
+        // Añadir tools si está habilitado
+        if (useTools) {
+            apiParams.tools = TOOLS as any;
+            apiParams.tool_choice = 'auto';
+        }
+
+        const response = await this.openai.chat.completions.create(apiParams);
 
         const choice = response.choices[0];
         const message = choice?.message;
@@ -99,7 +146,33 @@ class OpenAIService {
             throw new Error('No se recibió respuesta del modelo');
         }
 
-        // Agregar mensaje del asistente al historial
+        // Si es una respuesta estructurada sin tools, parsear directamente
+        if (schema && !message.tool_calls) {
+            const content = message.content;
+            if (!content) {
+                throw new Error('No se recibió contenido del modelo');
+            }
+
+            console.log(`[generateResponse] Respuesta estructurada recibida, parseando...`);
+            
+            // Limpiar bloques de código si el modelo los añade
+            let jsonText = (typeof content === 'string') ? content.trim() : JSON.stringify(content);
+            if (jsonText.startsWith('```json')) {
+                jsonText = jsonText.replaceAll(/```json\n?/g, '').replaceAll(/```\n?$/g, '');
+            } else if (jsonText.startsWith('```')) {
+                jsonText = jsonText.replaceAll(/```\n?/g, '');
+            }
+
+            // Parsear y validar con Zod
+            const parsed = schema.parse(JSON.parse(jsonText));
+
+            console.log(`[generateResponse] Respuesta parseada exitosamente`);
+            
+            // No agregar al historial en modo estructurado para mantener limpio el contexto
+            return { type: 'structured', data: parsed };
+        }
+
+        // Agregar mensaje del asistente al historial (para conversaciones normales y con tools)
         this.conversationHistory.push({
             role: 'assistant',
             content: message.content,
@@ -224,21 +297,29 @@ class OpenAIService {
     /**
      * Procesa una respuesta del LLM que puede contener tool calls,
      * ejecutándolos recursivamente hasta obtener una respuesta final
+     * @param toolExecutor Función que ejecuta las herramientas
      * @param userMessage Mensaje del usuario (opcional para llamadas recursivas)
      * @param systemPrompt Prompt del sistema (opcional)
-     * @param toolExecutor Función que ejecuta las herramientas
      * @returns La respuesta final del LLM
      */
-    static async processResponseWithTools(
+    static async processWithTools(
         toolExecutor: (name: string, args: any) => Promise<string | { type: 'file'; data: any }>,
         userMessage?: string,
         systemPrompt?: string
     ): Promise<string> {
-        const result = await this.generateResponseWithTools(userMessage, systemPrompt);
+        const result = await this.generateResponse({
+            userMessage,
+            systemPrompt,
+            useTools: true
+        });
 
         if (result.type === 'message') {
             // Respuesta final del LLM
             return result.content;
+        }
+
+        if (result.type === 'structured') {
+            throw new Error('Resultado inesperado: structured response en processWithTools');
         }
 
         // El LLM quiere llamar a herramientas
@@ -250,7 +331,7 @@ class OpenAIService {
         }
 
         // Llamar recursivamente para obtener la respuesta final
-        return this.processResponseWithTools(toolExecutor);
+        return this.processWithTools(toolExecutor);
     }
 
     /**
@@ -259,73 +340,89 @@ class OpenAIService {
      * @param schemaName Nombre descriptivo del esquema
      * @param userMessage Mensaje del usuario
      * @param systemPrompt Prompt del sistema
+     * @param files Archivos adjuntos (opcional)
      * @returns El objeto parseado y validado según el esquema
      */
-    static async generateStructuredResponse<T extends z.ZodTypeAny>(
+    static async generateStructured<T extends z.ZodTypeAny>(
         schema: T,
         schemaName: string,
         userMessage: string,
         systemPrompt: string,
         files?: Array<{ filename: string; mimeType?: string; dataUrl?: string; text?: string; url?: string }>
     ): Promise<z.infer<T>> {
-        this.loadProviderConfig();
+        console.log(`[generateStructured] Generando respuesta estructurada: ${schemaName}`);
 
-        console.log(`[generateStructuredResponse] Generando respuesta estructurada: ${schemaName}`);
-
-        // Convertir el esquema Zod a JSON Schema para incluirlo en el prompt
-        const jsonSchema = zodToJsonSchema(schema, schemaName);
-        const schemaDescription = JSON.stringify(jsonSchema, null, 2);
-
-        // Modificar el system prompt para incluir el esquema
-        const enhancedSystemPrompt = `${systemPrompt}
-
-FORMATO DE RESPUESTA REQUERIDO:
-Debes responder ÚNICAMENTE con un objeto JSON válido que cumpla con el siguiente esquema:
-
-${schemaDescription}
-
-IMPORTANTE:
-- Responde SOLO con el JSON, sin texto adicional antes o después
-- Asegúrate de que el JSON sea válido y cumpla con el esquema`;
-
-        // Push system and user messages into the conversation history so files are sent after them
-        this.conversationHistory.push({ role: 'system', content: enhancedSystemPrompt });
-        this.conversationHistory.push({ role: 'user', content: userMessage });
-
-        // Si hay archivos adjuntos, añadirlos al historial (usar addFileMessage para consistencia)
-        if (files && Array.isArray(files) && files.length > 0) {
-            for (const f of files) {
-                // Añadir metadatos/contenido del archivo al historial del LLM
-                this.addFileMessage(f.filename, f.dataUrl, f.mimeType, f.text);
-            }
-        }
-
-        const response = await this.openai.chat.completions.create({
-            model: ConfigManager.getSelectedModel(),
-            messages: this.conversationHistory as any,
-            max_tokens: 1000000
+        const result = await this.generateResponse({
+            userMessage,
+            systemPrompt,
+            schema,
+            schemaName,
+            files,
+            useTools: false
         });
 
-        const content = response.choices[0]?.message?.content;
-
-        if (!content) {
-            throw new Error('No se recibió respuesta del modelo');
+        if (result.type === 'structured') {
+            return result.data;
         }
 
-        console.log(`[generateStructuredResponse] Respuesta recibida, parseando...`);
-        
-        // Intentar limpiar bloques de código si el modelo los añade
-        let jsonText = (typeof content === 'string') ? content.trim() : JSON.stringify(content);
-        if (jsonText.startsWith('```json')) {
-            jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
-        } else if (jsonText.startsWith('```')) {
-            jsonText = jsonText.replace(/```\n?/g, '');
+        // Si llegamos aquí es porque el modelo devolvió tool calls o un mensaje no estructurado
+        throw new Error('El modelo no devolvió una respuesta estructurada válida');
+    }
+
+    /**
+     * Procesa una respuesta estructurada que puede usar tools
+     * @param schema Esquema Zod para validar la respuesta
+     * @param schemaName Nombre descriptivo del esquema
+     * @param toolExecutor Función que ejecuta las herramientas
+     * @param userMessage Mensaje del usuario
+     * @param systemPrompt Prompt del sistema
+     * @param files Archivos adjuntos (opcional)
+     * @returns El objeto parseado y validado según el esquema
+     */
+    static async processStructuredWithTools<T extends z.ZodTypeAny>(
+        schema: T,
+        schemaName: string,
+        toolExecutor: (name: string, args: any) => Promise<string | { type: 'file'; data: any }>,
+        userMessage: string,
+        systemPrompt: string,
+        files?: Array<{ filename: string; mimeType?: string; dataUrl?: string; text?: string; url?: string }>
+    ): Promise<z.infer<T>> {
+        console.log(`[processStructuredWithTools] Iniciando procesamiento con schema: ${schemaName}`);
+
+        const result = await this.generateResponse({
+            userMessage,
+            systemPrompt,
+            schema,
+            schemaName,
+            files,
+            useTools: true
+        });
+
+        // Si es una respuesta estructurada directa, retornarla
+        if (result.type === 'structured') {
+            return result.data;
         }
 
-        // Parsear y validar con Zod
-        const parsed = schema.parse(JSON.parse(jsonText));
+        // Si el modelo quiere usar tools, procesarlas
+        if (result.type === 'tool_calls') {
+            console.log(`LLM solicita ${result.calls.length} tool call(s) antes de dar respuesta estructurada`);
 
-        console.log(`[generateStructuredResponse] Respuesta parseada exitosamente`);
-        return parsed;
+            // Ejecutar todas las tool calls
+            for (const call of result.calls) {
+                await this.executeToolCall(call, toolExecutor);
+            }
+
+            // Llamar recursivamente para obtener la respuesta estructurada final
+            return this.processStructuredWithTools(
+                schema,
+                schemaName,
+                toolExecutor,
+                undefined as any, // No enviar nuevo mensaje de usuario
+                undefined as any // No enviar nuevo system prompt
+            );
+        }
+
+        // Si llegamos aquí, el modelo devolvió un mensaje no estructurado
+        throw new Error('El modelo no devolvió una respuesta estructurada válida');
     }
 }

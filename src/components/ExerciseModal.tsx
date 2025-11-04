@@ -20,9 +20,18 @@ interface ExerciseModalProps {
     isOpen: boolean;
     onClose: () => void;
     dbSchema?: string | null;
+    sqlInstructions?: string[];
+    learningObjectives?: string;
 }
 
-const ExerciseModal: React.FC<ExerciseModalProps> = ({ exercises, isOpen, onClose, dbSchema }) => {
+const ExerciseModal: React.FC<ExerciseModalProps> = ({ 
+    exercises, 
+    isOpen, 
+    onClose, 
+    dbSchema,
+    sqlInstructions,
+    learningObjectives
+}) => {
     const [selectedExerciseIndex, setSelectedExerciseIndex] = useState<number>(0);
     const [explanation, setExplanation] = useState<Explanation | null>(null);
     const [isLoadingExplanation, setIsLoadingExplanation] = useState<boolean>(false);
@@ -47,7 +56,9 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({ exercises, isOpen, onClos
                 action: 'generateExplanation',
                 exerciseName: selectedExercise.name,
                 exerciseStatement: selectedExercise.statement,
-                db_schema: dbSchema || undefined
+                db_schema: dbSchema || undefined,
+                sql_instructions: sqlInstructions || undefined,
+                learning_objectives: learningObjectives || undefined
             });
 
             if (response.success) {
