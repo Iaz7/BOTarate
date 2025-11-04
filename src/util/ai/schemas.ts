@@ -13,9 +13,9 @@ export const ExerciseSchema = z.object({
  */
 export const ExerciseListSchema = z.object({
     exercises: z.array(ExerciseSchema).describe("Lista de ejercicios identificados en la página. Array vacío si no hay ejercicios."),
-    db_schema: z.string().optional().describe("Script SQL para crear el esquema de la base de datos relacionado con la página, si se detecta"),
-    sql_instructions: z.array(z.string()).optional().describe("Lista de instrucciones o cláusulas SQL que se trabajan en los ejercicios de esta página (ej: 'SELECT', 'JOIN', 'GROUP BY', 'HAVING', 'Subconsultas', 'ORDER BY', etc.)"),
-    learning_objectives: z.string().optional().describe("Descripción breve de los objetivos de aprendizaje o conceptos que se pretenden trabajar con estos ejercicios")
+    db_schema: z.string().optional().nullable().describe("Script SQL para crear el esquema de la base de datos relacionado con la página, si se detecta"),
+    sql_instructions: z.array(z.string()).optional().nullable().describe("Lista de instrucciones o cláusulas SQL que se trabajan en los ejercicios de esta página (ej: 'SELECT', 'JOIN', 'GROUP BY', 'HAVING', 'Subconsultas', 'ORDER BY', etc.)"),
+    learning_objectives: z.string().optional().nullable().describe("Descripción breve de los objetivos de aprendizaje o conceptos que se pretenden trabajar con estos ejercicios")
 });
 
 /**

@@ -47,19 +47,7 @@ IMPORTANTE:
 CONTEXTO PEDAGÓGICO:
 ${sqlInstructions && sqlInstructions.length > 0 ? `- Este ejercicio trabaja las siguientes instrucciones SQL: ${sqlInstructions.join(', ')}` : ''}
 ${learningObjectives ? `- Objetivos de aprendizaje de la página: ${learningObjectives}` : ''}
-${sqlInstructions || learningObjectives ? '- Asegúrate de que tu explicación se alinee con estos objetivos de aprendizaje y enfoque especialmente en las instrucciones SQL mencionadas.' : ''}
-
-ACCESO A RECURSOS DEL CURSO:
-Tienes acceso a las herramientas getSectionContent y getResourceContent para consultar material de teoría del curso.
-- Si necesitas verificar qué conceptos se han explicado en clase, puedes consultar las secciones del curso
-- Busca material relacionado con las instrucciones SQL que se trabajan en el ejercicio
-- Prioriza explicar usando los conceptos que ya se han visto en clase
-- Si un concepto no se ha dado en clase, menciónalo brevemente pero no lo uses como base de tu explicación
-
-INFORMACIÓN DEL CURSO:
-A continuación tienes la estructura completa del curso con todas las secciones disponibles. Cada sección tiene un ID único que debes usar cuando necesites obtener su contenido detallado.
-
-${courseContext}`;
+${sqlInstructions || learningObjectives ? '- Asegúrate de que tu explicación se alinee con estos objetivos de aprendizaje y enfoque especialmente en las instrucciones SQL mencionadas.' : ''}`;
 
     const userPrompt = `Por favor, genera una explicación paso a paso para el siguiente ejercicio:
 
@@ -76,10 +64,9 @@ Antes de generar la explicación, considera consultar el material de teoría del
             OpenAIService.resetConversation();
             
             // Usar la nueva función que permite tools con respuestas estructuradas
-            const response = await OpenAIService.processStructuredWithTools(
+            const response = await OpenAIService.generateStructuredResponse(
                 ExplanationSchema,
                 "explanation",
-                (name, args) => this.executeToolCall(name, args),
                 userPrompt,
                 systemPrompt
             );

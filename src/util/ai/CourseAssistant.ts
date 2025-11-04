@@ -45,7 +45,7 @@ ${courseContext}`;
 
         const systemPrompt = resetHistory ? this.buildSystemPrompt() : undefined;
 
-        return await OpenAIService.processWithTools(
+        return await OpenAIService.processResponseWithTools(
             (name, args) => this.executeToolCall(name, args),
             userMessage,
             systemPrompt
