@@ -380,7 +380,7 @@ class Course {
      * @param pageId ID de la página (por ejemplo: "9210914")
      * @returns El contenido de la página en formato Markdown
      */
-    async getPageContent(pageId: string): Promise<string> {
+    async getPageContent(pageId: string): Promise<{ markdown: string; files: Array<{ id: string; filename: string; mimeType: string; size: number; dataUrl?: string; text?: string; url?: string }> }> {
         console.log(`[getPageContent] Obteniendo contenido de la página: ${pageId}`);
         
         try {
@@ -398,11 +398,11 @@ class Course {
                 throw new Error('No se encontró el contenido principal de la página');
             }
 
-            // 4. Parsear el contenido a Markdown
-            const markdown = this.parseHtmlToMarkdown(mainContent);
+            // 4. Parsear el contenido a Markdown y detectar archivos
+            const result = await this.parseHtmlToMarkdownWithFiles(mainContent, pageId);
             
-            console.log(`[getPageContent] Contenido parseado exitosamente, longitud: ${markdown.length}`);
-            return markdown;
+            console.log(`[getPageContent] Contenido parseado exitosamente, longitud: ${result.markdown.length}, archivos: ${result.files.length}`);
+            return result;
 
         } catch (error) {
             console.error(`[getPageContent] Error al obtener el contenido de la página:`, error);
@@ -417,8 +417,9 @@ class Course {
      * Parsea un elemento HTML a formato Markdown
      * Maneja texto, encabezados, párrafos y tablas
      */
-    private parseHtmlToMarkdown(element: any): string {
+    private async parseHtmlToMarkdownWithFiles(element: any, pageId: string): Promise<{ markdown: string; files: Array<{ id: string; filename: string; mimeType: string; size: number; dataUrl?: string; text?: string; url?: string }> }> {
         const lines: string[] = [];
+        const files: Array<{ id: string; filename: string; mimeType: string; size: number; dataUrl?: string; text?: string; url?: string }> = [];
         
         // Función auxiliar para limpiar texto
         const cleanText = (text: string): string => {
@@ -454,7 +455,7 @@ class Course {
         };
 
         // Función recursiva para procesar nodos
-        const processNode = (node: any): void => {
+        const processNode = async (node: any): Promise<void> => {
             const tagName = node.tagName?.toLowerCase();
 
             // Saltar elementos que no nos interesan
@@ -494,6 +495,101 @@ class Course {
                     lines.push(...parseTable(node));
                     lines.push('\n');
                     break;
+                case 'img': {
+                    const src = node.getAttribute('src') || node.getAttribute('data-src');
+                    if (src) {
+                        // Resolver URL absoluta
+                        let abs = src;
+                        try { abs = new URL(src, `https://egela.ehu.eus/mod/page/view.php?id=${pageId}`).toString(); } catch(e){}
+
+                        const fileId = `FILE${files.length + 1}`;
+                        try {
+                            const resp = await fetch(abs);
+                            if (resp.ok) {
+                                const blob = await resp.blob();
+                                const arrayBuffer = await blob.arrayBuffer();
+                                const uint8Array = new Uint8Array(arrayBuffer);
+                                let binary = '';
+                                const chunkSize = 8192;
+                                for (let i = 0; i < uint8Array.length; i += chunkSize) {
+                                    const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+                                    binary += String.fromCharCode(...chunk);
+                                }
+                                const base64 = btoa(binary);
+                                const dataUrl = `data:${blob.type};base64,${base64}`;
+                                files.push({ id: fileId, filename: abs.split('/').pop() || fileId, mimeType: blob.type, size: blob.size, dataUrl, url: abs });
+                                // Insertar marcador en el markdown
+                                lines.push(`[${fileId}]`);
+                            } else {
+                                lines.push(`[IMAGE MISSING]`);
+                            }
+                        } catch (err) {
+                            console.warn('[parseHtmlToMarkdownWithFiles] Error fetching image', err);
+                            lines.push(`[${fileId}]`);
+                        }
+                    }
+                    break;
+                }
+                case 'a': {
+                    const href = node.getAttribute('href');
+                    const text = cleanText(node.textContent || '');
+                    if (href) {
+                        let abs = href;
+                        try { abs = new URL(href, `https://egela.ehu.eus/mod/page/view.php?id=${pageId}`).toString(); } catch(e){}
+
+                        // Detectar enlaces a pluginfile o ficheros con extensiones comunes
+                        const isPluginFile = /pluginfile\.php/.test(abs);
+                        const fileExtMatch = abs.match(/\.([a-zA-Z0-9]+)(?:[?\#]|$)/);
+                        const ext = fileExtMatch ? fileExtMatch[1].toLowerCase() : null;
+                        const textLikeExt = ['sql','txt','md','csv','json','xml','html','js','py'].includes(ext || '');
+
+                        if (isPluginFile || textLikeExt) {
+                            const fileId = `FILE${files.length + 1}`;
+                            try {
+                                const resp = await fetch(abs);
+                                if (resp.ok) {
+                                    const blob = await resp.blob();
+                                    const mime = resp.headers.get('content-type') || blob.type || 'application/octet-stream';
+                                    if (mime.startsWith('text/') || textLikeExt) {
+                                        const textContent = await resp.text();
+                                        files.push({ id: fileId, filename: abs.split('/').pop() || fileId, mimeType: mime, size: textContent.length, text: textContent, url: abs });
+                                    } else {
+                                        // binario: convertir a base64
+                                        const arrayBuffer = await blob.arrayBuffer();
+                                        const uint8Array = new Uint8Array(arrayBuffer);
+                                        let binary = '';
+                                        const chunkSize = 8192;
+                                        for (let i = 0; i < uint8Array.length; i += chunkSize) {
+                                            const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+                                            binary += String.fromCharCode(...chunk);
+                                        }
+                                        const base64 = btoa(binary);
+                                        const dataUrl = `data:${mime};base64,${base64}`;
+                                        files.push({ id: fileId, filename: abs.split('/').pop() || fileId, mimeType: mime, size: blob.size, dataUrl, url: abs });
+                                    }
+                                    // Insertar marcador junto al texto del enlace
+                                    if (text) lines.push(`${text} [${fileId}]`); else lines.push(`[${fileId}]`);
+                                } else {
+                                    if (text) lines.push(text);
+                                }
+                            } catch (err) {
+                                console.warn('[parseHtmlToMarkdownWithFiles] Error fetching file link', err);
+                                if (text) lines.push(text);
+                            }
+                            break;
+                        }
+                    }
+                    // si no es un fichero relevante, seguir procesando su contenido
+                    for (const child of Array.from(node.children || [])) {
+                        // eslint-disable-next-line no-await-in-loop
+                        await processNode(child);
+                    }
+                    if (text) {
+                        // Añadir el texto del enlace si existe
+                        lines.push(text);
+                    }
+                    break;
+                }
                 case 'p':
                 case 'div':
                 case 'span': {
@@ -517,21 +613,25 @@ class Course {
                     
                     // Procesar hijos
                     for (const child of Array.from(node.children || [])) {
-                        processNode(child);
+                        // permitir await en profundidad
+                        // eslint-disable-next-line no-await-in-loop
+                        await processNode(child);
                     }
                     break;
                 }
                 default:
                     // Para otros elementos, procesar sus hijos
                     for (const child of Array.from(node.children || [])) {
-                        processNode(child);
+                        // eslint-disable-next-line no-await-in-loop
+                        await processNode(child);
                     }
                     break;
             }
         };
 
         // Iniciar el procesamiento
-        processNode(element);
+        // eslint-disable-next-line no-await-in-loop
+        await processNode(element);
 
         // Filtrar líneas vacías consecutivas y limpiar
         const filteredLines: string[] = [];
@@ -549,6 +649,9 @@ class Course {
             }
         }
 
-        return filteredLines.join('\n').trim();
+        return {
+            markdown: filteredLines.join('\n').trim(),
+            files
+        };
     }
 }

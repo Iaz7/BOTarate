@@ -169,12 +169,18 @@ ${courseContext}`;
         console.log(`[identifyExercises] Identificando ejercicios en página: ${pageId}`);
 
         try {
-            // 1. Obtener el contenido de la página en formato Markdown
-            const pageContent = await this.course.getPageContent(pageId);
-            console.log(`[identifyExercises] Contenido de la página obtenido (${pageContent.length} caracteres)`);
+            // 1. Obtener el contenido de la página en formato Markdown + archivos detectados
+            const pageResult = await this.course.getPageContent(pageId);
+            const pageContent = pageResult.markdown;
+            const attachedFiles = pageResult.files;
+            console.log(`[identifyExercises] Contenido de la página obtenido (${pageContent.length} caracteres), archivos: ${attachedFiles.length}`);
 
-            // 2. Construir el prompt para el LLM
+            // 2. Construir el prompt para el LLM (avisando sobre marcas [FILEn])
             const systemPrompt = `Eres un asistente experto en identificar ejercicios académicos en páginas educativas.
+
+ADVERTENCIA SOBRE ARCHIVOS:
+- En el markdown que recibirás pueden aparecer marcas como [FILE1], [FILE2], etc. Esos marcadores representan archivos adjuntos que corresponden a la posición en la página donde estaba el archivo (imagen, SQL, PDF, etc.).
+- Cuando encuentres un marcador [FILEn], consulta el archivo adjunto con ese índice. Si es una imagen que contiene una tabla, conviértela a formato Markdown si es posible. Si es un fichero de texto (SQL, MD, TXT), utiliza su contenido para completar el enunciado.
 
 TU TAREA:
 Analiza el contenido de la página proporcionado y identifica todos los ejercicios presentes.
@@ -182,24 +188,29 @@ Analiza el contenido de la página proporcionado y identifica todos los ejercici
 CRITERIOS PARA IDENTIFICAR EJERCICIOS:
 - La página puede no contener ejercicios. Es posible que la página solo tenga material de lectura para los alumnos. En este caso devuelve un array vacío.
 - Busca patrones como "EJERCICIO", "Ejercicio", "Pregunta", etc.
-- Un ejercicio típicamente tiene un identificador (número o nombre) y un enunciado
+- Un ejercicio típicamente tiene un identificador (número o nombre) y un enunciado. En algunos casos se incluye una tabla con el resultado esperado
 - El enunciado puede incluir tablas, descripciones, o preguntas específicas
-- Si hay tablas asociadas a un ejercicio, inclúyelas en el enunciado en formato Markdown
+- Si hay tablas asociadas a un ejercicio, inclúyelas en el enunciado en formato Markdown. Las tablas pueden venir en formato Markdown o en formato texto. Debes identificar cuando hay una tabla y convertirla a formato Markdown para incluirla en el enunciado
 
 IMPORTANTE:
 - Si NO hay ejercicios en la página, devuelve un array vacío en el campo "exercises"
-- Si SÍ hay ejercicios, incluye cada uno con su "name" (identificador) y "statement" (enunciado completo)`;
+- Si SÍ hay ejercicios, incluye cada uno con su "name" (identificador) y "statement" (enunciado completo)
+- Si ves texto que podría representar una tabla, conviértelo a formato Markdown al incluirlo en el enunciado
+`;
 
-const userPrompt = `Analiza el siguiente contenido de una página educativa e identifica los ejercicios:
+            const userPrompt = `Analiza el siguiente contenido de una página educativa e identifica los ejercicios:
 
 ${pageContent}`;
 
-            // 3. Generar respuesta estructurada usando Zod
+            // 3. Generar respuesta estructurada usando Zod. Adjuntamos los archivos detectados para que el modelo los consulte.
+            // Reiniciar historial para esta llamada específica para evitar mezclar contexto previo
+            OpenAIService.resetConversation();
             const response = await OpenAIService.generateStructuredResponse(
                 ExerciseListSchema,
                 "exercise_list",
                 userPrompt,
-                systemPrompt
+                systemPrompt,
+                attachedFiles
             );
 
             console.log(`[identifyExercises] Respuesta estructurada recibida:`, response);

@@ -130,24 +130,47 @@ class OpenAIService {
         });
     }
 
-    static addFileMessage(filename: string, dataUrl: string, mimeType: string): void {
+    /**
+     * Añade un archivo al historial como mensaje del usuario.
+     * Si se proporciona dataUrl se envía como image_url; si se proporciona textContent
+     * se envía como texto (útil para ficheros SQL/Markdown/texto).
+     */
+    static addFileMessage(filename: string, dataUrl?: string, mimeType?: string, textContent?: string): void {
         const isPdf = mimeType === 'application/pdf';
-        
+
+        if (textContent) {
+            // Enviar el contenido del archivo como texto editable
+            this.conversationHistory.push({
+                role: 'user',
+                content: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}).\n\nCONTENIDO:\n${textContent}`
+            });
+            return;
+        }
+
+        if (dataUrl) {
+            this.conversationHistory.push({
+                role: 'user',
+                content: [
+                    {
+                        type: 'text',
+                        text: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}). ${isPdf ? 'Por favor analiza el contenido de este PDF.' : ''}`
+                    },
+                    {
+                        type: 'image_url',
+                        image_url: {
+                            url: dataUrl,
+                            detail: 'high'
+                        }
+                    }
+                ]
+            });
+            return;
+        }
+
+        // Si no hay contenido, enviar al menos metadatos
         this.conversationHistory.push({
             role: 'user',
-            content: [
-                {
-                    type: 'text',
-                    text: `Archivo adjunto: ${filename} (${mimeType}). ${isPdf ? 'Por favor analiza el contenido de este PDF.' : ''}`
-                },
-                {
-                    type: 'image_url',
-                    image_url: {
-                        url: dataUrl,
-                        detail: 'high'
-                    }
-                }
-            ]
+            content: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}). El archivo está disponible pero no se ha incluido su contenido.`
         });
     }
 
@@ -242,7 +265,8 @@ class OpenAIService {
         schema: T,
         schemaName: string,
         userMessage: string,
-        systemPrompt: string
+        systemPrompt: string,
+        files?: Array<{ filename: string; mimeType?: string; dataUrl?: string; text?: string; url?: string }>
     ): Promise<z.infer<T>> {
         this.loadProviderConfig();
 
@@ -262,24 +286,24 @@ ${schemaDescription}
 
 IMPORTANTE:
 - Responde SOLO con el JSON, sin texto adicional antes o después
-- No uses bloques de código markdown (\`\`\`json)
 - Asegúrate de que el JSON sea válido y cumpla con el esquema`;
+
+        // Push system and user messages into the conversation history so files are sent after them
+        this.conversationHistory.push({ role: 'system', content: enhancedSystemPrompt });
+        this.conversationHistory.push({ role: 'user', content: userMessage });
+
+        // Si hay archivos adjuntos, añadirlos al historial (usar addFileMessage para consistencia)
+        if (files && Array.isArray(files) && files.length > 0) {
+            for (const f of files) {
+                // Añadir metadatos/contenido del archivo al historial del LLM
+                this.addFileMessage(f.filename, f.dataUrl, f.mimeType, f.text);
+            }
+        }
 
         const response = await this.openai.chat.completions.create({
             model: ConfigManager.getSelectedModel(),
-            messages: [
-                {
-                    role: 'system',
-                    content: enhancedSystemPrompt
-                },
-                {
-                    role: 'user',
-                    content: userMessage
-                }
-            ],
-            response_format: {
-                type: "json_object"
-            },
+            messages: this.conversationHistory as any,
+            max_tokens: 1000000
         });
 
         const content = response.choices[0]?.message?.content;
@@ -290,8 +314,16 @@ IMPORTANTE:
 
         console.log(`[generateStructuredResponse] Respuesta recibida, parseando...`);
         
+        // Intentar limpiar bloques de código si el modelo los añade
+        let jsonText = (typeof content === 'string') ? content.trim() : JSON.stringify(content);
+        if (jsonText.startsWith('```json')) {
+            jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
+        } else if (jsonText.startsWith('```')) {
+            jsonText = jsonText.replace(/```\n?/g, '');
+        }
+
         // Parsear y validar con Zod
-        const parsed = schema.parse(JSON.parse(content));
+        const parsed = schema.parse(JSON.parse(jsonText));
 
         console.log(`[generateStructuredResponse] Respuesta parseada exitosamente`);
         return parsed;
