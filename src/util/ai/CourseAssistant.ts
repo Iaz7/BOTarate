@@ -13,10 +13,6 @@ class CourseAssistant extends BaseAssistant {
      * Construye el system prompt completo con información del curso
      */
     private buildSystemPrompt(): string {
-        if (!this.course) {
-            return 'Eres un asistente útil.';
-        }
-
         const courseContext = JSON.stringify(this.course);
         
         return `Eres un asistente en una extensión de Chrome cuyo objetivo es ayudar a estudiantes con el contenido de sus cursos en Egela (plataforma educativa de la Universidad del País Vasco).

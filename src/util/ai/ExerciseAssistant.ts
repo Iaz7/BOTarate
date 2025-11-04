@@ -23,13 +23,11 @@ class ExerciseAssistant extends BaseAssistant {
         sqlInstructions?: string[];
         learningObjectives?: string;
     }> {
-        this.ensureCourseLoaded();
-
         console.log(`[identifyExercises] Identificando ejercicios en página: ${pageId}`);
 
         try {
             // 1. Obtener el contenido de la página en formato Markdown + archivos detectados
-            const pageResult = await this.course!.getPageContent(pageId);
+            const pageResult = await this.course.getPageContent(pageId);
             const pageContent = pageResult.markdown;
             const attachedFiles = pageResult.files;
             console.log(`[identifyExercises] Contenido de la página obtenido (${pageContent.length} caracteres), archivos: ${attachedFiles.length}`);

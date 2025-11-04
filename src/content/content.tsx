@@ -33,9 +33,37 @@ const ExtensionContent: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
     useEffect(() => {
+        const waitForSessionStorage = (timeoutMs: number = 5000, intervalMs: number = 200) => {
+            return new Promise<void>((resolve) => {
+                const start = Date.now();
+                console.log('[content] Iniciando espera de sessionStorage...');
+                const check = () => {
+                    const elapsed = Date.now() - start;
+                    const keysCount = sessionStorage.length;
+                    
+                    // Esperar hasta que haya más de 1 clave O se alcance el timeout
+                    if (keysCount > 1) {
+                        console.log(`[content] SessionStorage listo con ${keysCount} claves`);
+                        resolve();
+                    } else if (elapsed >= timeoutMs) {
+                        console.warn(`[content] Timeout alcanzado (${timeoutMs}ms) con ${keysCount} claves`);
+                        resolve();
+                    } else {
+                        setTimeout(check, intervalMs);
+                    }
+                };
+                check();
+            });
+        };
+
         const loadCourseData = async () => {
+            // Esperar a que sessionStorage tenga datos (más de 1 clave)
+            await waitForSessionStorage(10000, 100);
+            
             try {
-                // Serializar sessionStorage completo a un objeto
+                console.log(`[content] Serializando sessionStorage con ${sessionStorage.length} claves`);
+                
+                // Serializar sessionStorage completo a un objeto (después de esperar a que esté disponible)
                 const sessionStorageData: Record<string, string> = {};
                 for (let i = 0; i < sessionStorage.length; i++) {
                     const key = sessionStorage.key(i);
@@ -43,6 +71,8 @@ const ExtensionContent: React.FC = () => {
                         sessionStorageData[key] = sessionStorage.getItem(key) || '';
                     }
                 }
+                
+                console.log(`[content] Claves de sessionStorage:`, Object.keys(sessionStorageData));
 
                 // Enviar href y sessionStorage al background
                 const response = await chrome.runtime.sendMessage({ 

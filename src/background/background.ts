@@ -7,10 +7,11 @@ import { SqlTutorAssistant } from "../util/ai/SqlTutorAssistant";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
 
-const courseAssistant = new CourseAssistant();
-const exerciseAssistant = new ExerciseAssistant();
-const sqlTutorAssistant = new SqlTutorAssistant();
 let isConfigLoaded = false;
+
+const courseAssistant : CourseAssistant = new CourseAssistant();
+const exerciseAssistant : ExerciseAssistant = new ExerciseAssistant();
+const sqlTutorAssistant : SqlTutorAssistant = new SqlTutorAssistant();
 
 (async () => {
     try {
@@ -78,6 +79,7 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
                     if (course) {
                         courseAssistant.setCourse(course);
                         exerciseAssistant.setCourse(course);
+                        sqlTutorAssistant.setCourse(course);
                         sendResponse({ success: true, course: course });
                         console.log('[background] Curso cargado:', course);
                     } else {

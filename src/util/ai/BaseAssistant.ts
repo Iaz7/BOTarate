@@ -9,28 +9,8 @@ export { BaseAssistant };
 abstract class BaseAssistant {
     protected course: Course | null = null;
 
-    /**
-     * Establece el curso actual para el asistente
-     */
-    setCourse(course: Course): void {
+    public setCourse(course: Course): void {
         this.course = course;
-    }
-
-    /**
-     * Obtiene el curso actual
-     */
-    getCourse(): Course | null {
-        return this.course;
-    }
-
-    /**
-     * Verifica que haya un curso cargado
-     * @throws Error si no hay curso cargado
-     */
-    protected ensureCourseLoaded(): void {
-        if (!this.course) {
-            throw new Error('No hay curso cargado');
-        }
     }
 
     /**
@@ -41,8 +21,6 @@ abstract class BaseAssistant {
         name: string,
         args: any
     ): Promise<string | { type: 'file'; data: any }> {
-        this.ensureCourseLoaded();
-
         if (name === 'getSectionContent') {
             return await this.course!.getSectionContent(args.sectionId);
         }

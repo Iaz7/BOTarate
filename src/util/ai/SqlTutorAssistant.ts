@@ -25,7 +25,6 @@ class SqlTutorAssistant extends BaseAssistant {
         sqlInstructions?: string[],
         learningObjectives?: string
     ): Promise<ExplanationSchemaType> {
-        this.ensureCourseLoaded();
         console.log(`[generateExplanation] Generando explicación para: ${exerciseName}`);
 
         const courseContext = JSON.stringify(this.course);
