@@ -59,7 +59,9 @@ class OpenAIService {
     }
 
     static resetConversation(): void {
+        const previousLength = this.conversationHistory.length;
         this.conversationHistory = [];
+        console.log(`[OpenAIService] Conversacion reiniciada (${previousLength} mensajes eliminados)`);
     }
 
     /**
@@ -137,7 +139,38 @@ IMPORTANTE:
             apiParams.tool_choice = 'auto';
         }
 
+        // Log de información de la request
+        const requestTime = Date.now();
+        console.log('[OpenAIService] Request iniciado');
+        console.log(`[OpenAIService] Modelo: ${apiParams.model}`);
+        console.log(`[OpenAIService] Mensajes en historial: ${this.conversationHistory.length}`);
+        console.log(`[OpenAIService] Tools habilitadas: ${useTools ? 'Si (' + TOOLS.length + ' disponibles)' : 'No'}`);
+        console.log(`[OpenAIService] Schema estructurado: ${schema ? schemaName : 'No'}`);
+        
         const response = await this.openai.chat.completions.create(apiParams);
+        
+        // Log de información de la response
+        const responseTime = Date.now() - requestTime;
+        console.log(`[OpenAIService] Response recibida en ${responseTime}ms`);
+        
+        // Log de consumo de tokens
+        if (response.usage) {
+            console.log(`[OpenAIService] Tokens prompt: ${response.usage.prompt_tokens}`);
+            console.log(`[OpenAIService] Tokens completion: ${response.usage.completion_tokens}`);
+            console.log(`[OpenAIService] Tokens totales: ${response.usage.total_tokens}`);
+            
+            // Estimación de costo aproximado (basado en precios típicos de GPT-4)
+            const estimatedCost = (response.usage.prompt_tokens * 0.00003 + response.usage.completion_tokens * 0.00006);
+            console.log(`[OpenAIService] Costo estimado: $${estimatedCost.toFixed(6)}`);
+        }
+        
+        // Log de información adicional
+        if (response.choices[0]) {
+            console.log(`[OpenAIService] Finish reason: ${response.choices[0].finish_reason}`);
+            if (response.choices[0].message.tool_calls) {
+                console.log(`[OpenAIService] Tool calls: ${response.choices[0].message.tool_calls.length}`);
+            }
+        }
 
         const choice = response.choices[0];
         const message = choice?.message;
@@ -257,14 +290,23 @@ IMPORTANTE:
         toolCall: ToolCall,
         toolExecutor: (name: string, args: any) => Promise<string | { type: 'file'; data: any }>
     ): Promise<void> {
-        console.log(`Ejecutando tool: ${toolCall.function.name}`);
+        const startTime = Date.now();
+        console.log(`[OpenAIService] Ejecutando tool: ${toolCall.function.name}`);
+        console.log(`[OpenAIService] Argumentos: ${toolCall.function.arguments}`);
         
         try {
             const args = JSON.parse(toolCall.function.arguments);
             const toolResult = await toolExecutor(toolCall.function.name, args);
 
-            console.log(`Resultado de ${toolCall.function.name}:`, 
-                typeof toolResult === 'string' ? toolResult : '[Archivo]');
+            const executionTime = Date.now() - startTime;
+            console.log(`[OpenAIService] Tool ${toolCall.function.name} ejecutada en ${executionTime}ms`);
+            
+            if (typeof toolResult === 'string') {
+                const preview = toolResult.length > 200 ? toolResult.substring(0, 200) + '...' : toolResult;
+                console.log(`[OpenAIService] Resultado: ${preview}`);
+            } else {
+                console.log(`[OpenAIService] Resultado: Archivo ${toolResult.data.filename}`);
+            }
 
             // Agregar resultado al historial
             if (typeof toolResult === 'object' && toolResult.type === 'file') {
@@ -285,7 +327,9 @@ IMPORTANTE:
                 this.addToolResult(toolCall.id, toolCall.function.name, toolResult as string);
             }
         } catch (error) {
-            console.error(`Error ejecutando ${toolCall.function.name}:`, error);
+            const executionTime = Date.now() - startTime;
+            console.error(`[OpenAIService] Error en tool ${toolCall.function.name} (${executionTime}ms)`);
+            console.error(`[OpenAIService] Error:`, error);
             this.addToolResult(
                 toolCall.id,
                 toolCall.function.name,
@@ -307,6 +351,8 @@ IMPORTANTE:
         userMessage?: string,
         systemPrompt?: string
     ): Promise<string> {
+        console.log('[OpenAIService] Iniciando processWithTools');
+        
         const result = await this.generateResponse({
             userMessage,
             systemPrompt,
@@ -315,6 +361,7 @@ IMPORTANTE:
 
         if (result.type === 'message') {
             // Respuesta final del LLM
+            console.log('[OpenAIService] Respuesta final recibida');
             return result.content;
         }
 
@@ -323,7 +370,7 @@ IMPORTANTE:
         }
 
         // El LLM quiere llamar a herramientas
-        console.log(`LLM solicita ${result.calls.length} tool call(s)`);
+        console.log(`[OpenAIService] LLM solicita ${result.calls.length} tool calls`);
 
         // Ejecutar todas las tool calls
         for (const call of result.calls) {
@@ -331,6 +378,7 @@ IMPORTANTE:
         }
 
         // Llamar recursivamente para obtener la respuesta final
+        console.log('[OpenAIService] Continuando conversacion despues de tool calls');
         return this.processWithTools(toolExecutor);
     }
 
@@ -350,7 +398,10 @@ IMPORTANTE:
         systemPrompt: string,
         files?: Array<{ filename: string; mimeType?: string; dataUrl?: string; text?: string; url?: string }>
     ): Promise<z.infer<T>> {
-        console.log(`[generateStructured] Generando respuesta estructurada: ${schemaName}`);
+        console.log(`[OpenAIService] Generando respuesta estructurada: ${schemaName}`);
+        if (files && files.length > 0) {
+            console.log(`[OpenAIService] Archivos adjuntos: ${files.length}`);
+        }
 
         const result = await this.generateResponse({
             userMessage,
@@ -362,6 +413,7 @@ IMPORTANTE:
         });
 
         if (result.type === 'structured') {
+            console.log(`[OpenAIService] Respuesta estructurada generada: ${schemaName}`);
             return result.data;
         }
 
@@ -387,7 +439,10 @@ IMPORTANTE:
         systemPrompt: string,
         files?: Array<{ filename: string; mimeType?: string; dataUrl?: string; text?: string; url?: string }>
     ): Promise<z.infer<T>> {
-        console.log(`[processStructuredWithTools] Iniciando procesamiento con schema: ${schemaName}`);
+        console.log(`[OpenAIService] Iniciando processStructuredWithTools: ${schemaName}`);
+        if (files && files.length > 0) {
+            console.log(`[OpenAIService] Archivos adjuntos: ${files.length}`);
+        }
 
         const result = await this.generateResponse({
             userMessage,
@@ -400,12 +455,13 @@ IMPORTANTE:
 
         // Si es una respuesta estructurada directa, retornarla
         if (result.type === 'structured') {
+            console.log(`[OpenAIService] Respuesta estructurada generada: ${schemaName}`);
             return result.data;
         }
 
         // Si el modelo quiere usar tools, procesarlas
         if (result.type === 'tool_calls') {
-            console.log(`LLM solicita ${result.calls.length} tool call(s) antes de dar respuesta estructurada`);
+            console.log(`[OpenAIService] LLM solicita ${result.calls.length} tool calls`);
 
             // Ejecutar todas las tool calls
             for (const call of result.calls) {
@@ -413,6 +469,7 @@ IMPORTANTE:
             }
 
             // Llamar recursivamente para obtener la respuesta estructurada final
+            console.log('[OpenAIService] Continuando para obtener respuesta estructurada');
             return this.processStructuredWithTools(
                 schema,
                 schemaName,
