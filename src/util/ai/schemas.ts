@@ -12,8 +12,25 @@ export const ExerciseSchema = z.object({
  * Esquema para la respuesta de identificación de ejercicios
  */
 export const ExerciseListSchema = z.object({
-    exercises: z.array(ExerciseSchema).describe("Lista de ejercicios identificados en la página. Array vacío si no hay ejercicios.")
+    exercises: z.array(ExerciseSchema).describe("Lista de ejercicios identificados en la página. Array vacío si no hay ejercicios."),
+    db_schema: z.string().optional().describe("Script SQL para crear el esquema de la base de datos relacionado con la página, si se detecta")
+});
+
+/**
+ * Esquema para un paso de explicación
+ */
+export const StepSchema = z.object({
+    explanation: z.string().describe("Explicación detallada del paso en formato Markdown. Puede incluir tablas, código SQL, listas, etc.")
+});
+
+/**
+ * Esquema para la explicación estructurada de un ejercicio
+ */
+export const ExplanationSchema = z.object({
+    steps: z.array(StepSchema).describe("Lista ordenada de pasos para resolver el ejercicio. Cada paso debe ser claro y progresivo.")
 });
 
 export type ExerciseSchemaType = z.infer<typeof ExerciseSchema>;
 export type ExerciseListSchemaType = z.infer<typeof ExerciseListSchema>;
+export type StepSchemaType = z.infer<typeof StepSchema>;
+export type ExplanationSchemaType = z.infer<typeof ExplanationSchema>;

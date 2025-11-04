@@ -15,7 +15,7 @@ class ExerciseAssistant extends BaseAssistant {
      * @param pageId ID de la página de Egela
      * @returns Array de ejercicios identificados (vacío si no hay ejercicios)
      */
-    async identifyExercises(pageId: string): Promise<Exercise[]> {
+    async identifyExercises(pageId: string): Promise<{ exercises: Exercise[]; dbSchema?: string }> {
         this.ensureCourseLoaded();
 
         console.log(`[identifyExercises] Identificando ejercicios en página: ${pageId}`);
@@ -36,6 +36,8 @@ ADVERTENCIA SOBRE ARCHIVOS:
 
 TU TAREA:
 Analiza el contenido de la página proporcionado y identifica todos los ejercicios presentes.
+
+ADICIONAL: Si en la página observas un script SQL o un bloque que describe el esquema de la base de datos (por ejemplo instrucciones CREATE TABLE, CREATE INDEX, etc.), extrae ese script completo y devuélvelo en el campo "db_schema". El script debe ser el SQL necesario para recrear el esquema de la base de datos relacionado con los ejercicios de la página. Si no detectas tal script o información, devuelve el campo "db_schema" vacío o no lo incluyas.
 
 CRITERIOS PARA IDENTIFICAR EJERCICIOS:
 - La página puede no contener ejercicios. Es posible que la página solo tenga material de lectura para los alumnos. En este caso devuelve un array vacío.
@@ -68,12 +70,12 @@ ${pageContent}`;
             console.log(`[identifyExercises] Respuesta estructurada recibida:`, response);
 
             // 4. Convertir a objetos Exercise
-            const exercises: Exercise[] = response.exercises.map(
+            const exercises: Exercise[] = (response.exercises || []).map(
                 (ex: { name: string; statement: string }) => new Exercise(ex.name, ex.statement)
             );
 
-            console.log(`[identifyExercises] Se identificaron ${exercises.length} ejercicios`);
-            return exercises;
+            console.log(`[identifyExercises] Se identificaron ${exercises.length} ejercicios, db_schema presente: ${!!response.db_schema}`);
+            return { exercises, dbSchema: response.db_schema };
 
         } catch (error) {
             console.error(`[identifyExercises] Error:`, error);

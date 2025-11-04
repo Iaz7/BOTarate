@@ -27,6 +27,7 @@ const ExtensionContent: React.FC = () => {
     const [providerName, setProviderName] = useState<string>('');
     const [modelName, setModelName] = useState<string>('');
     const [exercises, setExercises] = useState<Exercise[]>([]);
+    const [dbSchema, setDbSchema] = useState<string | undefined>(undefined);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
     useEffect(() => {
@@ -105,7 +106,12 @@ const ExtensionContent: React.FC = () => {
 
             if (response.success) {
                 console.log(`[content] Se han identificado ${response.exercises.length} ejercicios:`, response.exercises);
-                
+                if (response.db_schema) {
+                    setDbSchema(response.db_schema);
+                } else {
+                    setDbSchema(undefined);
+                }
+
                 if (response.exercises.length > 0) {
                     setExercises(response.exercises);
                     setViewState('exercises');
@@ -161,6 +167,7 @@ const ExtensionContent: React.FC = () => {
                     />
                     <ExerciseModal 
                         exercises={exercises}
+                        dbSchema={dbSchema}
                         isOpen={isModalOpen}
                         onClose={handleCloseModal}
                     />

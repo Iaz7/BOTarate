@@ -3,11 +3,13 @@
 import { CourseAssistant } from "../util/ai/CourseAssistant";
 import { ExerciseAssistant } from "../util/ai/ExerciseAssistant";
 import { OpenAIService } from "../util/ai/OpenAIService";
+import { SqlTutorAssistant } from "../util/ai/SqlTutorAssistant";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
 
 const courseAssistant = new CourseAssistant();
 const exerciseAssistant = new ExerciseAssistant();
+const sqlTutorAssistant = new SqlTutorAssistant();
 let isConfigLoaded = false;
 
 (async () => {
@@ -113,12 +115,31 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             console.log(`Identificando ejercicios en página: ${pageId}`);
 
             exerciseAssistant.identifyExercises(pageId)
-                .then(exercises => {
-                    console.log(`Ejercicios identificados:`, exercises);
-                    sendResponse({ success: true, exercises: exercises });
+                .then(result => {
+                    // result: { exercises, dbSchema? }
+                    console.log(`Ejercicios identificados:`, result.exercises, 'db_schema present:', !!result.dbSchema);
+                    sendResponse({ success: true, exercises: result.exercises, db_schema: result.dbSchema });
                 })
                 .catch(error => {
                     console.error('Error en getExerciseList:', error);
+                    sendResponse({ success: false, error: error.message });
+                });
+
+            return true;
+        }
+
+        case "generateExplanation": {
+            const { exerciseName, exerciseStatement, db_schema } = request;
+
+            console.log(`Generando explicación para ejercicio: ${exerciseName}`);
+
+            sqlTutorAssistant.generateExplanation(exerciseName, exerciseStatement, db_schema)
+                .then(explanation => {
+                    console.log(`Explicación generada:`, explanation);
+                    sendResponse({ success: true, explanation: explanation });
+                })
+                .catch(error => {
+                    console.error('Error en generateExplanation:', error);
                     sendResponse({ success: false, error: error.message });
                 });
 
