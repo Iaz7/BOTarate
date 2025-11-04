@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import ChatSidebar from '../components/ChatSidebar';
-import ExerciseList from '../components/ExerciseList';
+import ExerciseModal from '../components/ExerciseModal';
+import FloatingButton from '../components/FloatingButton';
 import LoadingMessage from '../components/LoadingMessage';
 import NoExercisesMessage from '../components/NoExercisesMessage';
 import { ConfigManager } from '../util/config/ConfigManager';
@@ -26,6 +27,7 @@ const ExtensionContent: React.FC = () => {
     const [providerName, setProviderName] = useState<string>('');
     const [modelName, setModelName] = useState<string>('');
     const [exercises, setExercises] = useState<Exercise[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
     useEffect(() => {
         const loadCourseData = async () => {
@@ -128,41 +130,53 @@ const ExtensionContent: React.FC = () => {
         setViewState('chat');
     };
 
+    const handleOpenModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
     // No mostrar nada si está oculto o si no hay curso
     if (viewState === 'hidden' || !course) return null;
 
     // Renderizar según el estado
-    switch (viewState) {
-        case 'loading':
-            return <LoadingMessage />;
-        
-        case 'exercises':
-            return (
-                <ExerciseList 
-                    exercises={exercises}
-                    onClose={handleCloseExtension}
-                />
-            );
-        
-        case 'no-exercises':
-            return (
+    return (
+        <>
+            {viewState === 'loading' && <LoadingMessage />}
+            
+            {viewState === 'no-exercises' && (
                 <NoExercisesMessage 
                     onTimeout={handleNoExercisesTimeout}
                     duration={3000}
                 />
-            );
-        
-        case 'chat':
-        default:
-            return (
+            )}
+            
+            {viewState === 'exercises' && (
+                <>
+                    <FloatingButton 
+                        onClick={handleOpenModal}
+                        exerciseCount={exercises.length}
+                    />
+                    <ExerciseModal 
+                        exercises={exercises}
+                        isOpen={isModalOpen}
+                        onClose={handleCloseModal}
+                    />
+                </>
+            )}
+            
+            {viewState === 'chat' && (
                 <ChatSidebar
                     courseName={courseName}
                     providerName={providerName}
                     modelName={modelName}
                     onClose={handleCloseExtension}
                 />
-            );
-    }
+            )}
+        </>
+    );
 };
 
 // Componente principal que maneja la inyección
