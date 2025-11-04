@@ -1,30 +1,13 @@
-import { Course } from "../egela/Course";
-import { Exercise } from "../egela/Exercise";
+import { BaseAssistant } from "./BaseAssistant";
 import { OpenAIService } from "./OpenAIService";
-import { ExerciseListSchema } from "./schemas";
 
 export { CourseAssistant };
 
 /**
- * Servicio que integra OpenAI con el sistema de cursos de Egela
- * Maneja la lógica específica del asistente educativo
+ * Asistente para funcionalidad general del curso
+ * Maneja conversaciones y herramientas relacionadas con el curso
  */
-class CourseAssistant {
-    private course: Course | null = null;
-
-    /**
-     * Establece el curso actual para el asistente
-     */
-    setCourse(course: Course): void {
-        this.course = course;
-    }
-
-    /**
-     * Obtiene el curso actual
-     */
-    getCourse(): Course | null {
-        return this.course;
-    }
+class CourseAssistant extends BaseAssistant {
 
     /**
      * Construye el system prompt completo con información del curso
@@ -60,16 +43,14 @@ ${courseContext}`;
         name: string,
         args: any
     ): Promise<string | { type: 'file'; data: any }> {
-        if (!this.course) {
-            throw new Error('No hay curso cargado');
-        }
+        this.ensureCourseLoaded();
 
         if (name === 'getSectionContent') {
-            return await this.course.getSectionContent(args.sectionId);
+            return await this.course!.getSectionContent(args.sectionId);
         } 
         
         if (name === 'getResourceContent') {
-            const fileData = await this.course.getResourceFile(args.resourceId);
+            const fileData = await this.course!.getResourceFile(args.resourceId);
             
             // Determinar si el archivo es compatible con la API
             const supportedMimeTypes = [
@@ -154,81 +135,5 @@ ${courseContext}`;
             userMessage,
             systemPrompt
         );
-    }
-
-    /**
-     * Identifica los ejercicios en una página usando el LLM con respuestas estructuradas
-     * @param pageId ID de la página de Egela
-     * @returns Array de ejercicios identificados (vacío si no hay ejercicios)
-     */
-    async identifyExercises(pageId: string): Promise<Exercise[]> {
-        if (!this.course) {
-            throw new Error('No hay curso cargado');
-        }
-
-        console.log(`[identifyExercises] Identificando ejercicios en página: ${pageId}`);
-
-        try {
-            // 1. Obtener el contenido de la página en formato Markdown + archivos detectados
-            const pageResult = await this.course.getPageContent(pageId);
-            const pageContent = pageResult.markdown;
-            const attachedFiles = pageResult.files;
-            console.log(`[identifyExercises] Contenido de la página obtenido (${pageContent.length} caracteres), archivos: ${attachedFiles.length}`);
-
-            // 2. Construir el prompt para el LLM (avisando sobre marcas [FILEn])
-            const systemPrompt = `Eres un asistente experto en identificar ejercicios académicos en páginas educativas.
-
-ADVERTENCIA SOBRE ARCHIVOS:
-- En el markdown que recibirás pueden aparecer marcas como [FILE1], [FILE2], etc. Esos marcadores representan archivos adjuntos que corresponden a la posición en la página donde estaba el archivo (imagen, SQL, PDF, etc.).
-- Cuando encuentres un marcador [FILEn], consulta el archivo adjunto con ese índice. Si es una imagen que contiene una tabla, conviértela a formato Markdown si es posible. Si es un fichero de texto (SQL, MD, TXT), utiliza su contenido para completar el enunciado.
-
-TU TAREA:
-Analiza el contenido de la página proporcionado y identifica todos los ejercicios presentes.
-
-CRITERIOS PARA IDENTIFICAR EJERCICIOS:
-- La página puede no contener ejercicios. Es posible que la página solo tenga material de lectura para los alumnos. En este caso devuelve un array vacío.
-- Busca patrones como "EJERCICIO", "Ejercicio", "Pregunta", etc.
-- Un ejercicio típicamente tiene un identificador (número o nombre) y un enunciado. En algunos casos se incluye una tabla con el resultado esperado
-- El enunciado puede incluir tablas, descripciones, o preguntas específicas
-- Si hay tablas asociadas a un ejercicio, inclúyelas en el enunciado en formato Markdown. Las tablas pueden venir en formato Markdown o en formato texto. Debes identificar cuando hay una tabla y convertirla a formato Markdown para incluirla en el enunciado
-
-IMPORTANTE:
-- Si NO hay ejercicios en la página, devuelve un array vacío en el campo "exercises"
-- Si SÍ hay ejercicios, incluye cada uno con su "name" (identificador) y "statement" (enunciado completo)
-- Si ves texto que podría representar una tabla, conviértelo a formato Markdown al incluirlo en el enunciado
-`;
-
-            const userPrompt = `Analiza el siguiente contenido de una página educativa e identifica los ejercicios:
-
-${pageContent}`;
-
-            // 3. Generar respuesta estructurada usando Zod. Adjuntamos los archivos detectados para que el modelo los consulte.
-            // Reiniciar historial para esta llamada específica para evitar mezclar contexto previo
-            OpenAIService.resetConversation();
-            const response = await OpenAIService.generateStructuredResponse(
-                ExerciseListSchema,
-                "exercise_list",
-                userPrompt,
-                systemPrompt,
-                attachedFiles
-            );
-
-            console.log(`[identifyExercises] Respuesta estructurada recibida:`, response);
-
-            // 4. Convertir a objetos Exercise
-            const exercises: Exercise[] = response.exercises.map(
-                (ex) => new Exercise(ex.name, ex.statement)
-            );
-
-            console.log(`[identifyExercises] Se identificaron ${exercises.length} ejercicios`);
-            return exercises;
-
-        } catch (error) {
-            console.error(`[identifyExercises] Error:`, error);
-            if (error instanceof Error) {
-                throw new Error(`Error al identificar ejercicios: ${error.message}`);
-            }
-            throw new Error('Error desconocido al identificar ejercicios');
-        }
     }
 }

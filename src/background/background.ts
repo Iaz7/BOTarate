@@ -1,11 +1,13 @@
 /// <reference types="chrome"/>
 
 import { CourseAssistant } from "../util/ai/CourseAssistant";
+import { ExerciseAssistant } from "../util/ai/ExerciseAssistant";
 import { OpenAIService } from "../util/ai/OpenAIService";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
 
 const courseAssistant = new CourseAssistant();
+const exerciseAssistant = new ExerciseAssistant();
 let isConfigLoaded = false;
 
 (async () => {
@@ -73,6 +75,7 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
                 .then(course => {
                     if (course) {
                         courseAssistant.setCourse(course);
+                        exerciseAssistant.setCourse(course);
                         sendResponse({ success: true, course: course });
                         console.log('[background] Curso cargado:', course);
                     } else {
@@ -109,7 +112,7 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
 
             console.log(`Identificando ejercicios en página: ${pageId}`);
 
-            courseAssistant.identifyExercises(pageId)
+            exerciseAssistant.identifyExercises(pageId)
                 .then(exercises => {
                     console.log(`Ejercicios identificados:`, exercises);
                     sendResponse({ success: true, exercises: exercises });
