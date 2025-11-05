@@ -4,7 +4,7 @@ export type { ToolCall, ToolName, ToolResult };
 /**
  * Nombres de las herramientas disponibles para el LLM
  */
-type ToolName = 'getSectionContent' | 'getResourceContent';
+type ToolName = 'getSectionContent' | 'getPageContent' | 'getResourceContent';
 
 /**
  * Estructura de una llamada a herramienta del LLM
@@ -54,8 +54,26 @@ const TOOLS = [
     {
         type: 'function',
         function: {
+            name: 'getPageContent',
+            description: 'Obtiene el contenido textual de una página del curso de Egela. Devuelve el contenido completo de la página en formato texto.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    pageId: {
+                        type: 'string',
+                        description: 'El ID de la página del curso (por ejemplo: "8986640")'
+                    }
+                },
+                required: ['pageId'],
+                additionalProperties: false
+            }
+        }
+    },
+    {
+        type: 'function',
+        function: {
             name: 'getResourceContent',
-            description: 'Obtiene el contenido de un recurso descargable del curso (PDF, imagen, documento HTML, etc.). El archivo se procesará según su formato: PDFs e imágenes se envían directamente a la API para análisis, otros formatos devuelven solo metadatos.',
+            description: 'Obtiene el contenido de un recurso descargable del curso (PDF, imagen, documento HTML, page, etc.). El archivo se procesará según su formato: PDFs e imágenes se envían directamente a la API para análisis, otros formatos devuelven solo metadatos.',
             parameters: {
                 type: 'object',
                 properties: {

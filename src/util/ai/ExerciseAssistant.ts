@@ -18,8 +18,8 @@ class ExerciseAssistant extends BaseAssistant {
      * @param resourceId ID del recurso (para ubicarlo en la lista de recursos de la sección)
      * @returns Array de ejercicios identificados (vacío si no hay ejercicios), esquema de BD y contexto pedagógico
      */
-    async identifyExercises(pageId: string, resourceId?: string): Promise<{ 
-        exercises: Exercise[]; 
+    async identifyExercises(pageId: string, resourceId?: string): Promise<{
+        exercises: Exercise[];
         dbSchema?: string;
         sqlInstructions?: string[];
         learningObjectives?: string;
@@ -47,7 +47,7 @@ Este proceso se realizará en dos fases dentro de la misma conversación:
 La información obtenida en la FASE 1 se mantiene en el historial y estará disponible para la FASE 2.
 
 ACCESO A RECURSOS DEL CURSO:
-Tienes acceso a las herramientas getSectionContent y getResourceContent para consultar material del curso.
+Tienes acceso a las herramientas getSectionContent, getPageContent y getResourceContent para consultar material del curso.
 ${resourceId ? `
 UBICACIÓN DE LOS EJERCICIOS:
 - Los ejercicios que estás analizando están en el recurso con ID: ${resourceId}
@@ -62,6 +62,8 @@ OBLIGATORIO - EN LA FASE 1:
 3. USA la herramienta getResourceContent para consultar esos recursos (las diapositivas de teoría)
 4. Analiza el contenido de las diapositivas para entender qué conceptos SQL se han explicado
 5. Responde brevemente confirmando qué información has recopilado
+6. Identifica las páginas de los laboratorios realizados antes que el actual
+7. Usa getPageContent para consultar esas páginas de laboratorios previos y entender sus objetivos pedagógicos. Los objetivos que establezcas deberían incluir también los de estos laboratorios anteriores 
 ` : ''}
 
 INFORMACIÓN DEL CURSO:
@@ -124,7 +126,7 @@ ${pageContent}`;
             // NO resetear la conversación para mantener el historial entre fases
             OpenAIService.resetConversation();
             console.log(`[identifyExercises] FASE 1: Iniciando recopilación de información con tools`);
-            
+
             // Permitir que el LLM use tools para consultar recursos adicionales
             // Los archivos adjuntos se pasan aquí para que el LLM pueda ver el contenido de la página
             await OpenAIService.processResponseWithTools(
@@ -146,7 +148,7 @@ Basándote en toda la información que has recopilado en la fase anterior, gener
 4. Los objetivos de aprendizaje de la página`;
 
             console.log(`[identifyExercises] FASE 2: Generando respuesta estructurada`);
-            
+
             // NO pasar systemPrompt aquí porque ya está en el historial
             const response = await OpenAIService.generateStructuredResponse(
                 ExerciseListSchema,
@@ -165,7 +167,7 @@ Basándote en toda la información que has recopilado en la fase anterior, gener
             console.log(`[identifyExercises] Se identificaron ${exercises.length} ejercicios, db_schema presente: ${!!response.db_schema}`);
             console.log(`[identifyExercises] Instrucciones SQL: ${response.sql_instructions?.join(', ') || 'N/A'}`);
             console.log(`[identifyExercises] Objetivos de aprendizaje: ${response.learning_objectives || 'N/A'}`);
-            
+
             // 6. Guardar los datos en el storage para uso futuro
             const exerciseDataToStore = exercises.map(ex => ({ name: ex.name, statement: ex.statement }));
             await AssistantStorageManager.saveExerciseData(
@@ -176,9 +178,9 @@ Basándote en toda la información que has recopilado en la fase anterior, gener
                 response.learning_objectives || ''
             );
             console.log(`[identifyExercises] Datos guardados en storage para página ${pageId}`);
-            
-            return { 
-                exercises, 
+
+            return {
+                exercises,
                 dbSchema: response.db_schema || undefined,
                 sqlInstructions: response.sql_instructions || [],
                 learningObjectives: response.learning_objectives || undefined,

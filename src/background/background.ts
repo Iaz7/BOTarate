@@ -45,6 +45,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return processMessage(request, sender, sendResponse);
 });
 
+function processMessage(request: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): boolean {
+    switch (request.action) {
+        case "updateConfig":
+            return handleUpdateConfig(request, sendResponse);
+        case "getCourseData":
+            return handleGetCourseData(request, sendResponse);
+        case "getModelList":
+            return handleGetModelList(sendResponse);
+        case "generateResponse":
+            return handleGenerateResponse(request, sendResponse);
+        case "getExerciseList":
+            return handleGetExerciseList(request, sendResponse);
+        case "generateExplanation":
+            return handleGenerateExplanation(request, sendResponse);
+        default:
+            return false;
+    }
+}
+
 function updateConfigFromRequest(config: any): void {
     const { providerKeys, selectedProvider, selectedModel } = config;
     
@@ -63,131 +82,129 @@ function updateConfigFromRequest(config: any): void {
     }
 }
 
-function processMessage(request: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): boolean {
-    switch (request.action) {
-        case "updateConfig":
-            if (request.config) {
-                updateConfigFromRequest(request.config);
-                console.log("Configuración actualizada en background desde options");
-                sendResponse({ success: true });
-            }
-            return false;
-        case "getCourseData": {
-            // Nuevo: el content script pasa href y sessionStorage
-            const { href, sessionStorageData } = request;
-            
-            Course.fromHrefAndStorage(href, sessionStorageData)
-                .then(course => {
-                    if (course) {
-                        courseAssistant.setCourse(course);
-                        exerciseAssistant.setCourse(course);
-                        sqlTutorAssistant.setCourse(course);
-                        sendResponse({ success: true, course: course });
-                        console.log('[background] Curso cargado:', course);
-                    } else {
-                        sendResponse({ success: false, error: 'No se pudo cargar el curso' });
-                        console.error('[background] No se pudo crear el curso desde href y storage');
-                    }
-                })
-                .catch(error => {
-                    console.error('[background] Error al cargar curso:', error);
-                    sendResponse({ success: false, error: error.message });
-                });
-            
-            return true;
-        }
-        case "getModelList":
-            OpenAIService.getModelList().then((list: any) => sendResponse(list));
-            return true;
-        case "generateResponse": {
-            const { userMessage, resetHistory } = request;
-
-            console.log("Generando respuesta LLM en background...");
-
-            courseAssistant.generateResponse(userMessage, resetHistory)
-                .then(finalResponse => sendResponse(finalResponse))
-                .catch(error => {
-                    console.error('Error en generateResponse:', error);
-                    sendResponse(`Error: ${error.message}`);
-                });
-
-            return true;
-        }
-        case "getExerciseList": {
-            const { pageId, resourceId } = request;
-
-            console.log(`Identificando ejercicios en página: ${pageId}, recurso: ${resourceId || 'N/A'}`);
-
-            // Primero intentamos obtener los datos del storage
-            (async () => {
-                try {
-                    const cachedData = await AssistantStorageManager.getExerciseData(pageId);
-                    
-                    if (cachedData) {
-                        // Datos encontrados en cache
-                        console.log(`Ejercicios recuperados del storage (${cachedData.exercises.length} ejercicios)`);
-                        
-                        // Convertir los datos a objetos Exercise
-                        const exercises = cachedData.exercises.map(
-                            ex => new Exercise(ex.name, ex.statement)
-                        );
-                        
-                        sendResponse({ 
-                            success: true, 
-                            exercises: exercises, 
-                            db_schema: cachedData.dbSchema,
-                            sql_instructions: cachedData.sqlInstructions,
-                            learning_objectives: cachedData.learningObjectives,
-                            fromCache: true
-                        });
-                        return;
-                    }
-                    
-                    // No hay datos en cache, llamar al asistente
-                    console.log('No hay datos en cache, llamando al asistente...');
-                    const result = await exerciseAssistant.identifyExercises(pageId, resourceId);
-                    
-                    console.log(`Ejercicios identificados:`, result.exercises);
-                    console.log(`DB Schema presente:`, !!result.dbSchema);
-                    console.log(`Instrucciones SQL:`, result.sqlInstructions);
-                    console.log(`Objetivos de aprendizaje:`, result.learningObjectives);
-                    
-                    sendResponse({ 
-                        success: true, 
-                        exercises: result.exercises, 
-                        db_schema: result.dbSchema,
-                        sql_instructions: result.sqlInstructions,
-                        learning_objectives: result.learningObjectives,
-                        fromCache: false
-                    });
-                } catch (error: any) {
-                    console.error('Error en getExerciseList:', error);
-                    sendResponse({ success: false, error: error.message });
-                }
-            })();
-
-            return true;
-        }
-
-        case "generateExplanation": {
-            const { exerciseName, exerciseStatement, db_schema, sql_instructions, learning_objectives } = request;
-
-            console.log(`Generando explicación para ejercicio: ${exerciseName}`);
-
-            sqlTutorAssistant.generateExplanation(exerciseName, exerciseStatement, db_schema, sql_instructions, learning_objectives)
-                .then(explanation => {
-                    console.log(`Explicación generada:`, explanation);
-                    sendResponse({ success: true, explanation: explanation });
-                })
-                .catch(error => {
-                    console.error('Error en generateExplanation:', error);
-                    sendResponse({ success: false, error: error.message });
-                });
-
-            return true;
-        }
-
-        default:
-            return false;
+function handleUpdateConfig(request: any, sendResponse: (response?: any) => void): boolean {
+    if (request.config) {
+        updateConfigFromRequest(request.config);
+        console.log("Configuración actualizada en background desde options");
+        sendResponse({ success: true });
     }
+    return false;
+}
+
+function handleGetCourseData(request: any, sendResponse: (response?: any) => void): boolean {
+    const { href, sessionStorageData } = request;
+    
+    Course.fromHrefAndStorage(href, sessionStorageData)
+        .then(course => {
+            if (course) {
+                courseAssistant.setCourse(course);
+                exerciseAssistant.setCourse(course);
+                sqlTutorAssistant.setCourse(course);
+                sendResponse({ success: true, course: course });
+                console.log('[background] Curso cargado:', course);
+            } else {
+                sendResponse({ success: false, error: 'No se pudo cargar el curso' });
+                console.error('[background] No se pudo crear el curso desde href y storage');
+            }
+        })
+        .catch(error => {
+            console.error('[background] Error al cargar curso:', error);
+            sendResponse({ success: false, error: error.message });
+        });
+    
+    return true;
+}
+
+function handleGetModelList(sendResponse: (response?: any) => void): boolean {
+    OpenAIService.getModelList().then((list: any) => sendResponse(list));
+    return true;
+}
+
+function handleGenerateResponse(request: any, sendResponse: (response?: any) => void): boolean {
+    const { userMessage, resetHistory } = request;
+
+    console.log("Generando respuesta LLM en background...");
+
+    courseAssistant.generateResponse(userMessage, resetHistory)
+        .then(finalResponse => sendResponse(finalResponse))
+        .catch(error => {
+            console.error('Error en generateResponse:', error);
+            sendResponse(`Error: ${error.message}`);
+        });
+
+    return true;
+}
+
+function handleGetExerciseList(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId, resourceId } = request;
+
+    console.log(`Identificando ejercicios en página: ${pageId}, recurso: ${resourceId || 'N/A'}`);
+
+    // Primero intentamos obtener los datos del storage
+    (async () => {
+        try {
+            const cachedData = await AssistantStorageManager.getExerciseData(pageId);
+            
+            if (cachedData) {
+                // Datos encontrados en cache
+                console.log(`Ejercicios recuperados del storage (${cachedData.exercises.length} ejercicios)`);
+                
+                // Convertir los datos a objetos Exercise
+                const exercises = cachedData.exercises.map(
+                    ex => new Exercise(ex.name, ex.statement)
+                );
+                
+                sendResponse({ 
+                    success: true, 
+                    exercises: exercises, 
+                    db_schema: cachedData.dbSchema,
+                    sql_instructions: cachedData.sqlInstructions,
+                    learning_objectives: cachedData.learningObjectives,
+                    fromCache: true
+                });
+                return;
+            }
+            
+            // No hay datos en cache, llamar al asistente
+            console.log('No hay datos en cache, llamando al asistente...');
+            const result = await exerciseAssistant.identifyExercises(pageId, resourceId);
+            
+            console.log(`Ejercicios identificados:`, result.exercises);
+            console.log(`DB Schema presente:`, !!result.dbSchema);
+            console.log(`Instrucciones SQL:`, result.sqlInstructions);
+            console.log(`Objetivos de aprendizaje:`, result.learningObjectives);
+            
+            sendResponse({ 
+                success: true, 
+                exercises: result.exercises, 
+                db_schema: result.dbSchema,
+                sql_instructions: result.sqlInstructions,
+                learning_objectives: result.learningObjectives,
+                fromCache: false
+            });
+        } catch (error: any) {
+            console.error('Error en getExerciseList:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+function handleGenerateExplanation(request: any, sendResponse: (response?: any) => void): boolean {
+    const { exerciseName, exerciseStatement, db_schema, sql_instructions, learning_objectives } = request;
+
+    console.log(`Generando explicación para ejercicio: ${exerciseName}`);
+
+    sqlTutorAssistant.generateExplanation(exerciseName, exerciseStatement, db_schema, sql_instructions, learning_objectives)
+        .then(explanation => {
+            console.log(`Explicación generada:`, explanation);
+            sendResponse({ success: true, explanation: explanation });
+        })
+        .catch(error => {
+            console.error('Error en generateExplanation:', error);
+            sendResponse({ success: false, error: error.message });
+        });
+
+    return true;
 }
