@@ -70,7 +70,7 @@ REGLAS ADICIONALES:
 - Cada paso debe explicar UN concepto o acción específica
 - Usa formato Markdown para hacer las explicaciones más claras
 - Puedes usar tablas Markdown para mostrar resultados intermedios de consultas
-- Puedes usar bloques de código SQL con \`\`\`sql. Utilízalo SOLO para fragmentos completos de sql. Para nombres de tablas, columnas o funciones sueltos, SOLO PUEDES USAR NEGRITA con doble asterisco (**)
+- Puedes usar bloques de código SQL SOLO para consultas/subconsultas de sql con \`\`\`sql. Para nombres de tablas, columnas o funciones sueltos, SOLO PUEDES USAR NEGRITA, ya que debes tener en cuenta que el bloque introduce un salto de línea en el texto.
 - Incluye ejemplos concretos cuando sea posible. ${dbSchema ? 'Usa el esquema y los datos que se insertan en el script de creación de la base de datos proporcionado para tus ejemplos.' : ''}
 - Explica el razonamiento detrás de cada decisión
 - Si el ejercicio involucra múltiples tablas, muestra cómo se relacionan

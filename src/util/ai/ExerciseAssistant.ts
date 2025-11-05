@@ -56,7 +56,7 @@ UBICACIÓN DE LOS EJERCICIOS:
 - Busca en la estructura del curso el recurso ${resourceId} para ver qué recursos vienen antes
 - Los recursos anteriores (especialmente PDFs de diapositivas) contienen la teoría que debes revisar
 
-⚠️ OBLIGATORIO - EN LA FASE 1:
+OBLIGATORIO - EN LA FASE 1:
 1. Localiza el recurso ${resourceId} en la estructura del curso
 2. Identifica los recursos (especialmente PDFs) que vienen INMEDIATAMENTE ANTES en la misma sección
 3. USA la herramienta getResourceContent para consultar esos recursos (las diapositivas de teoría)
@@ -78,11 +78,25 @@ CRITERIOS PARA IDENTIFICAR EJERCICIOS (FASE 2):
 - Busca patrones como "EJERCICIO", "Ejercicio", "Pregunta", etc.
 - Un ejercicio típicamente tiene un identificador (número o nombre) y un enunciado. En algunos casos se incluye una tabla con el resultado esperado
 - El enunciado puede incluir tablas, descripciones, o preguntas específicas
-- Si hay tablas asociadas a un ejercicio, inclúyelas en el enunciado en formato Markdown. Las tablas pueden venir en formato Markdown o en formato texto. Debes identificar cuando hay una tabla y convertirla a formato Markdown para incluirla en el enunciado
+- Si hay tablas asociadas a un ejercicio, inclúyelas en el enunciado en formato Markdown. 
+- IMPORTANTE: Las tablas pueden venir en formato texto plano. Debes identificar cuando hay una tabla (buscando patrones como líneas de -, valores separados por espacios, saltos de línea...) y convertirla a tabla en formato Markdown para incluirla en el enunciado. Por ejemplo:
+
+el texto DNI NOMBRE
+72515671 Jon Zatarain 72515672 Javier Cosin 72515673 Bienvenido Atetxe 75646464 Iker Pujol 88888888 Maite Artola
+representa una tabla que debe convertirse a:
+| DNI       | NOMBRE          |
+|-----------|-----------------|
+| 72515671  | Jon Zatarain    |
+| 72515672  | Javier Cosin    |
+| 72515673  | Bienvenido Atetxe|
+| 75646464  | Iker Pujol      |
+| 88888888  | Maite Artola    |
 
 ESQUEMA DE BASE DE DATOS (FASE 2):
-- Si en la página observas un script SQL o un bloque que describe el esquema de la base de datos (por ejemplo instrucciones CREATE TABLE, CREATE INDEX, etc.), extrae ese script completo y devuélvelo en el campo "db_schema"
-- Si no detectas tal script o información, devuelve el campo "db_schema" vacío
+- Si en la página observas un script SQL o un bloque que describe el esquema de la base de datos (por ejempl
+o instrucc
+iones CREATE TABLE, CREATE INDEX, etc.), extrae ese script completo y devuélvelo en el campo "db_schema"
+- Si no dectas tal script o información, devuelve el campo "db_schema" vacío
 
 INSTRUCCIONES SQL (FASE 2):
 - Analiza los ejercicios e identifica qué instrucciones, cláusulas o conceptos SQL se pretenden trabajar
