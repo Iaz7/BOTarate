@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import React, { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Exercise {
     name: string;
@@ -22,15 +22,19 @@ interface ExerciseModalProps {
     dbSchema?: string | null;
     sqlInstructions?: string[];
     learningObjectives?: string;
+    pageId?: string;
+    onRegenerateExercises?: () => void;
 }
 
-const ExerciseModal: React.FC<ExerciseModalProps> = ({ 
-    exercises, 
-    isOpen, 
-    onClose, 
+const ExerciseModal: React.FC<ExerciseModalProps> = ({
+    exercises,
+    isOpen,
+    onClose,
     dbSchema,
     sqlInstructions,
-    learningObjectives
+    learningObjectives,
+    pageId,
+    onRegenerateExercises,
 }) => {
     const [selectedExerciseIndex, setSelectedExerciseIndex] = useState<number>(0);
     const [explanation, setExplanation] = useState<Explanation | null>(null);
@@ -53,26 +57,27 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
 
         try {
             const response = await chrome.runtime.sendMessage({
-                action: 'generateExplanation',
+                action: "generateExplanation",
                 exerciseName: selectedExercise.name,
                 exerciseStatement: selectedExercise.statement,
                 db_schema: dbSchema || undefined,
                 sql_instructions: sqlInstructions || undefined,
-                learning_objectives: learningObjectives || undefined
+                learning_objectives: learningObjectives || undefined,
             });
 
             if (response.success) {
                 setExplanation(response.explanation);
             } else {
-                const errorMessage = response.error || 'Error desconocido al generar la explicación';
-                console.error('Error al generar explicación:', errorMessage);
+                const errorMessage = response.error || "Error desconocido al generar la explicación";
+                console.error("Error al generar explicación:", errorMessage);
                 setExplanationError(errorMessage);
             }
         } catch (error) {
-            console.error('Error al generar explicación:', error);
-            const errorMessage = error instanceof Error 
-                ? `Error de comunicación: ${error.message}` 
-                : 'Error de comunicación con el asistente de IA';
+            console.error("Error al generar explicación:", error);
+            const errorMessage =
+                error instanceof Error
+                    ? `Error de comunicación: ${error.message}`
+                    : "Error de comunicación con el asistente de IA";
             setExplanationError(errorMessage);
         } finally {
             setIsLoadingExplanation(false);
@@ -83,33 +88,29 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
         <div
             className="card shadow-lg border-primary"
             style={{
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: '90%',
-                maxWidth: '1400px',
-                height: '85vh',
+                position: "fixed",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "90%",
+                maxWidth: "1400px",
+                height: "85vh",
                 zIndex: 10000,
-                overflow: 'hidden'
+                overflow: "hidden",
             }}
         >
             {/* Header */}
             <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h3 className="h5 mb-0">📝 Ejercicios ({exercises.length})</h3>
-                <button
-                    onClick={onClose}
-                    className="btn btn-sm btn-light"
-                    title="Cerrar"
-                >
-                    ✕
+                <h3 className="h5 mb-0">Ejercicios ({exercises.length})</h3>
+                <button onClick={onClose} className="btn btn-sm btn-light" title="Cerrar">
+                    ×
                 </button>
             </div>
 
             {/* Content */}
-            <div className="d-flex" style={{ flex: 1, overflow: 'hidden', height: 'calc(85vh - 60px)' }}>
+            <div className="d-flex" style={{ flex: 1, overflow: "hidden", height: "calc(85vh - 60px)" }}>
                 {/* Columna izquierda - Lista de ejercicios */}
-                <div className="bg-light border-end p-3" style={{ width: '280px', overflowY: 'auto' }}>
+                <div className="bg-light border-end p-3" style={{ width: "280px", overflowY: "auto" }}>
                     <h4 className="h6 text-muted mb-3">EJERCICIOS</h4>
                     <div className="d-flex flex-column gap-2">
                         {exercises.map((exercise, index) => (
@@ -117,12 +118,12 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                 key={`exercise-${exercise.name}-${index}`}
                                 onClick={() => handleExerciseChange(index)}
                                 className={`btn btn-sm text-start ${
-                                    selectedExerciseIndex === index ? 'btn-primary' : 'btn-outline-secondary'
+                                    selectedExerciseIndex === index ? "btn-primary" : "btn-outline-secondary"
                                 }`}
                                 style={{
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis'
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
                                 }}
                                 title={exercise.name}
                             >
@@ -130,44 +131,43 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                             </button>
                         ))}
                     </div>
+                    {onRegenerateExercises && (
+                        <button
+                            onClick={onRegenerateExercises}
+                            className="btn btn-warning btn-sm w-100 mt-3"
+                            title="Regenerar la lista de ejercicios"
+                        >
+                            Regenerar Ejercicios
+                        </button>
+                    )}
                 </div>
 
                 {/* Título del ejercicio seleccionado */}
-                <div className="d-flex flex-column" style={{ flex: 1, overflow: 'hidden' }}>
+                <div className="d-flex flex-column" style={{ flex: 1, overflow: "hidden" }}>
                     <div className="bg-light border-bottom p-3">
                         <h2 className="h5 mb-0">{selectedExercise.name}</h2>
                     </div>
 
                     {/* Columnas de Enunciado y Explicación */}
-                    <div className="d-flex" style={{ flex: 1, overflow: 'hidden' }}>
+                    <div className="d-flex" style={{ flex: 1, overflow: "hidden" }}>
                         {/* Columna de Enunciado */}
-                        <div className="d-flex flex-column border-end" style={{ flex: 1, overflow: 'hidden' }}>
+                        <div className="d-flex flex-column border-end" style={{ flex: 1, overflow: "hidden" }}>
                             <div className="bg-light border-bottom px-4 py-2">
                                 <h3 className="h6 text-muted mb-0">ENUNCIADO</h3>
                             </div>
-                            <div className="p-4" style={{ flex: 1, overflowY: 'auto' }}>
+                            <div className="p-4" style={{ flex: 1, overflowY: "auto" }}>
                                 <div className="exercise-statement">
-                                    <ReactMarkdown 
+                                    <ReactMarkdown
                                         remarkPlugins={[remarkGfm]}
                                         components={{
-                                            table: ({node, ...props}) => (
+                                            table: ({ node, ...props }) => (
                                                 <table className="table table-bordered table-sm mt-2 mb-2" {...props} />
                                             ),
-                                            thead: ({node, ...props}) => (
-                                                <thead className="table-light" {...props} />
-                                            ),
-                                            p: ({node, ...props}) => (
-                                                <p className="mb-2" {...props} />
-                                            ),
-                                            h1: ({node, ...props}) => (
-                                                <h4 className="mt-3 mb-2" {...props} />
-                                            ),
-                                            h2: ({node, ...props}) => (
-                                                <h5 className="mt-3 mb-2" {...props} />
-                                            ),
-                                            h3: ({node, ...props}) => (
-                                                <h6 className="mt-2 mb-2" {...props} />
-                                            ),
+                                            thead: ({ node, ...props }) => <thead className="table-light" {...props} />,
+                                            p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+                                            h1: ({ node, ...props }) => <h4 className="mt-3 mb-2" {...props} />,
+                                            h2: ({ node, ...props }) => <h5 className="mt-3 mb-2" {...props} />,
+                                            h3: ({ node, ...props }) => <h6 className="mt-2 mb-2" {...props} />,
                                         }}
                                     >
                                         {selectedExercise.statement}
@@ -177,28 +177,30 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                         </div>
 
                         {/* Columna de Explicación */}
-                        <div className="d-flex flex-column" style={{ flex: 1, overflow: 'hidden' }}>
+                        <div className="d-flex flex-column" style={{ flex: 1, overflow: "hidden" }}>
                             <div className="bg-light border-bottom px-4 py-2">
                                 <h3 className="h6 text-muted mb-0">EXPLICACIÓN</h3>
                             </div>
-                            <div className="p-4" style={{ flex: 1, overflowY: 'auto' }}>
+                            <div className="p-4" style={{ flex: 1, overflowY: "auto" }}>
                                 {!explanation && !isLoadingExplanation && !explanationError && (
-                                    <div className="d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '200px' }}>
+                                    <div
+                                        className="d-flex flex-column align-items-center justify-content-center"
+                                        style={{ minHeight: "200px" }}
+                                    >
                                         <p className="text-muted mb-3">
                                             Genera una explicación paso a paso para resolver este ejercicio
                                         </p>
-                                        <button
-                                            onClick={handleGenerateExplanation}
-                                            className="btn btn-primary"
-                                        >
-                                            <span className="me-2">🧑‍🏫</span>
+                                        <button onClick={handleGenerateExplanation} className="btn btn-primary">
                                             Generar Explicación
                                         </button>
                                     </div>
                                 )}
 
                                 {isLoadingExplanation && (
-                                    <div className="d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '200px' }}>
+                                    <div
+                                        className="d-flex flex-column align-items-center justify-content-center"
+                                        style={{ minHeight: "200px" }}
+                                    >
                                         <div className="spinner-border text-primary mb-3" role="status">
                                             <span className="visually-hidden">Cargando...</span>
                                         </div>
@@ -207,7 +209,10 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                 )}
 
                                 {explanationError && (
-                                    <div className="d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '200px' }}>
+                                    <div
+                                        className="d-flex flex-column align-items-center justify-content-center"
+                                        style={{ minHeight: "200px" }}
+                                    >
                                         <div className="alert alert-danger w-100" role="alert">
                                             <h5 className="alert-heading d-flex align-items-center">
                                                 Error al analizar los ejercicios
@@ -215,11 +220,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                             <hr />
                                             <p className="mb-3">{explanationError}</p>
                                             <div className="d-flex gap-2">
-                                                <button
-                                                    onClick={handleGenerateExplanation}
-                                                    className="btn btn-danger"
-                                                >
-                                                    <span className="me-2">🔄</span>
+                                                <button onClick={handleGenerateExplanation} className="btn btn-danger">
                                                     Reintentar
                                                 </button>
                                             </div>
@@ -238,23 +239,34 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                                     <ReactMarkdown
                                                         remarkPlugins={[remarkGfm]}
                                                         components={{
-                                                            table: ({node, ...props}) => (
-                                                                <table className="table table-bordered table-sm mt-2 mb-2" {...props} />
+                                                            table: ({ node, ...props }) => (
+                                                                <table
+                                                                    className="table table-bordered table-sm mt-2 mb-2"
+                                                                    {...props}
+                                                                />
                                                             ),
-                                                            thead: ({node, ...props}) => (
+                                                            thead: ({ node, ...props }) => (
                                                                 <thead className="table-light" {...props} />
                                                             ),
-                                                            p: ({node, ...props}) => (
+                                                            p: ({ node, ...props }) => (
                                                                 <p className="mb-2" {...props} />
                                                             ),
-                                                            code: ({node, ...props}) => {
+                                                            code: ({ node, ...props }) => {
                                                                 const inline = (props as any).inline;
-                                                                return inline
-                                                                    ? <code className="bg-light px-1" {...props} />
-                                                                    : <code className="d-block bg-light p-2 rounded" {...props} />;
+                                                                return inline ? (
+                                                                    <code className="bg-light px-1" {...props} />
+                                                                ) : (
+                                                                    <code
+                                                                        className="d-block bg-light p-2 rounded"
+                                                                        {...props}
+                                                                    />
+                                                                );
                                                             },
-                                                            pre: ({node, ...props}) => (
-                                                                <pre className="bg-light p-3 rounded overflow-auto" {...props} />
+                                                            pre: ({ node, ...props }) => (
+                                                                <pre
+                                                                    className="bg-light p-3 rounded overflow-auto"
+                                                                    {...props}
+                                                                />
                                                             ),
                                                         }}
                                                     >
@@ -263,6 +275,15 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                                 </div>
                                             </div>
                                         ))}
+                                        <button
+                                            onClick={() => {
+                                                setExplanation(null);
+                                                handleGenerateExplanation();
+                                            }}
+                                            className="btn btn-outline-primary"
+                                        >
+                                            Regenerar Explicación
+                                        </button>
                                     </div>
                                 )}
                             </div>

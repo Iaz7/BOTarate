@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 interface ChatMessage {
-    role: 'user' | 'assistant';
+    role: "user" | "assistant";
     content: string;
     id: string;
 }
@@ -13,50 +13,45 @@ interface ChatSidebarProps {
     onClose: () => void;
 }
 
-const ChatSidebar: React.FC<ChatSidebarProps> = ({ 
-    courseName, 
-    providerName, 
-    modelName, 
-    onClose 
-}) => {
+const ChatSidebar: React.FC<ChatSidebarProps> = ({ courseName, providerName, modelName, onClose }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [inputValue, setInputValue] = useState<string>('');
+    const [inputValue, setInputValue] = useState<string>("");
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleSendMessage = async () => {
         if (!inputValue.trim() || isGenerating) return;
 
         const userMessage: ChatMessage = {
-            role: 'user',
+            role: "user",
             content: inputValue,
-            id: `user-${Date.now()}`
+            id: `user-${Date.now()}`,
         };
 
         setMessages(prev => [...prev, userMessage]);
-        setInputValue('');
+        setInputValue("");
         setIsGenerating(true);
 
         try {
-            const response = await chrome.runtime.sendMessage({ 
+            const response = await chrome.runtime.sendMessage({
                 action: "generateResponse",
                 userMessage: inputValue,
-                resetHistory: messages.length === 0
+                resetHistory: messages.length === 0,
             });
 
             const assistantMessage: ChatMessage = {
-                role: 'assistant',
+                role: "assistant",
                 content: response,
-                id: `assistant-${Date.now()}`
+                id: `assistant-${Date.now()}`,
             };
 
             setMessages(prev => [...prev, assistantMessage]);
         } catch (error) {
-            console.error('Error generating response:', error);
+            console.error("Error generating response:", error);
             const errorMessage: ChatMessage = {
-                role: 'assistant',
-                content: 'Error al generar la respuesta. Por favor, inténtalo de nuevo.',
-                id: `error-${Date.now()}`
+                role: "assistant",
+                content: "Error al generar la respuesta. Por favor, inténtalo de nuevo.",
+                id: `error-${Date.now()}`,
             };
             setMessages(prev => [...prev, errorMessage]);
         } finally {
@@ -65,7 +60,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSendMessage();
         }
@@ -75,49 +70,49 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         <div
             className="extension-sidebar"
             style={{
-                position: 'fixed',
-                top: '0',
-                right: isCollapsed ? '-580px' : '0',
-                width: '600px',
-                height: '100vh',
-                backgroundColor: '#ffffff',
-                borderLeft: '1px solid #dee2e6',
-                boxShadow: '-2px 0 8px rgba(0,0,0,0.1)',
-                zIndex: '9999',
-                transition: 'right 0.3s ease-in-out',
-                display: 'flex',
-                flexDirection: 'column',
-                fontFamily: 'Inter, sans-serif'
+                position: "fixed",
+                top: "0",
+                right: isCollapsed ? "-580px" : "0",
+                width: "600px",
+                height: "100vh",
+                backgroundColor: "#ffffff",
+                borderLeft: "1px solid #dee2e6",
+                boxShadow: "-2px 0 8px rgba(0,0,0,0.1)",
+                zIndex: "9999",
+                transition: "right 0.3s ease-in-out",
+                display: "flex",
+                flexDirection: "column",
+                fontFamily: "Inter, sans-serif",
             }}
         >
             {/* Botón para colapsar/expandir */}
             <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 style={{
-                    position: 'absolute',
-                    left: '-40px',
-                    top: '20px',
-                    width: '40px',
-                    height: '40px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px 0 0 4px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '16px',
-                    boxShadow: '-2px 0 8px rgba(0,0,0,0.1)'
+                    position: "absolute",
+                    left: "-40px",
+                    top: "20px",
+                    width: "40px",
+                    height: "40px",
+                    backgroundColor: "#007bff",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px 0 0 4px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "16px",
+                    boxShadow: "-2px 0 8px rgba(0,0,0,0.1)",
                 }}
-                title={isCollapsed ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+                title={isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"}
             >
-                {isCollapsed ? '◀' : '▶'}
+                {isCollapsed ? "◀" : "▶"}
             </button>
 
             {/* Header */}
             <div className="card-header bg-light border-bottom">
-                <h3 className="h5 mb-2">💬 Asistente IA</h3>
+                <h3 className="h5 mb-2">Asistente IA</h3>
                 <p className="small text-muted mb-1">
                     <strong>Curso:</strong> {courseName}
                 </p>
@@ -129,29 +124,29 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             {/* Área de chat */}
             <div
                 style={{
-                    flex: '1',
-                    overflowY: 'auto',
-                    padding: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px'
+                    flex: "1",
+                    overflowY: "auto",
+                    padding: "16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
                 }}
             >
                 {messages.length === 0 ? (
                     <div className="alert alert-info" role="alert">
-                        👋 ¡Hola! Pregúntame sobre el curso y te ayudaré.
+                        ¡Hola! Pregúntame sobre el curso y te ayudaré.
                     </div>
                 ) : (
-                    messages.map((message) => (
+                    messages.map(message => (
                         <div
                             key={message.id}
-                            className={`card ${message.role === 'user' ? 'bg-primary text-white' : ''}`}
+                            className={`card ${message.role === "user" ? "bg-primary text-white" : ""}`}
                         >
                             <div className="card-body p-2">
                                 <div className="small mb-1">
-                                    <strong>{message.role === 'user' ? '👤 Tú' : '🤖 Asistente'}</strong>
+                                    <strong>{message.role === "user" ? "Tú" : "Asistente"}</strong>
                                 </div>
-                                <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>
+                                <div style={{ whiteSpace: "pre-wrap" }}>{message.content}</div>
                             </div>
                         </div>
                     ))
@@ -179,7 +174,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         className="form-control"
                         placeholder="Escribe tu pregunta..."
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        onChange={e => setInputValue(e.target.value)}
                         onKeyDown={handleKeyDown}
                         disabled={isGenerating}
                     />
@@ -192,10 +187,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         Enviar
                     </button>
                 </div>
-                <button
-                    onClick={onClose}
-                    className="btn btn-outline-danger btn-sm w-100 mt-2"
-                >
+                <button onClick={onClose} className="btn btn-outline-danger btn-sm w-100 mt-2">
                     Cerrar extensión
                 </button>
             </div>

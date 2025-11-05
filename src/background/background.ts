@@ -11,9 +11,9 @@ import { AssistantStorageManager } from "../util/storage/AssistantStorageManager
 
 let isConfigLoaded = false;
 
-const courseAssistant : CourseAssistant = new CourseAssistant();
-const exerciseAssistant : ExerciseAssistant = new ExerciseAssistant();
-const sqlTutorAssistant : SqlTutorAssistant = new SqlTutorAssistant();
+const courseAssistant: CourseAssistant = new CourseAssistant();
+const exerciseAssistant: ExerciseAssistant = new ExerciseAssistant();
+const sqlTutorAssistant: SqlTutorAssistant = new SqlTutorAssistant();
 
 (async () => {
     try {
@@ -59,6 +59,8 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleGetExerciseList(request, sendResponse);
         case "generateExplanation":
             return handleGenerateExplanation(request, sendResponse);
+        case "removeExerciseData":
+            return handleRemoveExerciseData(request, sendResponse);
         default:
             return false;
     }
@@ -66,7 +68,7 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
 
 function updateConfigFromRequest(config: any): void {
     const { providerKeys, selectedProvider, selectedModel } = config;
-    
+
     if (providerKeys) {
         for (let index = 0; index < providerKeys.length; index++) {
             ConfigManager.setProviderKey(index, providerKeys[index]);
@@ -76,7 +78,7 @@ function updateConfigFromRequest(config: any): void {
     if (selectedProvider !== undefined) {
         ConfigManager.selectProvider(selectedProvider);
     }
-    
+
     if (selectedModel !== undefined) {
         ConfigManager.selectModel(selectedModel);
     }
@@ -93,7 +95,7 @@ function handleUpdateConfig(request: any, sendResponse: (response?: any) => void
 
 function handleGetCourseData(request: any, sendResponse: (response?: any) => void): boolean {
     const { href, sessionStorageData } = request;
-    
+
     Course.fromHrefAndStorage(href, sessionStorageData)
         .then(course => {
             if (course) {
@@ -111,7 +113,7 @@ function handleGetCourseData(request: any, sendResponse: (response?: any) => voi
             console.error('[background] Error al cargar curso:', error);
             sendResponse({ success: false, error: error.message });
         });
-    
+
     return true;
 }
 
@@ -144,19 +146,19 @@ function handleGetExerciseList(request: any, sendResponse: (response?: any) => v
     (async () => {
         try {
             const cachedData = await AssistantStorageManager.getExerciseData(pageId);
-            
+
             if (cachedData) {
                 // Datos encontrados en cache
                 console.log(`Ejercicios recuperados del storage (${cachedData.exercises.length} ejercicios)`);
-                
+
                 // Convertir los datos a objetos Exercise
                 const exercises = cachedData.exercises.map(
                     ex => new Exercise(ex.name, ex.statement)
                 );
-                
-                sendResponse({ 
-                    success: true, 
-                    exercises: exercises, 
+
+                sendResponse({
+                    success: true,
+                    exercises: exercises,
                     db_schema: cachedData.dbSchema,
                     sql_instructions: cachedData.sqlInstructions,
                     learning_objectives: cachedData.learningObjectives,
@@ -164,19 +166,19 @@ function handleGetExerciseList(request: any, sendResponse: (response?: any) => v
                 });
                 return;
             }
-            
+
             // No hay datos en cache, llamar al asistente
             console.log('No hay datos en cache, llamando al asistente...');
             const result = await exerciseAssistant.identifyExercises(pageId, resourceId);
-            
+
             console.log(`Ejercicios identificados:`, result.exercises);
             console.log(`DB Schema presente:`, !!result.dbSchema);
             console.log(`Instrucciones SQL:`, result.sqlInstructions);
             console.log(`Objetivos de aprendizaje:`, result.learningObjectives);
-            
-            sendResponse({ 
-                success: true, 
-                exercises: result.exercises, 
+
+            sendResponse({
+                success: true,
+                exercises: result.exercises,
                 db_schema: result.dbSchema,
                 sql_instructions: result.sqlInstructions,
                 learning_objectives: result.learningObjectives,
@@ -206,5 +208,21 @@ function handleGenerateExplanation(request: any, sendResponse: (response?: any) 
             sendResponse({ success: false, error: error.message });
         });
 
+    return true;
+}
+
+function handleRemoveExerciseData(request: any, sendResponse: (response?: any) => void): boolean {
+
+    const { pageId } = request;
+
+    AssistantStorageManager.removeExerciseData(pageId)
+        .then(() => {
+            console.log(`Datos de ejercicios eliminados para la página: ${pageId}`);
+            sendResponse({ success: true });
+        })
+        .catch(error => {
+            console.error('Error al eliminar datos de ejercicios:', error);
+            sendResponse({ success: false, error: error.message });
+        });
     return true;
 }
