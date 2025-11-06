@@ -16,7 +16,7 @@ abstract class BaseAssistant {
 
     /**
      * Ejecutor de herramientas compartido por todos los asistentes
-     * Proporciona acceso a getSectionContent, getPageContent y getResourceContent
+     * Proporciona acceso a getSectionContent, getPageContent, getResourceContent y explainExercise
      */
     protected async executeToolCall(
         name: string,
@@ -32,6 +32,10 @@ abstract class BaseAssistant {
 
         if (name === 'getResourceContent') {
             return await ToolFunctions.getResourceContent(this.course!, args);
+        }
+
+        if (name === 'explainExercise') {
+            return await ToolFunctions.explainExercise(args);
         }
 
         throw new Error(`Herramienta desconocida: ${name}`);

@@ -1,5 +1,5 @@
 import { Exercise } from "../egela/Exercise";
-import { AssistantStorageManager } from "../storage/AssistantStorageManager";
+import { ExerciseStorageManager } from "../storage/ExerciseStorageManager";
 import { BaseAssistant } from "./BaseAssistant";
 import { OpenAIService } from "./OpenAIService";
 import { ExerciseListSchema } from "./schemas";
@@ -170,7 +170,7 @@ Basándote en toda la información que has recopilado en la fase anterior, gener
 
             // 6. Guardar los datos en el storage para uso futuro
             const exerciseDataToStore = exercises.map(ex => ({ name: ex.name, statement: ex.statement }));
-            await AssistantStorageManager.saveExerciseData(
+            await ExerciseStorageManager.saveExerciseData(
                 pageId,
                 exerciseDataToStore,
                 response.db_schema || '',

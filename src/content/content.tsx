@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 
 import ChatSidebar from "../components/ChatSidebar";
 import ExerciseModal from "../components/ExerciseModal";
-import FloatingButton from "../components/FloatingButton";
 import LoadingMessage from "../components/LoadingMessage";
 import NoExercisesMessage from "../components/NoExercisesMessage";
 import { ConfigManager } from "../util/config/ConfigManager";
@@ -18,7 +17,7 @@ interface Exercise {
     statement: string;
 }
 
-type ViewState = "loading" | "exercises" | "no-exercises" | "chat" | "hidden";
+type ViewState = "loading" | "no-exercises" | "chat" | "hidden";
 
 const ExtensionContent: React.FC = () => {
     const [viewState, setViewState] = useState<ViewState>("chat");
@@ -31,7 +30,10 @@ const ExtensionContent: React.FC = () => {
     const [sqlInstructions, setSqlInstructions] = useState<string[] | undefined>(undefined);
     const [learningObjectives, setLearningObjectives] = useState<string | undefined>(undefined);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [selectedExerciseIndex, setSelectedExerciseIndex] = useState<number>(0);
     const [currentPageId, setCurrentPageId] = useState<string | null>(null);
+    const [isLoadingExercises, setIsLoadingExercises] = useState<boolean>(false);
+    const [modalLoadFromCache, setModalLoadFromCache] = useState<boolean>(false);
 
     useEffect(() => {
         const waitForSessionStorage = (timeoutMs: number = 5000, intervalMs: number = 200) => {
@@ -100,7 +102,8 @@ const ExtensionContent: React.FC = () => {
                         if (pageId) {
                             console.log(`[content] Detectada página de Egela, ID: ${pageId}`);
                             setCurrentPageId(pageId);
-                            setViewState("loading");
+                            setViewState("chat"); // Abrir el chat en lugar del loading
+                            setIsLoadingExercises(true); // Activar el estado de carga
                             await identifyExercisesInPage(pageId);
                         }
                     }
@@ -126,8 +129,23 @@ const ExtensionContent: React.FC = () => {
             }
         };
 
+        // Listener para mensajes del background (para abrir el modal)
+        const messageListener = (message: any) => {
+            if (message.action === "openExerciseModal") {
+                console.log("[content] Recibido mensaje para abrir modal del ejercicio:", message.exerciseIndex);
+                handleOpenExerciseModal(message.exerciseIndex);
+            }
+        };
+
+        chrome.runtime.onMessage.addListener(messageListener);
+
         loadCourseData();
         loadConfig();
+
+        // Cleanup
+        return () => {
+            chrome.runtime.onMessage.removeListener(messageListener);
+        };
     }, []);
 
     const identifyExercisesInPage = async (pageId: string) => {
@@ -172,7 +190,6 @@ const ExtensionContent: React.FC = () => {
 
                 if (response.exercises.length > 0) {
                     setExercises(response.exercises);
-                    setViewState("exercises");
                 } else {
                     setViewState("no-exercises");
                 }
@@ -183,6 +200,8 @@ const ExtensionContent: React.FC = () => {
         } catch (error) {
             console.error("[content] Error al solicitar identificación de ejercicios:", error);
             setViewState("chat");
+        } finally {
+            setIsLoadingExercises(false); // Desactivar el estado de carga
         }
     };
 
@@ -194,35 +213,25 @@ const ExtensionContent: React.FC = () => {
         setViewState("chat");
     };
 
-    const handleOpenModal = () => {
-        setIsModalOpen(true);
-    };
-
     const handleCloseModal = () => {
         setIsModalOpen(false);
     };
 
-    const handleRegenerateExercises = async () => {
-        if (!currentPageId) return;
+    const handleOpenExerciseModal = (exerciseIndex: number, fromCache: boolean = false) => {
+        setSelectedExerciseIndex(exerciseIndex);
+        setModalLoadFromCache(fromCache);
+        setIsModalOpen(true);
+    };
 
-        // Cerrar el modal
-        setIsModalOpen(false);
+    const handleOpenExplanationFromCache = async (exerciseName: string) => {
+        // Buscar el ejercicio por nombre
+        const exerciseIndex = exercises.findIndex(ex => ex.name === exerciseName);
 
-        // Mostrar loading
-        setViewState("loading");
-
-        try {
-            // Borrar los datos del storage
-            await chrome.runtime.sendMessage({
-                action: "removeExerciseData",
-                pageId: currentPageId,
-            });
-
-            // Regenerar los ejercicios
-            await identifyExercisesInPage(currentPageId);
-        } catch (error) {
-            console.error("[content] Error al regenerar ejercicios:", error);
-            setViewState("chat");
+        if (exerciseIndex >= 0) {
+            // Si encontramos el ejercicio, abrir el modal con ese ejercicio y carga del cache
+            handleOpenExerciseModal(exerciseIndex, true);
+        } else {
+            console.warn(`[content] No se encontró el ejercicio: ${exerciseName}`);
         }
     };
 
@@ -238,28 +247,31 @@ const ExtensionContent: React.FC = () => {
                 <NoExercisesMessage onTimeout={handleNoExercisesTimeout} duration={3000} />
             )}
 
-            {viewState === "exercises" && (
-                <>
-                    <FloatingButton onClick={handleOpenModal} exerciseCount={exercises.length} />
-                    <ExerciseModal
-                        exercises={exercises}
-                        dbSchema={dbSchema}
-                        sqlInstructions={sqlInstructions}
-                        learningObjectives={learningObjectives}
-                        isOpen={isModalOpen}
-                        onClose={handleCloseModal}
-                        pageId={currentPageId || undefined}
-                        onRegenerateExercises={handleRegenerateExercises}
-                    />
-                </>
-            )}
-
+            {/* El chat siempre se muestra si el estado es "chat" */}
             {viewState === "chat" && (
                 <ChatSidebar
                     courseName={courseName}
                     providerName={providerName}
                     modelName={modelName}
                     onClose={handleCloseExtension}
+                    isLoadingExercises={isLoadingExercises}
+                    exercises={exercises}
+                    pageId={currentPageId || undefined}
+                    onOpenExplanation={handleOpenExplanationFromCache}
+                />
+            )}
+
+            {/* El modal se muestra sobre el chat cuando se selecciona un ejercicio */}
+            {isModalOpen && exercises.length > 0 && (
+                <ExerciseModal
+                    exercise={exercises[selectedExerciseIndex]}
+                    dbSchema={dbSchema}
+                    sqlInstructions={sqlInstructions}
+                    learningObjectives={learningObjectives}
+                    isOpen={isModalOpen}
+                    onClose={handleCloseModal}
+                    pageId={currentPageId || undefined}
+                    loadFromCache={modalLoadFromCache}
                 />
             )}
         </>

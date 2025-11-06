@@ -16,39 +16,78 @@ interface Explanation {
 }
 
 interface ExerciseModalProps {
-    exercises: Exercise[];
+    exercise: Exercise;
     isOpen: boolean;
     onClose: () => void;
     dbSchema?: string | null;
     sqlInstructions?: string[];
     learningObjectives?: string;
     pageId?: string;
-    onRegenerateExercises?: () => void;
+    loadFromCache?: boolean; // Si es true, carga del cache. Si es false/undefined, genera nueva
 }
 
 const ExerciseModal: React.FC<ExerciseModalProps> = ({
-    exercises,
+    exercise,
     isOpen,
     onClose,
     dbSchema,
     sqlInstructions,
     learningObjectives,
     pageId,
-    onRegenerateExercises,
+    loadFromCache = false,
 }) => {
-    const [selectedExerciseIndex, setSelectedExerciseIndex] = useState<number>(0);
     const [explanation, setExplanation] = useState<Explanation | null>(null);
     const [isLoadingExplanation, setIsLoadingExplanation] = useState<boolean>(false);
     const [explanationError, setExplanationError] = useState<string | null>(null);
 
+    // Generar automáticamente la explicación al abrir el modal
+    React.useEffect(() => {
+        if (isOpen) {
+            // Resetear el estado al abrir
+            setExplanation(null);
+            setExplanationError(null);
+
+            // Decidir si cargar del cache o generar nueva
+            if (loadFromCache) {
+                handleLoadCachedExplanation();
+            } else {
+                handleGenerateExplanation();
+            }
+        }
+    }, [isOpen, exercise.name, loadFromCache]); // Regenerar si cambia el ejercicio o el modo
+
     if (!isOpen) return null;
 
-    const selectedExercise = exercises[selectedExerciseIndex];
+    const handleLoadCachedExplanation = async () => {
+        if (!pageId) {
+            setExplanationError("No se puede cargar la explicación: falta el ID de página");
+            return;
+        }
 
-    const handleExerciseChange = (index: number) => {
-        setSelectedExerciseIndex(index);
-        setExplanation(null);
+        setIsLoadingExplanation(true);
         setExplanationError(null);
+
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: "getCachedExplanation",
+                pageId: pageId,
+                exerciseName: exercise.name,
+            });
+
+            if (response.success) {
+                setExplanation(response.explanation);
+                console.log("Explicación cargada del cache");
+            } else {
+                const errorMessage = response.error || "No se encontró explicación guardada";
+                console.error("Error al cargar explicación del cache:", errorMessage);
+                setExplanationError(errorMessage);
+            }
+        } catch (error) {
+            console.error("Error al cargar explicación del cache:", error);
+            setExplanationError("Error de comunicación al cargar la explicación");
+        } finally {
+            setIsLoadingExplanation(false);
+        }
     };
 
     const handleGenerateExplanation = async () => {
@@ -58,15 +97,17 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
         try {
             const response = await chrome.runtime.sendMessage({
                 action: "generateExplanation",
-                exerciseName: selectedExercise.name,
-                exerciseStatement: selectedExercise.statement,
+                exerciseName: exercise.name,
+                exerciseStatement: exercise.statement,
                 db_schema: dbSchema || undefined,
                 sql_instructions: sqlInstructions || undefined,
                 learning_objectives: learningObjectives || undefined,
+                pageId: pageId || undefined,
             });
 
             if (response.success) {
                 setExplanation(response.explanation);
+                console.log("Explicación generada exitosamente");
             } else {
                 const errorMessage = response.error || "Error desconocido al generar la explicación";
                 console.error("Error al generar explicación:", errorMessage);
@@ -93,7 +134,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                 left: "50%",
                 transform: "translate(-50%, -50%)",
                 width: "90%",
-                maxWidth: "1400px",
+                maxWidth: "900px",
                 height: "85vh",
                 zIndex: 10000,
                 overflow: "hidden",
@@ -101,194 +142,97 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
         >
             {/* Header */}
             <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h3 className="h5 mb-0">Ejercicios ({exercises.length})</h3>
+                <h3 className="h5 mb-0">{exercise.name}</h3>
                 <button onClick={onClose} className="btn btn-sm btn-light" title="Cerrar">
                     ×
                 </button>
             </div>
 
-            {/* Content */}
-            <div className="d-flex" style={{ flex: 1, overflow: "hidden", height: "calc(85vh - 60px)" }}>
-                {/* Columna izquierda - Lista de ejercicios */}
-                <div className="bg-light border-end p-3" style={{ width: "280px", overflowY: "auto" }}>
-                    <h4 className="h6 text-muted mb-3">EJERCICIOS</h4>
-                    <div className="d-flex flex-column gap-2">
-                        {exercises.map((exercise, index) => (
-                            <button
-                                key={`exercise-${exercise.name}-${index}`}
-                                onClick={() => handleExerciseChange(index)}
-                                className={`btn btn-sm text-start ${
-                                    selectedExerciseIndex === index ? "btn-primary" : "btn-outline-secondary"
-                                }`}
-                                style={{
-                                    whiteSpace: "nowrap",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                }}
-                                title={exercise.name}
-                            >
-                                {exercise.name}
-                            </button>
-                        ))}
-                    </div>
-                    {onRegenerateExercises && (
-                        <button
-                            onClick={onRegenerateExercises}
-                            className="btn btn-warning btn-sm w-100 mt-3"
-                            title="Regenerar la lista de ejercicios"
+            {/* Content - Solo la explicación */}
+            <div className="d-flex flex-column" style={{ flex: 1, overflow: "hidden", height: "calc(85vh - 60px)" }}>
+                <div className="p-4" style={{ flex: 1, overflowY: "auto" }}>
+                    {isLoadingExplanation && (
+                        <div
+                            className="d-flex flex-column align-items-center justify-content-center"
+                            style={{ minHeight: "200px" }}
                         >
-                            Regenerar Ejercicios
-                        </button>
-                    )}
-                </div>
-
-                {/* Título del ejercicio seleccionado */}
-                <div className="d-flex flex-column" style={{ flex: 1, overflow: "hidden" }}>
-                    <div className="bg-light border-bottom p-3">
-                        <h2 className="h5 mb-0">{selectedExercise.name}</h2>
-                    </div>
-
-                    {/* Columnas de Enunciado y Explicación */}
-                    <div className="d-flex" style={{ flex: 1, overflow: "hidden" }}>
-                        {/* Columna de Enunciado */}
-                        <div className="d-flex flex-column border-end" style={{ flex: 1, overflow: "hidden" }}>
-                            <div className="bg-light border-bottom px-4 py-2">
-                                <h3 className="h6 text-muted mb-0">ENUNCIADO</h3>
+                            <div className="spinner-border text-primary mb-3" role="status">
+                                <span className="visually-hidden">Cargando...</span>
                             </div>
-                            <div className="p-4" style={{ flex: 1, overflowY: "auto" }}>
-                                <div className="exercise-statement">
-                                    <ReactMarkdown
-                                        remarkPlugins={[remarkGfm]}
-                                        components={{
-                                            table: ({ node, ...props }) => (
-                                                <table className="table table-bordered table-sm mt-2 mb-2" {...props} />
-                                            ),
-                                            thead: ({ node, ...props }) => <thead className="table-light" {...props} />,
-                                            p: ({ node, ...props }) => <p className="mb-2" {...props} />,
-                                            h1: ({ node, ...props }) => <h4 className="mt-3 mb-2" {...props} />,
-                                            h2: ({ node, ...props }) => <h5 className="mt-3 mb-2" {...props} />,
-                                            h3: ({ node, ...props }) => <h6 className="mt-2 mb-2" {...props} />,
-                                        }}
-                                    >
-                                        {selectedExercise.statement}
-                                    </ReactMarkdown>
+                            <p className="text-muted">Generando explicación...</p>
+                        </div>
+                    )}
+
+                    {explanationError && (
+                        <div
+                            className="d-flex flex-column align-items-center justify-content-center"
+                            style={{ minHeight: "200px" }}
+                        >
+                            <div className="alert alert-danger w-100" role="alert">
+                                <h5 className="alert-heading d-flex align-items-center">
+                                    Error al generar la explicación
+                                </h5>
+                                <hr />
+                                <p className="mb-3">{explanationError}</p>
+                                <div className="d-flex gap-2">
+                                    <button onClick={handleGenerateExplanation} className="btn btn-danger">
+                                        Reintentar
+                                    </button>
                                 </div>
                             </div>
                         </div>
+                    )}
 
-                        {/* Columna de Explicación */}
-                        <div className="d-flex flex-column" style={{ flex: 1, overflow: "hidden" }}>
-                            <div className="bg-light border-bottom px-4 py-2">
-                                <h3 className="h6 text-muted mb-0">EXPLICACIÓN</h3>
-                            </div>
-                            <div className="p-4" style={{ flex: 1, overflowY: "auto" }}>
-                                {!explanation && !isLoadingExplanation && !explanationError && (
-                                    <div
-                                        className="d-flex flex-column align-items-center justify-content-center"
-                                        style={{ minHeight: "200px" }}
-                                    >
-                                        <p className="text-muted mb-3">
-                                            Genera una explicación paso a paso para resolver este ejercicio
-                                        </p>
-                                        <button onClick={handleGenerateExplanation} className="btn btn-primary">
-                                            Generar Explicación
-                                        </button>
+                    {explanation && explanation.steps && !isLoadingExplanation && (
+                        <div className="d-flex flex-column gap-3">
+                            {explanation.steps.map((step, index) => (
+                                <div key={`step-${index}`} className="card">
+                                    <div className="card-header bg-primary text-white">
+                                        <h4 className="h6 mb-0">Paso {index + 1}</h4>
                                     </div>
-                                )}
-
-                                {isLoadingExplanation && (
-                                    <div
-                                        className="d-flex flex-column align-items-center justify-content-center"
-                                        style={{ minHeight: "200px" }}
-                                    >
-                                        <div className="spinner-border text-primary mb-3" role="status">
-                                            <span className="visually-hidden">Cargando...</span>
-                                        </div>
-                                        <p className="text-muted">Generando explicación...</p>
-                                    </div>
-                                )}
-
-                                {explanationError && (
-                                    <div
-                                        className="d-flex flex-column align-items-center justify-content-center"
-                                        style={{ minHeight: "200px" }}
-                                    >
-                                        <div className="alert alert-danger w-100" role="alert">
-                                            <h5 className="alert-heading d-flex align-items-center">
-                                                Error al analizar los ejercicios
-                                            </h5>
-                                            <hr />
-                                            <p className="mb-3">{explanationError}</p>
-                                            <div className="d-flex gap-2">
-                                                <button onClick={handleGenerateExplanation} className="btn btn-danger">
-                                                    Reintentar
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {explanation && explanation.steps && (
-                                    <div className="d-flex flex-column gap-3">
-                                        {explanation.steps.map((step, index) => (
-                                            <div key={`step-${index}`} className="card">
-                                                <div className="card-header bg-primary text-white">
-                                                    <h4 className="h6 mb-0">Paso {index + 1}</h4>
-                                                </div>
-                                                <div className="card-body">
-                                                    <ReactMarkdown
-                                                        remarkPlugins={[remarkGfm]}
-                                                        components={{
-                                                            table: ({ node, ...props }) => (
-                                                                <table
-                                                                    className="table table-bordered table-sm mt-2 mb-2"
-                                                                    {...props}
-                                                                />
-                                                            ),
-                                                            thead: ({ node, ...props }) => (
-                                                                <thead className="table-light" {...props} />
-                                                            ),
-                                                            p: ({ node, ...props }) => (
-                                                                <p className="mb-2" {...props} />
-                                                            ),
-                                                            code: ({ node, ...props }) => {
-                                                                const inline = (props as any).inline;
-                                                                return inline ? (
-                                                                    <code className="bg-light px-1" {...props} />
-                                                                ) : (
-                                                                    <code
-                                                                        className="d-block bg-light p-2 rounded"
-                                                                        {...props}
-                                                                    />
-                                                                );
-                                                            },
-                                                            pre: ({ node, ...props }) => (
-                                                                <pre
-                                                                    className="bg-light p-3 rounded overflow-auto"
-                                                                    {...props}
-                                                                />
-                                                            ),
-                                                        }}
-                                                    >
-                                                        {step.explanation}
-                                                    </ReactMarkdown>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <button
-                                            onClick={() => {
-                                                setExplanation(null);
-                                                handleGenerateExplanation();
+                                    <div className="card-body">
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            components={{
+                                                table: ({ node, ...props }) => (
+                                                    <table
+                                                        className="table table-bordered table-sm mt-2 mb-2"
+                                                        {...props}
+                                                    />
+                                                ),
+                                                thead: ({ node, ...props }) => (
+                                                    <thead className="table-light" {...props} />
+                                                ),
+                                                p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+                                                code: ({ node, ...props }) => {
+                                                    const inline = (props as any).inline;
+                                                    return inline ? (
+                                                        <code className="bg-light px-1" {...props} />
+                                                    ) : (
+                                                        <code className="d-block bg-light p-2 rounded" {...props} />
+                                                    );
+                                                },
+                                                pre: ({ node, ...props }) => (
+                                                    <pre className="bg-light p-3 rounded overflow-auto" {...props} />
+                                                ),
                                             }}
-                                            className="btn btn-outline-primary"
                                         >
-                                            Regenerar Explicación
-                                        </button>
+                                            {step.explanation}
+                                        </ReactMarkdown>
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            ))}
+                            <button
+                                onClick={() => {
+                                    setExplanation(null);
+                                    handleGenerateExplanation();
+                                }}
+                                className="btn btn-outline-primary"
+                            >
+                                Regenerar Explicación
+                            </button>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>

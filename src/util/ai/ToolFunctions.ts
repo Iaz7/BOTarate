@@ -20,7 +20,7 @@ export class ToolFunctions {
      * Soporta imágenes, PDFs, texto y HTML
      */
     static async getResourceContent(
-        course: Course, 
+        course: Course,
         args: { resourceId: string }
     ): Promise<string | { type: 'file'; data: any }> {
         const fileData = await course.getResourceFile(args.resourceId);
@@ -105,5 +105,30 @@ export class ToolFunctions {
             size: fileData.size,
             message: `Archivo de tipo ${fileData.mimeType} - No se puede procesar el contenido directamente. Tamaño: ${(fileData.size / 1024 / 1024).toFixed(2)} MB`
         });
+    }
+
+    /**
+     * Solicita la explicación de un ejercicio específico
+     * Esta función enviará un mensaje al content script para abrir el modal de explicación
+     */
+    static async explainExercise(args: { exerciseIndex: number }): Promise<string> {
+        // Enviar mensaje a todos los tabs activos para abrir el modal
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+
+        if (tabs.length > 0 && tabs[0].id) {
+            try {
+                await chrome.tabs.sendMessage(tabs[0].id, {
+                    action: 'openExerciseModal',
+                    exerciseIndex: args.exerciseIndex
+                });
+
+                return `Abriendo el modal con la explicación del ejercicio #${args.exerciseIndex + 1}...`;
+            } catch (error) {
+                console.error('[explainExercise] Error enviando mensaje al content script:', error);
+                return `Error al abrir el modal del ejercicio #${args.exerciseIndex + 1}. Por favor, intenta de nuevo.`;
+            }
+        }
+
+        return `No se pudo abrir el modal. Asegúrate de estar en la página correcta.`;
     }
 }

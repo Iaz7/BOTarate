@@ -1,5 +1,10 @@
 import React, { useState } from "react";
 
+interface Exercise {
+    name: string;
+    statement: string;
+}
+
 interface ChatMessage {
     role: "user" | "assistant";
     content: string;
@@ -11,13 +16,62 @@ interface ChatSidebarProps {
     providerName: string;
     modelName: string;
     onClose: () => void;
+    isLoadingExercises?: boolean;
+    exercises?: Exercise[];
+    pageId?: string;
+    onOpenExplanation?: (exerciseName: string) => void;
 }
 
-const ChatSidebar: React.FC<ChatSidebarProps> = ({ courseName, providerName, modelName, onClose }) => {
+const ChatSidebar: React.FC<ChatSidebarProps> = ({
+    courseName,
+    providerName,
+    modelName,
+    onClose,
+    isLoadingExercises = false,
+    exercises = [],
+    pageId,
+    onOpenExplanation,
+}) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState<string>("");
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
+    const [activeTab, setActiveTab] = useState<"chat" | "explanations">("chat");
+    const [exercisesWithExplanations, setExercisesWithExplanations] = useState<string[]>([]);
+    const [isLoadingExplanations, setIsLoadingExplanations] = useState(false);
+
+    // Cargar ejercicios con explicaciones cuando haya pageId y ejercicios
+    React.useEffect(() => {
+        if (pageId && exercises.length > 0) {
+            loadExercisesWithExplanations();
+        }
+    }, [pageId, exercises]);
+
+    const loadExercisesWithExplanations = async () => {
+        if (!pageId) return;
+
+        setIsLoadingExplanations(true);
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: "getExercisesWithExplanations",
+                pageId: pageId,
+            });
+
+            if (response.success) {
+                setExercisesWithExplanations(response.exerciseNames);
+            }
+        } catch (error) {
+            console.error("Error loading exercises with explanations:", error);
+        } finally {
+            setIsLoadingExplanations(false);
+        }
+    };
+
+    const handleExplanationClick = (exerciseName: string) => {
+        if (onOpenExplanation) {
+            onOpenExplanation(exerciseName);
+        }
+    };
 
     const handleSendMessage = async () => {
         if (!inputValue.trim() || isGenerating) return;
@@ -37,6 +91,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ courseName, providerName, mod
                 action: "generateResponse",
                 userMessage: inputValue,
                 resetHistory: messages.length === 0,
+                exercises: exercises.length > 0 ? exercises : undefined,
             });
 
             const assistantMessage: ChatMessage = {
@@ -119,9 +174,38 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ courseName, providerName, mod
                 <p className="small text-muted mb-0">
                     <strong>Proveedor:</strong> {providerName} | <strong>Modelo:</strong> {modelName}
                 </p>
+
+                {/* Pestañas (solo mostrar si hay ejercicios) */}
+                {exercises.length > 0 && (
+                    <ul className="nav nav-tabs mt-3 mb-0" role="tablist">
+                        <li className="nav-item" role="presentation">
+                            <button
+                                className={`nav-link ${activeTab === "chat" ? "active" : ""}`}
+                                onClick={() => setActiveTab("chat")}
+                                type="button"
+                                role="tab"
+                            >
+                                Chat
+                            </button>
+                        </li>
+                        <li className="nav-item" role="presentation">
+                            <button
+                                className={`nav-link ${activeTab === "explanations" ? "active" : ""}`}
+                                onClick={() => setActiveTab("explanations")}
+                                type="button"
+                                role="tab"
+                            >
+                                Explicaciones guardadas
+                                {exercisesWithExplanations.length > 0 && (
+                                    <span className="badge bg-primary ms-2">{exercisesWithExplanations.length}</span>
+                                )}
+                            </button>
+                        </li>
+                    </ul>
+                )}
             </div>
 
-            {/* Área de chat */}
+            {/* Área de contenido (chat o explicaciones) */}
             <div
                 style={{
                     flex: "1",
@@ -132,37 +216,102 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ courseName, providerName, mod
                     gap: "12px",
                 }}
             >
-                {messages.length === 0 ? (
-                    <div className="alert alert-info" role="alert">
-                        ¡Hola! Pregúntame sobre el curso y te ayudaré.
-                    </div>
-                ) : (
-                    messages.map(message => (
-                        <div
-                            key={message.id}
-                            className={`card ${message.role === "user" ? "bg-primary text-white" : ""}`}
-                        >
-                            <div className="card-body p-2">
-                                <div className="small mb-1">
-                                    <strong>{message.role === "user" ? "Tú" : "Asistente"}</strong>
+                {activeTab === "chat" ? (
+                    <>
+                        {isLoadingExercises ? (
+                            <div className="card border-primary">
+                                <div className="card-body p-3">
+                                    <div className="d-flex align-items-center mb-2">
+                                        <div
+                                            className="spinner-border spinner-border-sm text-primary me-2"
+                                            role="status"
+                                        >
+                                            <span className="visually-hidden">Cargando...</span>
+                                        </div>
+                                        <strong>Buscando ejercicios...</strong>
+                                    </div>
+                                    <p className="text-muted small mb-0">
+                                        Analizando el contenido de la página para identificar los ejercicios
+                                        disponibles.
+                                    </p>
                                 </div>
-                                <div style={{ whiteSpace: "pre-wrap" }}>{message.content}</div>
                             </div>
-                        </div>
-                    ))
-                )}
+                        ) : messages.length === 0 ? (
+                            <div className="alert alert-info" role="alert">
+                                ¡Hola! Pregúntame sobre el curso y te ayudaré.
+                            </div>
+                        ) : (
+                            messages.map(message => (
+                                <div
+                                    key={message.id}
+                                    className={`card ${message.role === "user" ? "bg-primary text-white" : ""}`}
+                                >
+                                    <div className="card-body p-2">
+                                        <div className="small mb-1">
+                                            <strong>{message.role === "user" ? "Tú" : "Asistente"}</strong>
+                                        </div>
+                                        <div style={{ whiteSpace: "pre-wrap" }}>{message.content}</div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
 
-                {isGenerating && (
-                    <div className="card border-secondary">
-                        <div className="card-body p-2">
-                            <div className="d-flex align-items-center">
-                                <div className="spinner-border spinner-border-sm me-2" aria-label="Generando respuesta">
-                                    <span className="visually-hidden">Cargando...</span>
+                        {isGenerating && (
+                            <div className="card border-secondary">
+                                <div className="card-body p-2">
+                                    <div className="d-flex align-items-center">
+                                        <div
+                                            className="spinner-border spinner-border-sm me-2"
+                                            aria-label="Generando respuesta"
+                                        >
+                                            <span className="visually-hidden">Cargando...</span>
+                                        </div>
+                                        <span className="small">Generando respuesta...</span>
+                                    </div>
                                 </div>
-                                <span className="small">Generando respuesta...</span>
                             </div>
-                        </div>
-                    </div>
+                        )}
+                    </>
+                ) : (
+                    <>
+                        {/* Pestaña de explicaciones guardadas */}
+                        {isLoadingExplanations ? (
+                            <div className="card border-primary">
+                                <div className="card-body p-3">
+                                    <div className="d-flex align-items-center">
+                                        <div className="spinner-border spinner-border-sm text-primary me-2">
+                                            <span className="visually-hidden">Cargando...</span>
+                                        </div>
+                                        <span>Cargando explicaciones...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : exercisesWithExplanations.length === 0 ? (
+                            <div className="alert alert-info" role="alert">
+                                <strong>No hay explicaciones guardadas</strong>
+                                <p className="mb-0 mt-2 small">
+                                    Las explicaciones generadas a través del chat se guardarán aquí para que puedas
+                                    acceder a ellas más tarde.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="list-group">
+                                {exercisesWithExplanations.map((exerciseName, index) => (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        className="list-group-item list-group-item-action"
+                                        onClick={() => handleExplanationClick(exerciseName)}
+                                    >
+                                        <div className="d-flex w-100 justify-content-between align-items-center">
+                                            <h6 className="mb-0">{exerciseName}</h6>
+                                            <span className="badge bg-primary">Ver explicación</span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 
@@ -172,17 +321,17 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ courseName, providerName, mod
                     <input
                         type="text"
                         className="form-control"
-                        placeholder="Escribe tu pregunta..."
+                        placeholder={isLoadingExercises ? "Cargando ejercicios..." : "Escribe tu pregunta..."}
                         value={inputValue}
                         onChange={e => setInputValue(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        disabled={isGenerating}
+                        disabled={isGenerating || isLoadingExercises}
                     />
                     <button
                         className="btn btn-primary"
                         type="button"
                         onClick={handleSendMessage}
-                        disabled={isGenerating || !inputValue.trim()}
+                        disabled={isGenerating || !inputValue.trim() || isLoadingExercises}
                     >
                         Enviar
                     </button>

@@ -7,7 +7,8 @@ import { SqlTutorAssistant } from "../util/ai/SqlTutorAssistant";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
 import { Exercise } from "../util/egela/Exercise";
-import { AssistantStorageManager } from "../util/storage/AssistantStorageManager";
+import { ExerciseStorageManager } from "../util/storage/ExerciseStorageManager";
+import { ExplanationStorageManager } from "../util/storage/ExplanationStorageManager";
 
 let isConfigLoaded = false;
 
@@ -59,6 +60,10 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleGetExerciseList(request, sendResponse);
         case "generateExplanation":
             return handleGenerateExplanation(request, sendResponse);
+        case "getCachedExplanation":
+            return handleGetCachedExplanation(request, sendResponse);
+        case "getExercisesWithExplanations":
+            return handleGetExercisesWithExplanations(request, sendResponse);
         case "removeExerciseData":
             return handleRemoveExerciseData(request, sendResponse);
         default:
@@ -123,11 +128,11 @@ function handleGetModelList(sendResponse: (response?: any) => void): boolean {
 }
 
 function handleGenerateResponse(request: any, sendResponse: (response?: any) => void): boolean {
-    const { userMessage, resetHistory } = request;
+    const { userMessage, resetHistory, exercises } = request;
 
     console.log("Generando respuesta LLM en background...");
 
-    courseAssistant.generateResponse(userMessage, resetHistory)
+    courseAssistant.generateResponse(userMessage, resetHistory, exercises)
         .then(finalResponse => sendResponse(finalResponse))
         .catch(error => {
             console.error('Error en generateResponse:', error);
@@ -145,7 +150,7 @@ function handleGetExerciseList(request: any, sendResponse: (response?: any) => v
     // Primero intentamos obtener los datos del storage
     (async () => {
         try {
-            const cachedData = await AssistantStorageManager.getExerciseData(pageId);
+            const cachedData = await ExerciseStorageManager.getExerciseData(pageId);
 
             if (cachedData) {
                 // Datos encontrados en cache
@@ -153,7 +158,7 @@ function handleGetExerciseList(request: any, sendResponse: (response?: any) => v
 
                 // Convertir los datos a objetos Exercise
                 const exercises = cachedData.exercises.map(
-                    ex => new Exercise(ex.name, ex.statement)
+                    (ex: { name: string; statement: string }) => new Exercise(ex.name, ex.statement)
                 );
 
                 sendResponse({
@@ -194,35 +199,98 @@ function handleGetExerciseList(request: any, sendResponse: (response?: any) => v
 }
 
 function handleGenerateExplanation(request: any, sendResponse: (response?: any) => void): boolean {
-    const { exerciseName, exerciseStatement, db_schema, sql_instructions, learning_objectives } = request;
+    const { exerciseName, exerciseStatement, db_schema, sql_instructions, learning_objectives, pageId } = request;
 
     console.log(`Generando explicación para ejercicio: ${exerciseName}`);
 
-    sqlTutorAssistant.generateExplanation(exerciseName, exerciseStatement, db_schema, sql_instructions, learning_objectives)
-        .then(explanation => {
+    (async () => {
+        try {
+            // Siempre generar nueva explicación (no usar cache)
+            const explanation = await sqlTutorAssistant.generateExplanation(
+                exerciseName,
+                exerciseStatement,
+                db_schema,
+                sql_instructions,
+                learning_objectives
+            );
+
             console.log(`Explicación generada:`, explanation);
+
+            // Guardar en cache si se proporciona pageId
+            if (pageId) {
+                await ExplanationStorageManager.saveExplanation(pageId, exerciseName, explanation);
+                console.log(`Explicación guardada en cache para: ${exerciseName}`);
+            }
+
             sendResponse({ success: true, explanation: explanation });
-        })
-        .catch(error => {
+        } catch (error: any) {
             console.error('Error en generateExplanation:', error);
             sendResponse({ success: false, error: error.message });
-        });
+        }
+    })();
+
+    return true;
+}
+
+function handleGetCachedExplanation(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId, exerciseName } = request;
+
+    console.log(`Recuperando explicación del cache para: ${exerciseName}`);
+
+    (async () => {
+        try {
+            const cachedExplanation = await ExplanationStorageManager.getExplanation(pageId, exerciseName);
+
+            if (cachedExplanation) {
+                console.log(`Explicación recuperada del cache para: ${exerciseName}`);
+                sendResponse({ success: true, explanation: cachedExplanation });
+            } else {
+                sendResponse({ success: false, error: 'No hay explicación guardada para este ejercicio' });
+            }
+        } catch (error: any) {
+            console.error('Error al recuperar explicación del cache:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+function handleGetExercisesWithExplanations(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId } = request;
+
+    console.log(`Obteniendo lista de ejercicios con explicaciones para: ${pageId}`);
+
+    (async () => {
+        try {
+            const exerciseNames = await ExplanationStorageManager.getExerciseNamesWithExplanations(pageId);
+            console.log(`Encontrados ${exerciseNames.length} ejercicios con explicaciones`);
+            sendResponse({ success: true, exerciseNames: exerciseNames });
+        } catch (error: any) {
+            console.error('Error al obtener ejercicios con explicaciones:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
 
     return true;
 }
 
 function handleRemoveExerciseData(request: any, sendResponse: (response?: any) => void): boolean {
-
     const { pageId } = request;
 
-    AssistantStorageManager.removeExerciseData(pageId)
-        .then(() => {
-            console.log(`Datos de ejercicios eliminados para la página: ${pageId}`);
+    (async () => {
+        try {
+            // Eliminar tanto los datos de ejercicios como las explicaciones
+            await ExerciseStorageManager.removeExerciseData(pageId);
+            await ExplanationStorageManager.removeExplanationData(pageId);
+
+            console.log(`Datos de ejercicios y explicaciones eliminados para la página: ${pageId}`);
             sendResponse({ success: true });
-        })
-        .catch(error => {
-            console.error('Error al eliminar datos de ejercicios:', error);
+        } catch (error: any) {
+            console.error('Error al eliminar datos:', error);
             sendResponse({ success: false, error: error.message });
-        });
+        }
+    })();
+
     return true;
 }

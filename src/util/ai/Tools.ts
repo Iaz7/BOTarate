@@ -4,7 +4,7 @@ export type { ToolCall, ToolName, ToolResult };
 /**
  * Nombres de las herramientas disponibles para el LLM
  */
-type ToolName = 'getSectionContent' | 'getPageContent' | 'getResourceContent';
+type ToolName = 'getSectionContent' | 'getPageContent' | 'getResourceContent' | 'explainExercise';
 
 /**
  * Estructura de una llamada a herramienta del LLM
@@ -83,6 +83,24 @@ const TOOLS = [
                     }
                 },
                 required: ['resourceId'],
+                additionalProperties: false
+            }
+        }
+    },
+    {
+        type: 'function',
+        function: {
+            name: 'explainExercise',
+            description: 'Inicia la generación de una explicación paso a paso para un ejercicio específico. Esta herramienta abrirá el modal de explicación del ejercicio en la interfaz de usuario. Usa esta herramienta cuando el usuario solicite explícitamente ver la explicación o resolución de un ejercicio.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    exerciseIndex: {
+                        type: 'number',
+                        description: 'El índice del ejercicio en la lista de ejercicios disponibles (comenzando desde 0). Por ejemplo, si el usuario pide "explica el ejercicio 1", el índice sería 0.'
+                    }
+                },
+                required: ['exerciseIndex'],
                 additionalProperties: false
             }
         }
