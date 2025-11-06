@@ -20,6 +20,7 @@ interface ChatSidebarProps {
     exercises?: Exercise[];
     pageId?: string;
     onOpenExplanation?: (exerciseName: string) => void;
+    onExplanationGenerated?: () => void; // Callback para recargar lista cuando se genera explicación
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -31,6 +32,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     exercises = [],
     pageId,
     onOpenExplanation,
+    onExplanationGenerated,
 }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);

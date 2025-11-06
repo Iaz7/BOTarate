@@ -34,6 +34,7 @@ const ExtensionContent: React.FC = () => {
     const [currentPageId, setCurrentPageId] = useState<string | null>(null);
     const [isLoadingExercises, setIsLoadingExercises] = useState<boolean>(false);
     const [modalLoadFromCache, setModalLoadFromCache] = useState<boolean>(false);
+    const [reloadExplanationsKey, setReloadExplanationsKey] = useState<number>(0);
 
     useEffect(() => {
         const waitForSessionStorage = (timeoutMs: number = 5000, intervalMs: number = 200) => {
@@ -235,6 +236,11 @@ const ExtensionContent: React.FC = () => {
         }
     };
 
+    const handleExplanationGenerated = () => {
+        // Incrementar el trigger para forzar recarga en ChatSidebar
+        setReloadExplanationsKey(prev => prev + 1);
+    };
+
     // No mostrar nada si está oculto o si no hay curso
     if (viewState === "hidden" || !course) return null;
 
@@ -258,6 +264,8 @@ const ExtensionContent: React.FC = () => {
                     exercises={exercises}
                     pageId={currentPageId || undefined}
                     onOpenExplanation={handleOpenExplanationFromCache}
+                    onExplanationGenerated={handleExplanationGenerated}
+                    key={reloadExplanationsKey} // Re-renderizar cuando cambie el trigger
                 />
             )}
 
@@ -272,6 +280,7 @@ const ExtensionContent: React.FC = () => {
                     onClose={handleCloseModal}
                     pageId={currentPageId || undefined}
                     loadFromCache={modalLoadFromCache}
+                    onExplanationGenerated={handleExplanationGenerated}
                 />
             )}
         </>

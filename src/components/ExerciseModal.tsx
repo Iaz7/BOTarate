@@ -24,6 +24,7 @@ interface ExerciseModalProps {
     learningObjectives?: string;
     pageId?: string;
     loadFromCache?: boolean; // Si es true, carga del cache. Si es false/undefined, genera nueva
+    onExplanationGenerated?: () => void; // Callback cuando se genera una nueva explicación
 }
 
 const ExerciseModal: React.FC<ExerciseModalProps> = ({
@@ -35,6 +36,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
     learningObjectives,
     pageId,
     loadFromCache = false,
+    onExplanationGenerated,
 }) => {
     const [explanation, setExplanation] = useState<Explanation | null>(null);
     const [isLoadingExplanation, setIsLoadingExplanation] = useState<boolean>(false);
@@ -108,6 +110,11 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
             if (response.success) {
                 setExplanation(response.explanation);
                 console.log("Explicación generada exitosamente");
+
+                // Notificar que se generó una nueva explicación
+                if (onExplanationGenerated) {
+                    onExplanationGenerated();
+                }
             } else {
                 const errorMessage = response.error || "Error desconocido al generar la explicación";
                 console.error("Error al generar explicación:", errorMessage);
