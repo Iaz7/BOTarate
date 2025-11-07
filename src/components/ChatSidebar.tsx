@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import ExerciseConfigTab from "./ExerciseConfigTab";
+import LabConfigTab from "./LabConfigTab";
 
 interface Exercise {
     name: string;
@@ -20,6 +21,7 @@ interface ChatSidebarProps {
     onClose: () => void;
     isLoadingExercises?: boolean;
     pageId?: string;
+    courseId?: string; // Añadido para la configuración de laboratorios
     onOpenExplanation?: (exerciseName: string) => void;
     onExplanationGenerated?: () => void; // Callback para recargar lista cuando se genera explicación
 }
@@ -31,6 +33,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     onClose,
     isLoadingExercises = false,
     pageId,
+    courseId,
     onOpenExplanation,
     onExplanationGenerated,
 }) => {
@@ -38,7 +41,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState<string>("");
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
-    const [activeTab, setActiveTab] = useState<"chat" | "explanations" | "config">("chat");
+    const [activeTab, setActiveTab] = useState<"chat" | "explanations" | "config" | "labs">("chat");
     const [exercisesWithExplanations, setExercisesWithExplanations] = useState<string[]>([]);
     const [isLoadingExplanations, setIsLoadingExplanations] = useState(false);
     const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -271,9 +274,21 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 type="button"
                                 role="tab"
                             >
-                                Configuración
+                                Configurar ejercicios
                             </button>
                         </li>
+                        {courseId && (
+                            <li className="nav-item" role="presentation">
+                                <button
+                                    className={`nav-link ${activeTab === "labs" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("labs")}
+                                    type="button"
+                                    role="tab"
+                                >
+                                    Configurar laboratorios
+                                </button>
+                            </li>
+                        )}
                     </ul>
                 )}
             </div>
@@ -385,9 +400,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             </div>
                         )}
                     </>
-                ) : (
+                ) : activeTab === "config" ? (
                     <>
-                        {/* Pestaña de configuración */}
+                        {/* Pestaña de configuración de ejercicios */}
                         <ExerciseConfigTab
                             exercises={exercises}
                             pageId={pageId || ""}
@@ -395,7 +410,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             isActive={activeTab === "config"}
                         />
                     </>
-                )}
+                ) : activeTab === "labs" ? (
+                    <>
+                        {/* Pestaña de configuración de laboratorios */}
+                        <LabConfigTab
+                            courseId={courseId || ""}
+                            onConfigUpdate={handleConfigUpdate}
+                            isActive={activeTab === "labs"}
+                        />
+                    </>
+                ) : null}
             </div>
 
             {/* Input de chat */}

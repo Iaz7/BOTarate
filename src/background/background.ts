@@ -9,6 +9,7 @@ import { Course } from "../util/egela/Course";
 import { Exercise } from "../util/egela/Exercise";
 import { ExerciseStorageManager } from "../util/storage/ExerciseStorageManager";
 import { ExplanationStorageManager } from "../util/storage/ExplanationStorageManager";
+import { Lab, LabStorageManager } from "../util/storage/LabStorageManager";
 
 let isConfigLoaded = false;
 
@@ -72,6 +73,10 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleGetExerciseData(request, sendResponse);
         case "removeBlockedExercisesExplanations":
             return handleRemoveBlockedExercisesExplanations(request, sendResponse);
+        case "getLabData":
+            return handleGetLabData(request, sendResponse);
+        case "updateLabRequired":
+            return handleUpdateLabRequired(request, sendResponse);
         default:
             return false;
     }
@@ -108,11 +113,15 @@ function handleGetCourseData(request: any, sendResponse: (response?: any) => voi
     const { href, sessionStorageData } = request;
 
     Course.fromHrefAndStorage(href, sessionStorageData)
-        .then(course => {
+        .then(async course => {
             if (course) {
                 courseAssistant.setCourse(course);
                 exerciseAssistant.setCourse(course);
                 sqlTutorAssistant.setCourse(course);
+
+                // Extraer y guardar laboratorios si no existen ya en el storage
+                await initializeLabDataIfNeeded(course);
+
                 sendResponse({ success: true, course: course });
                 console.log('[background] Curso cargado:', course);
             } else {
@@ -126,6 +135,38 @@ function handleGetCourseData(request: any, sendResponse: (response?: any) => voi
         });
 
     return true;
+}
+
+async function initializeLabDataIfNeeded(course: Course): Promise<void> {
+    const hasLabData = await LabStorageManager.hasLabData(course.id);
+
+    if (hasLabData) {
+        console.log('[background] Ya existen datos de laboratorios para este curso');
+        return;
+    }
+
+    console.log('[background] Extrayendo laboratorios del curso...');
+
+    // Obtener todos los recursos tipo "page" de todas las secciones
+    const labs: Lab[] = [];
+    for (const section of course.sections) {
+        const pageResources = section.getResourcesByType('page');
+        for (const resource of pageResources) {
+            labs.push({
+                id: resource.id,
+                name: resource.name,
+                required: false // Por defecto, ningún lab es requerido
+            });
+        }
+    }
+
+    // Guardar la lista de laboratorios en el storage
+    if (labs.length > 0) {
+        await LabStorageManager.saveLabData(course.id, labs);
+        console.log(`[background] ${labs.length} laboratorios guardados:`, labs);
+    } else {
+        console.log('[background] No se encontraron laboratorios (recursos tipo "page")');
+    }
 }
 
 function handleGetModelList(sendResponse: (response?: any) => void): boolean {
@@ -374,6 +415,43 @@ function handleRemoveBlockedExercisesExplanations(request: any, sendResponse: (r
             sendResponse({ success: true });
         } catch (error: any) {
             console.error('Error al eliminar explicaciones de ejercicios bloqueados:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+function handleGetLabData(request: any, sendResponse: (response?: any) => void): boolean {
+    const { courseId } = request;
+
+    (async () => {
+        try {
+            const data = await LabStorageManager.getLabData(courseId);
+            if (data) {
+                sendResponse({ success: true, data: data });
+            } else {
+                sendResponse({ success: false, error: 'No hay datos de laboratorios para este curso' });
+            }
+        } catch (error: any) {
+            console.error('Error al obtener datos de laboratorios:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+function handleUpdateLabRequired(request: any, sendResponse: (response?: any) => void): boolean {
+    const { courseId, labId, required } = request;
+
+    (async () => {
+        try {
+            await LabStorageManager.updateLabRequired(courseId, labId, required);
+            console.log(`Estado 'required' actualizado para laboratorio ${labId}: ${required}`);
+            sendResponse({ success: true });
+        } catch (error: any) {
+            console.error('Error al actualizar estado de laboratorio:', error);
             sendResponse({ success: false, error: error.message });
         }
     })();

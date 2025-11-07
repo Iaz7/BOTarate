@@ -23,6 +23,7 @@ const ExtensionContent: React.FC = () => {
     const [viewState, setViewState] = useState<ViewState>("chat");
     const [course, setCourse] = useState<Course | null>(null);
     const [courseName, setCourseName] = useState<string>("Cargando...");
+    const [courseId, setCourseId] = useState<string | null>(null);
     const [providerName, setProviderName] = useState<string>("");
     const [modelName, setModelName] = useState<string>("");
     const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -87,6 +88,7 @@ const ExtensionContent: React.FC = () => {
 
                 if (response.success && response.course) {
                     setCourse(response.course);
+                    setCourseId(response.course.id); // Guardar el ID del curso
 
                     // Obtener el nombre del curso desde la página
                     const courseTitle =
@@ -257,6 +259,7 @@ const ExtensionContent: React.FC = () => {
             {viewState === "chat" && (
                 <ChatSidebar
                     courseName={courseName}
+                    courseId={courseId || undefined}
                     providerName={providerName}
                     modelName={modelName}
                     onClose={handleCloseExtension}
