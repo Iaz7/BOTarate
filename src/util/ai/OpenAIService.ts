@@ -214,7 +214,8 @@ class OpenAIService {
         const completion = await this.openai.chat.completions.parse({
             model: ConfigManager.getSelectedModel(),
             messages: this.conversationHistory as any,
-            response_format: zodResponseFormat(schema, schemaName),
+            // Cast to any to avoid deep/infinite type instantiation from zodResponseFormat
+            response_format: zodResponseFormat(schema, schemaName) as any,
             max_tokens: 1000000
         });
 
