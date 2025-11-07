@@ -96,16 +96,16 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                 });
             }
 
-            // Eliminar explicaciones de ejercicios bloqueados
-            const blockedExercises = Array.from(pendingChanges.entries())
+            // Eliminar explicaciones de ejercicios de reto
+            const challengeExercises = Array.from(pendingChanges.entries())
                 .filter(([_, allowed]) => !allowed)
                 .map(([name]) => name);
 
-            if (blockedExercises.length > 0) {
+            if (challengeExercises.length > 0) {
                 await chrome.runtime.sendMessage({
-                    action: "removeBlockedExercisesExplanations",
+                    action: "removeChallengeExercisesExplanations",
                     pageId: pageId,
-                    exerciseNames: blockedExercises,
+                    exerciseNames: challengeExercises,
                 });
             }
 
@@ -143,8 +143,8 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
             <div className="alert alert-info small mb-3" role="alert">
                 <strong>Configuración de ejercicios</strong>
                 <p className="mb-0 mt-1">
-                    Controla qué ejercicios pueden ser explicados por el asistente. Los ejercicios bloqueados no podrán
-                    ser resueltos mediante la IA.
+                    Controla qué ejercicios pueden ser explicados por el asistente. Los ejercicios de reto no podrán ser
+                    resueltos mediante la IA, pero sí evaluados cuando el estudiante envíe su solución.
                 </p>
             </div>
 
@@ -169,7 +169,7 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                                         <div className="d-flex align-items-center">
                                             <span>{exercise.name}</span>
                                             {!isAllowed && (
-                                                <span className="badge bg-warning text-dark ms-2">Bloqueado</span>
+                                                <span className="badge bg-warning text-dark ms-2">Reto</span>
                                             )}
                                         </div>
                                     </td>

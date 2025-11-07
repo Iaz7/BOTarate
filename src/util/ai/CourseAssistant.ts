@@ -21,26 +21,26 @@ class CourseAssistant extends BaseAssistant {
             // Mostramos tanto el número de posición (1..N) como un índice entre corchetes junto al nombre
             const exerciseList = exercises.map((ex, index) => {
                 const pos = index + 1;
-                const status = ex.allowed === false ? '[BLOQUEADO]' : '[PERMITIDO]';
+                const status = ex.allowed === false ? '[RETO]' : '[PERMITIDO]';
                 // Formato: "1. [ÍNDICE:1] Nombre del ejercicio [PERMITIDO]"
                 return `${pos}. [ÍNDICE:${pos}] ${ex.name} ${status}`;
             }).join('\n');
 
-            const blockedCount = exercises.filter(ex => ex.allowed === false).length;
-            const allowedCount = exercises.length - blockedCount;
+            const challengeCount = exercises.filter(ex => ex.allowed === false).length;
+            const allowedCount = exercises.length - challengeCount;
 
             exerciseContext = `\n\nEJERCICIOS DISPONIBLES EN ESTA PÁGINA:
-El usuario está actualmente en una página con ${exercises.length} ejercicios (${allowedCount} permitidos, ${blockedCount} bloqueados). Cuando el usuario solicite la explicación de un ejercicio específico (por ejemplo: "explica el ejercicio 3", "¿cómo se resuelve el segundo ejercicio?", etc.), debes verificar primero si está bloqueado.
+El usuario está actualmente en una página con ${exercises.length} ejercicios (${allowedCount} permitidos, ${challengeCount} de reto). Cuando el usuario solicite la explicación de un ejercicio específico (por ejemplo: "explica el ejercicio 3", "¿cómo se resuelve el segundo ejercicio?", etc.), debes verificar primero si es un ejercicio de reto.
 
 Lista de ejercicios en orden (cada línea muestra: posición. [ÍNDICE:pos] Nombre DEL EJERCICIO [ESTADO]):
 ${exerciseList}
 
-IMPORTANTE SOBRE EJERCICIOS BLOQUEADOS:
-- Los ejercicios marcados como [BLOQUEADO] NO pueden ser explicados.
-- Si el usuario solicita la explicación de un ejercicio bloqueado, debes informarle que la resolución de ese ejercicio está bloqueada por el profesor para que lo resuelva por su cuenta.
-- Menciona también qué otros ejercicios están bloqueados (si los hay).
-- NO uses la herramienta explainExercise para ejercicios bloqueados.
-- Los ejercicios bloqueados SÍ pueden ser resueltos por el estudiante usando la herramienta solveExercise.
+IMPORTANTE SOBRE EJERCICIOS DE RETO:
+- Los ejercicios marcados como [RETO] NO pueden ser explicados.
+- Si el usuario solicita la explicación de un ejercicio de reto, debes informarle que la resolución de ese ejercicio está bloqueada por el profesor para que lo resuelva por su cuenta como desafío.
+- Menciona también qué otros ejercicios son de reto (si los hay).
+- NO uses la herramienta explainExercise para ejercicios de reto.
+- Los ejercicios de reto SÍ pueden ser resueltos por el estudiante usando la herramienta solveExercise.
 
 IMPORTANTE SOBRE REFERENCIAS A EJERCICIOS:
 - El usuario podrá referirse a los ejercicios por su número de posición (ejercicio 1, ejercicio 2, etc.), por nombre, o de forma relativa ("el siguiente", "el anterior").
@@ -49,7 +49,7 @@ IMPORTANTE SOBRE REFERENCIAS A EJERCICIOS:
 - Mantén siempre presente el orden de la lista para identificar correctamente los ejercicios.
 
 Cuando el usuario pida ver/explicar un ejercicio PERMITIDO, usa la herramienta explainExercise para abrir el modal de explicación.
-Cuando el usuario quiera resolver/intentar/enviar su solución para un ejercicio (PERMITIDO o BLOQUEADO), usa la herramienta solveExercise para abrir el formulario de resolución.`;
+Cuando el usuario quiera resolver/intentar/enviar su solución para un ejercicio (PERMITIDO o DE RETO), usa la herramienta solveExercise para abrir el formulario de resolución.`;
         }
 
         return `Eres un asistente en una extensión de Chrome cuyo objetivo es ayudar a estudiantes con el contenido de sus cursos en Egela (plataforma educativa de la Universidad del País Vasco).

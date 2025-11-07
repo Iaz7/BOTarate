@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { ProgressManager } from "../util/progress/ProgressManager";
 import ExerciseConfigTab from "./ExerciseConfigTab";
 import LabConfigTab from "./LabConfigTab";
+import ProgressTab from "./ProgressTab";
 
 interface Exercise {
     name: string;
@@ -45,12 +47,40 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState<string>("");
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
-    const [activeTab, setActiveTab] = useState<"chat" | "explanations" | "evaluations" | "config" | "labs">("chat");
+    const [activeTab, setActiveTab] = useState<
+        "chat" | "explanations" | "evaluations" | "config" | "labs" | "progress"
+    >("chat");
     const [exercisesWithExplanations, setExercisesWithExplanations] = useState<string[]>([]);
     const [exercisesWithEvaluations, setExercisesWithEvaluations] = useState<string[]>([]);
     const [isLoadingExplanations, setIsLoadingExplanations] = useState(false);
     const [isLoadingEvaluations, setIsLoadingEvaluations] = useState(false);
     const [exercises, setExercises] = useState<Exercise[]>([]);
+    const [isLabBlocked, setIsLabBlocked] = useState<boolean>(false);
+    const [isCheckingBlocked, setIsCheckingBlocked] = useState<boolean>(true);
+
+    // Verificar si el laboratorio está bloqueado
+    React.useEffect(() => {
+        const checkLabBlocked = async () => {
+            if (!pageId || !courseId) {
+                setIsLabBlocked(false);
+                setIsCheckingBlocked(false);
+                return;
+            }
+
+            setIsCheckingBlocked(true);
+            try {
+                const blocked = await ProgressManager.isLabBlocked(pageId, courseId);
+                setIsLabBlocked(blocked);
+            } catch (error) {
+                console.error("[ChatSidebar] Error checking if lab is blocked:", error);
+                setIsLabBlocked(false);
+            } finally {
+                setIsCheckingBlocked(false);
+            }
+        };
+
+        checkLabBlocked();
+    }, [pageId, courseId]);
 
     // Cargar ejercicios cuando cambie pageId
     React.useEffect(() => {
@@ -274,56 +304,68 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     <strong>Proveedor:</strong> {providerName} | <strong>Modelo:</strong> {modelName}
                 </p>
 
-                {/* Pestañas (solo mostrar si hay ejercicios) */}
-                {exercises.length > 0 && (
-                    <ul className="nav nav-tabs mt-3 mb-0" role="tablist">
-                        <li className="nav-item" role="presentation">
-                            <button
-                                className={`nav-link ${activeTab === "chat" ? "active" : ""}`}
-                                onClick={() => setActiveTab("chat")}
-                                type="button"
-                                role="tab"
-                            >
-                                Chat
-                            </button>
-                        </li>
-                        <li className="nav-item" role="presentation">
-                            <button
-                                className={`nav-link ${activeTab === "explanations" ? "active" : ""}`}
-                                onClick={() => setActiveTab("explanations")}
-                                type="button"
-                                role="tab"
-                            >
-                                Explicaciones guardadas
-                                {exercisesWithExplanations.length > 0 && (
-                                    <span className="badge bg-primary ms-2">{exercisesWithExplanations.length}</span>
-                                )}
-                            </button>
-                        </li>
-                        <li className="nav-item" role="presentation">
-                            <button
-                                className={`nav-link ${activeTab === "evaluations" ? "active" : ""}`}
-                                onClick={() => setActiveTab("evaluations")}
-                                type="button"
-                                role="tab"
-                            >
-                                Evaluaciones guardadas
-                                {exercisesWithEvaluations.length > 0 && (
-                                    <span className="badge bg-success ms-2">{exercisesWithEvaluations.length}</span>
-                                )}
-                            </button>
-                        </li>
-                        <li className="nav-item" role="presentation">
-                            <button
-                                className={`nav-link ${activeTab === "config" ? "active" : ""}`}
-                                onClick={() => setActiveTab("config")}
-                                type="button"
-                                role="tab"
-                            >
-                                Configurar ejercicios
-                            </button>
-                        </li>
-                        {courseId && (
+                {/* Pestañas */}
+                <ul className="nav nav-tabs mt-3 mb-0" role="tablist">
+                    <li className="nav-item" role="presentation">
+                        <button
+                            className={`nav-link ${activeTab === "chat" ? "active" : ""}`}
+                            onClick={() => setActiveTab("chat")}
+                            type="button"
+                            role="tab"
+                        >
+                            Chat
+                        </button>
+                    </li>
+                    {/* Pestañas solo disponibles cuando hay ejercicios */}
+                    {exercises.length > 0 && (
+                        <>
+                            <li className="nav-item" role="presentation">
+                                <button
+                                    className={`nav-link ${activeTab === "explanations" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("explanations")}
+                                    type="button"
+                                    role="tab"
+                                    disabled={isLabBlocked}
+                                    title={isLabBlocked ? "No disponible mientras el laboratorio esté bloqueado" : ""}
+                                >
+                                    Explicaciones guardadas
+                                    {exercisesWithExplanations.length > 0 && (
+                                        <span className="badge bg-primary ms-2">
+                                            {exercisesWithExplanations.length}
+                                        </span>
+                                    )}
+                                </button>
+                            </li>
+                            <li className="nav-item" role="presentation">
+                                <button
+                                    className={`nav-link ${activeTab === "evaluations" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("evaluations")}
+                                    type="button"
+                                    role="tab"
+                                    disabled={isLabBlocked}
+                                    title={isLabBlocked ? "No disponible mientras el laboratorio esté bloqueado" : ""}
+                                >
+                                    Evaluaciones guardadas
+                                    {exercisesWithEvaluations.length > 0 && (
+                                        <span className="badge bg-success ms-2">{exercisesWithEvaluations.length}</span>
+                                    )}
+                                </button>
+                            </li>
+                            <li className="nav-item" role="presentation">
+                                <button
+                                    className={`nav-link ${activeTab === "config" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("config")}
+                                    type="button"
+                                    role="tab"
+                                >
+                                    Configurar ejercicios
+                                </button>
+                            </li>
+                        </>
+                    )}
+                    {/* Pestaña de laboratorios siempre visible si hay courseId */}
+                    {courseId && (
+                        <>
                             <li className="nav-item" role="presentation">
                                 <button
                                     className={`nav-link ${activeTab === "labs" ? "active" : ""}`}
@@ -334,9 +376,19 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                     Configurar laboratorios
                                 </button>
                             </li>
-                        )}
-                    </ul>
-                )}
+                            <li className="nav-item" role="presentation">
+                                <button
+                                    className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("progress")}
+                                    type="button"
+                                    role="tab"
+                                >
+                                    Mi progreso
+                                </button>
+                            </li>
+                        </>
+                    )}
+                </ul>
             </div>
 
             {/* Área de contenido (chat o explicaciones) */}
@@ -352,14 +404,42 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             >
                 {activeTab === "chat" ? (
                     <>
-                        {isLoadingExercises ? (
+                        {isCheckingBlocked ? (
                             <div className="card border-primary">
                                 <div className="card-body p-3">
                                     <div className="d-flex align-items-center mb-2">
-                                        <div
-                                            className="spinner-border spinner-border-sm text-primary me-2"
-                                            role="status"
-                                        >
+                                        <div className="spinner-border spinner-border-sm text-primary me-2">
+                                            <span className="visually-hidden">Verificando acceso...</span>
+                                        </div>
+                                        <strong>Verificando acceso al laboratorio...</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : isLabBlocked ? (
+                            <div className="alert alert-danger" role="alert">
+                                <h5 className="alert-heading">
+                                    <i className="bi bi-lock-fill me-2"></i>
+                                    Laboratorio bloqueado
+                                </h5>
+                                <p>
+                                    Este laboratorio está bloqueado porque es un laboratorio requerido y aún no has
+                                    completado el laboratorio anterior.
+                                </p>
+                                <hr />
+                                <p className="mb-0">
+                                    <strong>Para desbloquear este laboratorio:</strong>
+                                </p>
+                                <ul className="mb-0 mt-2">
+                                    <li>Completa todos los ejercicios de reto del laboratorio anterior</li>
+                                    <li>Obtén una calificación mínima de 5.0 en cada ejercicio de reto</li>
+                                    <li>Revisa tu progreso en la pestaña "Mi progreso"</li>
+                                </ul>
+                            </div>
+                        ) : isLoadingExercises ? (
+                            <div className="card border-primary">
+                                <div className="card-body p-3">
+                                    <div className="d-flex align-items-center mb-2">
+                                        <div className="spinner-border spinner-border-sm text-primary me-2">
                                             <span className="visually-hidden">Cargando...</span>
                                         </div>
                                         <strong>Buscando ejercicios...</strong>
@@ -505,6 +585,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             isActive={activeTab === "labs"}
                         />
                     </>
+                ) : activeTab === "progress" ? (
+                    <>
+                        {/* Pestaña de progreso del estudiante */}
+                        <ProgressTab courseId={courseId || ""} />
+                    </>
                 ) : null}
             </div>
 
@@ -514,17 +599,23 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     <input
                         type="text"
                         className="form-control"
-                        placeholder={isLoadingExercises ? "Cargando ejercicios..." : "Escribe tu pregunta..."}
+                        placeholder={
+                            isLabBlocked
+                                ? "Laboratorio bloqueado..."
+                                : isLoadingExercises
+                                ? "Cargando ejercicios..."
+                                : "Escribe tu pregunta..."
+                        }
                         value={inputValue}
                         onChange={e => setInputValue(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        disabled={isGenerating || isLoadingExercises}
+                        disabled={isGenerating || isLoadingExercises || isLabBlocked}
                     />
                     <button
                         className="btn btn-primary"
                         type="button"
                         onClick={handleSendMessage}
-                        disabled={isGenerating || !inputValue.trim() || isLoadingExercises}
+                        disabled={isGenerating || !inputValue.trim() || isLoadingExercises || isLabBlocked}
                     >
                         Enviar
                     </button>
