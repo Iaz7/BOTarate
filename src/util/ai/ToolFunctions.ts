@@ -125,7 +125,7 @@ export class ToolFunctions {
                 return `Abriendo el modal con la explicación del ejercicio #${args.exerciseIndex + 1}...`;
             } catch (error) {
                 console.error('[explainExercise] Error enviando mensaje al content script:', error);
-                return `Error al abrir el modal del ejercicio #${args.exerciseIndex + 1}. Por favor, intenta de nuevo.`;
+                return `Error al abrir el modal del ejercicio #${args.exerciseIndex + 1}`;
             }
         }
 

@@ -261,7 +261,6 @@ const ExtensionContent: React.FC = () => {
                     modelName={modelName}
                     onClose={handleCloseExtension}
                     isLoadingExercises={isLoadingExercises}
-                    exercises={exercises}
                     pageId={currentPageId || undefined}
                     onOpenExplanation={handleOpenExplanationFromCache}
                     onExplanationGenerated={handleExplanationGenerated}

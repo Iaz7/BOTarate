@@ -5,7 +5,7 @@ import { BaseStorageManager } from "./BaseStorageManager";
  */
 export interface ExerciseData {
     pageId: string;
-    exercises: Array<{ name: string; statement: string }>;
+    exercises: Array<{ name: string; statement: string; allowed?: boolean }>;
     dbSchema?: string;
     sqlInstructions?: string[];
     learningObjectives?: string;
@@ -28,7 +28,7 @@ export class ExerciseStorageManager extends BaseStorageManager {
      */
     static async saveExerciseData(
         pageId: string,
-        exercises: Array<{ name: string; statement: string }>,
+        exercises: Array<{ name: string; statement: string; allowed?: boolean }>,
         dbSchema?: string,
         sqlInstructions?: string[],
         learningObjectives?: string
@@ -84,5 +84,33 @@ export class ExerciseStorageManager extends BaseStorageManager {
      */
     static async getExerciseDataAge(pageId: string): Promise<number | null> {
         return await this.getDaysSinceLastUpdate(this.STORAGE_KEY_PREFIX, pageId);
+    }
+
+    /**
+     * Actualiza el estado 'allowed' de un ejercicio específico
+     * @param pageId ID de la página
+     * @param exerciseName Nombre del ejercicio
+     * @param allowed Nuevo estado de permitido/bloqueado
+     */
+    static async updateExerciseAllowed(pageId: string, exerciseName: string, allowed: boolean): Promise<void> {
+        const data = await this.getExerciseData(pageId);
+        if (!data) {
+            throw new Error(`No se encontraron datos de ejercicios para la página ${pageId}`);
+        }
+
+        const exercise = data.exercises.find(ex => ex.name === exerciseName);
+        if (!exercise) {
+            throw new Error(`No se encontró el ejercicio ${exerciseName}`);
+        }
+
+        exercise.allowed = allowed;
+
+        await this.saveExerciseData(
+            pageId,
+            data.exercises,
+            data.dbSchema,
+            data.sqlInstructions,
+            data.learningObjectives
+        );
     }
 }

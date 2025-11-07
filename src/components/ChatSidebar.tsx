@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import ExerciseConfigTab from "./ExerciseConfigTab";
 
 interface Exercise {
     name: string;
     statement: string;
+    allowed?: boolean;
 }
 
 interface ChatMessage {
@@ -17,7 +19,6 @@ interface ChatSidebarProps {
     modelName: string;
     onClose: () => void;
     isLoadingExercises?: boolean;
-    exercises?: Exercise[];
     pageId?: string;
     onOpenExplanation?: (exerciseName: string) => void;
     onExplanationGenerated?: () => void; // Callback para recargar lista cuando se genera explicación
@@ -29,7 +30,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     modelName,
     onClose,
     isLoadingExercises = false,
-    exercises = [],
     pageId,
     onOpenExplanation,
     onExplanationGenerated,
@@ -38,16 +38,18 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState<string>("");
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
-    const [activeTab, setActiveTab] = useState<"chat" | "explanations">("chat");
+    const [activeTab, setActiveTab] = useState<"chat" | "explanations" | "config">("chat");
     const [exercisesWithExplanations, setExercisesWithExplanations] = useState<string[]>([]);
     const [isLoadingExplanations, setIsLoadingExplanations] = useState(false);
+    const [exercises, setExercises] = useState<Exercise[]>([]);
 
-    // Cargar ejercicios con explicaciones cuando haya pageId y ejercicios
+    // Cargar ejercicios cuando cambie pageId
     React.useEffect(() => {
-        if (pageId && exercises.length > 0) {
+        if (pageId) {
+            loadExercises();
             loadExercisesWithExplanations();
         }
-    }, [pageId, exercises]);
+    }, [pageId]);
 
     const loadExercisesWithExplanations = async () => {
         if (!pageId) return;
@@ -69,9 +71,68 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         }
     };
 
+    const loadExercises = async () => {
+        if (!pageId) return;
+
+        try {
+            // Cargar solo desde storage
+            const resp = await chrome.runtime.sendMessage({ action: "getExerciseData", pageId });
+            if (resp && resp.success && resp.data && Array.isArray(resp.data.exercises)) {
+                // Asegurarse de incluir campo allowed
+                const loaded = resp.data.exercises.map((ex: any) => ({
+                    name: ex.name,
+                    statement: ex.statement,
+                    allowed: ex.allowed ?? true,
+                }));
+                setExercises(loaded);
+            } else {
+                // No hay datos en storage, lista vacía
+                setExercises([]);
+            }
+        } catch (error) {
+            console.error("Error loading exercises:", error);
+            setExercises([]);
+        }
+    };
+
     const handleExplanationClick = (exerciseName: string) => {
         if (onOpenExplanation) {
             onOpenExplanation(exerciseName);
+        }
+    };
+
+    const handleConfigUpdate = async () => {
+        // Recargar ejercicios desde el storage con la configuración actualizada
+        if (pageId) {
+            try {
+                const response = await chrome.runtime.sendMessage({
+                    action: "getExerciseData",
+                    pageId: pageId,
+                });
+
+                if (response.success && response.data) {
+                    setExercises(
+                        response.data.exercises.map((ex: any) => ({
+                            name: ex.name,
+                            statement: ex.statement,
+                            allowed: ex.allowed ?? true,
+                        }))
+                    );
+                }
+            } catch (error) {
+                console.error("Error loading updated exercises:", error);
+            }
+        }
+
+        // Recargar lista de explicaciones
+        await loadExercisesWithExplanations();
+
+        // Limpiar el historial del chat para forzar regeneración con nuevo prompt
+        setMessages([]);
+
+        // Notificar al padre si es necesario
+        if (onExplanationGenerated) {
+            onExplanationGenerated();
         }
     };
 
@@ -203,6 +264,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 )}
                             </button>
                         </li>
+                        <li className="nav-item" role="presentation">
+                            <button
+                                className={`nav-link ${activeTab === "config" ? "active" : ""}`}
+                                onClick={() => setActiveTab("config")}
+                                type="button"
+                                role="tab"
+                            >
+                                Configuración
+                            </button>
+                        </li>
                     </ul>
                 )}
             </div>
@@ -274,7 +345,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             </div>
                         )}
                     </>
-                ) : (
+                ) : activeTab === "explanations" ? (
                     <>
                         {/* Pestaña de explicaciones guardadas */}
                         {isLoadingExplanations ? (
@@ -313,6 +384,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 ))}
                             </div>
                         )}
+                    </>
+                ) : (
+                    <>
+                        {/* Pestaña de configuración */}
+                        <ExerciseConfigTab
+                            exercises={exercises}
+                            pageId={pageId || ""}
+                            onConfigUpdate={handleConfigUpdate}
+                            isActive={activeTab === "config"}
+                        />
                     </>
                 )}
             </div>

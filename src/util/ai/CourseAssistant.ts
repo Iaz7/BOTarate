@@ -17,15 +17,37 @@ class CourseAssistant extends BaseAssistant {
 
         let exerciseContext = '';
         if (exercises && exercises.length > 0) {
+            // Crear lista manteniendo el orden original e indicando estado y un índice explícito
+            // Mostramos tanto el número de posición (1..N) como un índice entre corchetes junto al nombre
+            const exerciseList = exercises.map((ex, index) => {
+                const pos = index + 1;
+                const status = ex.allowed === false ? '[BLOQUEADO]' : '[PERMITIDO]';
+                // Formato: "1. [ÍNDICE:1] Nombre del ejercicio [PERMITIDO]"
+                return `${pos}. [ÍNDICE:${pos}] ${ex.name} ${status}`;
+            }).join('\n');
+
+            const blockedCount = exercises.filter(ex => ex.allowed === false).length;
+            const allowedCount = exercises.length - blockedCount;
+
             exerciseContext = `\n\nEJERCICIOS DISPONIBLES EN ESTA PÁGINA:
-El usuario está actualmente en una página con ${exercises.length} ejercicios. Cuando el usuario solicite la explicación de un ejercicio específico (por ejemplo: "explica el ejercicio 3", "¿cómo se resuelve el segundo ejercicio?", etc.), debes usar la herramienta explainExercise para abrir el modal de explicación del ejercicio correspondiente.
+El usuario está actualmente en una página con ${exercises.length} ejercicios (${allowedCount} permitidos, ${blockedCount} bloqueados). Cuando el usuario solicite la explicación de un ejercicio específico (por ejemplo: "explica el ejercicio 3", "¿cómo se resuelve el segundo ejercicio?", etc.), debes verificar primero si está bloqueado.
 
-Lista de ejercicios disponibles:
-${exercises.map((ex, idx) => `${ex.name}`).join('\n')}
+Lista de ejercicios en orden (cada línea muestra: posición. [ÍNDICE:pos] Nombre DEL EJERCICIO [ESTADO]):
+${exerciseList}
 
-Para identificar los ejercicios, usa los nombres listados arriba. El usuario podrá referirse a ellos por nombre, por número, de forma relativa ("el siguiente al que acabas de resolver"). Ten en cuenta que los ejercicios vienen en el orden que se muestran en la página.
+IMPORTANTE SOBRE EJERCICIOS BLOQUEADOS:
+- Los ejercicios marcados como [BLOQUEADO] NO pueden ser explicados.
+- Si el usuario solicita la explicación de un ejercicio bloqueado, debes informarle que la resolución de ese ejercicio está bloqueada por el profesor para que lo resuelva por su cuenta.
+- Menciona también qué otros ejercicios están bloqueados (si los hay).
+- NO uses la herramienta explainExercise para ejercicios bloqueados.
 
-Cuando el usuario pida ver/explicar un ejercicio, usa la herramienta explainExercise para abrir el modal de explicación.`;
+IMPORTANTE SOBRE REFERENCIAS A EJERCICIOS:
+- El usuario podrá referirse a los ejercicios por su número de posición (ejercicio 1, ejercicio 2, etc.), por nombre, o de forma relativa ("el siguiente", "el anterior").
+- El número de posición (1..${exercises.length}) corresponde al orden listado arriba.
+- Además, justo al lado del nombre incluimos la etiqueta [ÍNDICE:pos] — ESTE ES EL VALOR QUE DEBES PROPORCIONAR cuando el usuario te pida el índice de un ejercicio. Por ejemplo, si la línea es "2. [ÍNDICE:2] Ejercicio X [PERMITIDO]", y el usuario pide "dame el índice del ejercicio X", debes responder "2".
+- Mantén siempre presente el orden de la lista para identificar correctamente los ejercicios.
+
+Cuando el usuario pida ver/explicar un ejercicio PERMITIDO, usa la herramienta explainExercise para abrir el modal de explicación.`;
         }
 
         return `Eres un asistente en una extensión de Chrome cuyo objetivo es ayudar a estudiantes con el contenido de sus cursos en Egela (plataforma educativa de la Universidad del País Vasco).

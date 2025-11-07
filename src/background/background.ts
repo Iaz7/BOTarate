@@ -66,6 +66,12 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleGetExercisesWithExplanations(request, sendResponse);
         case "removeExerciseData":
             return handleRemoveExerciseData(request, sendResponse);
+        case "updateExerciseAllowed":
+            return handleUpdateExerciseAllowed(request, sendResponse);
+        case "getExerciseData":
+            return handleGetExerciseData(request, sendResponse);
+        case "removeBlockedExercisesExplanations":
+            return handleRemoveBlockedExercisesExplanations(request, sendResponse);
         default:
             return false;
     }
@@ -158,7 +164,8 @@ function handleGetExerciseList(request: any, sendResponse: (response?: any) => v
 
                 // Convertir los datos a objetos Exercise
                 const exercises = cachedData.exercises.map(
-                    (ex: { name: string; statement: string }) => new Exercise(ex.name, ex.statement)
+                    (ex: { name: string; statement: string; allowed?: boolean }) =>
+                        new Exercise(ex.name, ex.statement, ex.allowed ?? true)
                 );
 
                 sendResponse({
@@ -205,6 +212,22 @@ function handleGenerateExplanation(request: any, sendResponse: (response?: any) 
 
     (async () => {
         try {
+            // Verificar si el ejercicio está bloqueado antes de generar la explicación
+            if (pageId) {
+                const exerciseData = await ExerciseStorageManager.getExerciseData(pageId);
+                if (exerciseData) {
+                    const exercise = exerciseData.exercises.find(ex => ex.name === exerciseName);
+                    if (exercise?.allowed === false) {
+                        console.log(`Intento de explicar ejercicio bloqueado: ${exerciseName}`);
+                        sendResponse({
+                            success: false,
+                            error: `El ejercicio "${exerciseName}" está bloqueado y no puede ser explicado.`
+                        });
+                        return;
+                    }
+                }
+            }
+
             // Siempre generar nueva explicación (no usar cache)
             const explanation = await sqlTutorAssistant.generateExplanation(
                 exerciseName,
@@ -288,6 +311,69 @@ function handleRemoveExerciseData(request: any, sendResponse: (response?: any) =
             sendResponse({ success: true });
         } catch (error: any) {
             console.error('Error al eliminar datos:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+function handleUpdateExerciseAllowed(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId, exerciseName, allowed } = request;
+
+    (async () => {
+        try {
+            await ExerciseStorageManager.updateExerciseAllowed(pageId, exerciseName, allowed);
+            console.log(`Estado 'allowed' actualizado para ${exerciseName}: ${allowed}`);
+            sendResponse({ success: true });
+        } catch (error: any) {
+            console.error('Error al actualizar estado de ejercicio:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+function handleGetExerciseData(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId } = request;
+
+    (async () => {
+        try {
+            const data = await ExerciseStorageManager.getExerciseData(pageId);
+            if (data) {
+                sendResponse({ success: true, data: data });
+            } else {
+                sendResponse({ success: false, error: 'No hay datos para esta página' });
+            }
+        } catch (error: any) {
+            console.error('Error al obtener datos de ejercicios:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+function handleRemoveBlockedExercisesExplanations(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId, exerciseNames } = request;
+
+    (async () => {
+        try {
+            // Eliminar las explicaciones de los ejercicios bloqueados
+            for (const exerciseName of exerciseNames) {
+                try {
+                    await ExplanationStorageManager.removeExplanation(pageId, exerciseName);
+                    console.log(`Explicación eliminada para ejercicio bloqueado: ${exerciseName}`);
+                } catch (removeError) {
+                    // Es normal que no exista explicación para algunos ejercicios
+                    console.log(`No había explicación guardada para: ${exerciseName}`, removeError);
+                }
+            }
+
+            sendResponse({ success: true });
+        } catch (error: any) {
+            console.error('Error al eliminar explicaciones de ejercicios bloqueados:', error);
             sendResponse({ success: false, error: error.message });
         }
     })();
