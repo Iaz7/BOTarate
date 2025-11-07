@@ -32,7 +32,16 @@ export const ExplanationSchema = z.object({
     steps: z.array(StepSchema).describe("Lista ordenada de pasos para resolver el ejercicio. Cada paso debe ser claro y progresivo.")
 });
 
+/**
+ * Esquema para la evaluación de una solución de ejercicio
+ */
+export const EvaluationSchema = z.object({
+    score: z.number().min(0).max(10).describe("Puntuación de la solución sobre 10 puntos"),
+    feedback: z.string().describe("Comentario detallado sobre la solución en formato Markdown. Debe incluir: qué está bien, qué está mal, sugerencias de mejora y explicación de errores si los hay.")
+});
+
 export type ExerciseSchemaType = z.infer<typeof ExerciseSchema>;
 export type ExerciseListSchemaType = z.infer<typeof ExerciseListSchema>;
 export type StepSchemaType = z.infer<typeof StepSchema>;
 export type ExplanationSchemaType = z.infer<typeof ExplanationSchema>;
+export type EvaluationSchemaType = z.infer<typeof EvaluationSchema>;

@@ -131,4 +131,29 @@ export class ToolFunctions {
 
         return `No se pudo abrir el modal. Asegúrate de estar en la página correcta.`;
     }
+
+    /**
+     * Solicita la resolución de un ejercicio específico por parte del estudiante
+     * Esta función enviará un mensaje al content script para abrir el modal de resolución
+     */
+    static async solveExercise(args: { exerciseIndex: number }): Promise<string> {
+        // Enviar mensaje a todos los tabs activos para abrir el modal
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+
+        if (tabs.length > 0 && tabs[0].id) {
+            try {
+                await chrome.tabs.sendMessage(tabs[0].id, {
+                    action: 'openSolutionModal',
+                    exerciseIndex: args.exerciseIndex
+                });
+
+                return `Abriendo el formulario para que introduzcas tu solución del ejercicio #${args.exerciseIndex + 1}...`;
+            } catch (error) {
+                console.error('[solveExercise] Error enviando mensaje al content script:', error);
+                return `Error al abrir el formulario del ejercicio #${args.exerciseIndex + 1}`;
+            }
+        }
+
+        return `No se pudo abrir el formulario. Asegúrate de estar en la página correcta.`;
+    }
 }

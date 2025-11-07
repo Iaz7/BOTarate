@@ -1,0 +1,226 @@
+import { BaseStorageManager } from "./BaseStorageManager";
+
+/**
+ * Estructura de una evaluación
+ */
+export interface Evaluation {
+    score: number;
+    feedback: string;
+}
+
+/**
+ * Estructura de una evaluación guardada con metadatos
+ */
+export interface SavedEvaluation extends Evaluation {
+    exerciseName: string;
+    solution: string; // La solución enviada por el estudiante
+    timestamp: number; // Momento en que se realizó la evaluación
+}
+
+/**
+ * Estructura de datos de evaluaciones para una página
+ * Mapea el nombre del ejercicio a un array de sus evaluaciones (puede haber múltiples intentos)
+ */
+export interface EvaluationData {
+    pageId: string;
+    evaluations: Record<string, SavedEvaluation[]>; // { "Ejercicio 1": [eval1, eval2, ...], ... }
+}
+
+/**
+ * Gestor de almacenamiento para evaluaciones de ejercicios
+ * Guarda y recupera las evaluaciones generadas por el EvaluationAssistant
+ */
+export class EvaluationStorageManager extends BaseStorageManager {
+    private static readonly STORAGE_KEY_PREFIX = 'evaluation_data_';
+
+    /**
+     * Guarda una nueva evaluación de un ejercicio específico
+     * @param pageId ID de la página
+     * @param exerciseName Nombre del ejercicio
+     * @param solution Solución enviada por el estudiante
+     * @param evaluation Evaluación generada
+     */
+    static async saveEvaluation(
+        pageId: string,
+        exerciseName: string,
+        solution: string,
+        evaluation: Evaluation
+    ): Promise<void> {
+        // Obtener las evaluaciones existentes para esta página
+        const existingData = await this.getEvaluationData(pageId);
+
+        const savedEvaluation: SavedEvaluation = {
+            exerciseName,
+            solution,
+            score: evaluation.score,
+            feedback: evaluation.feedback,
+            timestamp: Date.now()
+        };
+
+        const existingEvaluations = existingData?.evaluations || {};
+        const exerciseEvaluations = existingEvaluations[exerciseName] || [];
+
+        const data: EvaluationData = {
+            pageId,
+            evaluations: {
+                ...existingEvaluations,
+                [exerciseName]: [...exerciseEvaluations, savedEvaluation]
+            }
+        };
+
+        await this.saveData(this.STORAGE_KEY_PREFIX, pageId, data);
+    }
+
+    /**
+     * Recupera todas las evaluaciones de una página
+     * @param pageId ID de la página
+     * @returns Datos de evaluaciones o null si no existen
+     */
+    static async getEvaluationData(pageId: string): Promise<(EvaluationData & { timestamp: number }) | null> {
+        return await this.getData<EvaluationData>(this.STORAGE_KEY_PREFIX, pageId);
+    }
+
+    /**
+     * Recupera todas las evaluaciones de un ejercicio específico
+     * @param pageId ID de la página
+     * @param exerciseName Nombre del ejercicio
+     * @returns Array de evaluaciones o array vacío si no existen
+     */
+    static async getEvaluations(pageId: string, exerciseName: string): Promise<SavedEvaluation[]> {
+        const data = await this.getEvaluationData(pageId);
+        if (!data || !data.evaluations[exerciseName]) {
+            return [];
+        }
+        return data.evaluations[exerciseName];
+    }
+
+    /**
+     * Recupera la última evaluación de un ejercicio específico
+     * @param pageId ID de la página
+     * @param exerciseName Nombre del ejercicio
+     * @returns Última evaluación o null si no existe
+     */
+    static async getLatestEvaluation(pageId: string, exerciseName: string): Promise<SavedEvaluation | null> {
+        const evaluations = await this.getEvaluations(pageId, exerciseName);
+        if (evaluations.length === 0) return null;
+
+        // Devolver la evaluación más reciente (último elemento del array)
+        return evaluations.at(-1) || null;
+    }
+
+    /**
+     * Recupera la mejor evaluación (mayor puntuación) de un ejercicio específico
+     * @param pageId ID de la página
+     * @param exerciseName Nombre del ejercicio
+     * @returns Mejor evaluación o null si no existe
+     */
+    static async getBestEvaluation(pageId: string, exerciseName: string): Promise<SavedEvaluation | null> {
+        const evaluations = await this.getEvaluations(pageId, exerciseName);
+        if (evaluations.length === 0) return null;
+
+        // Encontrar la evaluación con mayor puntuación
+        return evaluations.reduce((best, current) =>
+            current.score > best.score ? current : best, evaluations[0]
+        );
+    }
+
+    /**
+     * Elimina todas las evaluaciones de un ejercicio específico
+     * @param pageId ID de la página
+     * @param exerciseName Nombre del ejercicio
+     */
+    static async removeEvaluations(pageId: string, exerciseName: string): Promise<void> {
+        const data = await this.getEvaluationData(pageId);
+        if (!data) return;
+
+        delete data.evaluations[exerciseName];
+
+        // Si no quedan evaluaciones, eliminar toda la entrada
+        if (Object.keys(data.evaluations).length === 0) {
+            await this.removeEvaluationData(pageId);
+        } else {
+            await this.saveData(this.STORAGE_KEY_PREFIX, pageId, {
+                pageId: data.pageId,
+                evaluations: data.evaluations
+            });
+        }
+    }
+
+    /**
+     * Elimina todas las evaluaciones de una página del storage
+     * @param pageId ID de la página
+     */
+    static async removeEvaluationData(pageId: string): Promise<void> {
+        await this.removeData(this.STORAGE_KEY_PREFIX, pageId);
+    }
+
+    /**
+     * Limpia todas las evaluaciones almacenadas
+     */
+    static async clearAllEvaluationData(): Promise<void> {
+        await this.clearAllData(this.STORAGE_KEY_PREFIX);
+    }
+
+    /**
+     * Verifica si existen evaluaciones para un ejercicio específico
+     * @param pageId ID de la página
+     * @param exerciseName Nombre del ejercicio
+     * @returns true si existen evaluaciones, false en caso contrario
+     */
+    static async hasEvaluations(pageId: string, exerciseName: string): Promise<boolean> {
+        const evaluations = await this.getEvaluations(pageId, exerciseName);
+        return evaluations.length > 0;
+    }
+
+    /**
+     * Verifica si existen datos guardados para una página
+     * @param pageId ID de la página
+     * @returns true si existen datos, false en caso contrario
+     */
+    static async hasEvaluationData(pageId: string): Promise<boolean> {
+        return await this.hasData(this.STORAGE_KEY_PREFIX, pageId);
+    }
+
+    /**
+     * Obtiene la cantidad de días desde que se guardaron las evaluaciones
+     * @param pageId ID de la página
+     * @returns Días transcurridos o null si no hay datos
+     */
+    static async getEvaluationDataAge(pageId: string): Promise<number | null> {
+        return await this.getDaysSinceLastUpdate(this.STORAGE_KEY_PREFIX, pageId);
+    }
+
+    /**
+     * Obtiene la lista de nombres de ejercicios con evaluaciones guardadas
+     * @param pageId ID de la página
+     * @returns Lista de nombres de ejercicios o array vacío si no hay datos
+     */
+    static async getExerciseNamesWithEvaluations(pageId: string): Promise<string[]> {
+        const data = await this.getEvaluationData(pageId);
+        if (!data) return [];
+        return Object.keys(data.evaluations);
+    }
+
+    /**
+     * Obtiene el número total de intentos para un ejercicio específico
+     * @param pageId ID de la página
+     * @param exerciseName Nombre del ejercicio
+     * @returns Número de intentos realizados
+     */
+    static async getAttemptCount(pageId: string, exerciseName: string): Promise<number> {
+        const evaluations = await this.getEvaluations(pageId, exerciseName);
+        return evaluations.length;
+    }
+
+    /**
+     * Verifica si un ejercicio ha sido aprobado (puntuación >= umbral)
+     * @param pageId ID de la página
+     * @param exerciseName Nombre del ejercicio
+     * @param passingScore Puntuación mínima para aprobar (por defecto 5)
+     * @returns true si la mejor evaluación supera el umbral, false en caso contrario
+     */
+    static async isPassed(pageId: string, exerciseName: string, passingScore: number = 5): Promise<boolean> {
+        const bestEvaluation = await this.getBestEvaluation(pageId, exerciseName);
+        return bestEvaluation !== null && bestEvaluation.score >= passingScore;
+    }
+}

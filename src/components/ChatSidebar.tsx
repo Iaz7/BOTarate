@@ -24,6 +24,8 @@ interface ChatSidebarProps {
     courseId?: string; // Añadido para la configuración de laboratorios
     onOpenExplanation?: (exerciseName: string) => void;
     onExplanationGenerated?: () => void; // Callback para recargar lista cuando se genera explicación
+    onOpenEvaluation?: (exerciseName: string) => void;
+    onEvaluationGenerated?: () => void; // Callback para recargar lista cuando se genera evaluación
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -36,14 +38,18 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     courseId,
     onOpenExplanation,
     onExplanationGenerated,
+    onOpenEvaluation,
+    onEvaluationGenerated,
 }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState<string>("");
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
-    const [activeTab, setActiveTab] = useState<"chat" | "explanations" | "config" | "labs">("chat");
+    const [activeTab, setActiveTab] = useState<"chat" | "explanations" | "evaluations" | "config" | "labs">("chat");
     const [exercisesWithExplanations, setExercisesWithExplanations] = useState<string[]>([]);
+    const [exercisesWithEvaluations, setExercisesWithEvaluations] = useState<string[]>([]);
     const [isLoadingExplanations, setIsLoadingExplanations] = useState(false);
+    const [isLoadingEvaluations, setIsLoadingEvaluations] = useState(false);
     const [exercises, setExercises] = useState<Exercise[]>([]);
 
     // Cargar ejercicios cuando cambie pageId
@@ -51,6 +57,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         if (pageId) {
             loadExercises();
             loadExercisesWithExplanations();
+            loadExercisesWithEvaluations();
         }
     }, [pageId]);
 
@@ -71,6 +78,26 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             console.error("Error loading exercises with explanations:", error);
         } finally {
             setIsLoadingExplanations(false);
+        }
+    };
+
+    const loadExercisesWithEvaluations = async () => {
+        if (!pageId) return;
+
+        setIsLoadingEvaluations(true);
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: "getExercisesWithEvaluations",
+                pageId: pageId,
+            });
+
+            if (response.success) {
+                setExercisesWithEvaluations(response.exerciseNames);
+            }
+        } catch (error) {
+            console.error("Error loading exercises with evaluations:", error);
+        } finally {
+            setIsLoadingEvaluations(false);
         }
     };
 
@@ -101,6 +128,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const handleExplanationClick = (exerciseName: string) => {
         if (onOpenExplanation) {
             onOpenExplanation(exerciseName);
+        }
+    };
+
+    const handleEvaluationClick = (exerciseName: string) => {
+        if (onOpenEvaluation) {
+            onOpenEvaluation(exerciseName);
         }
     };
 
@@ -269,6 +302,19 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         </li>
                         <li className="nav-item" role="presentation">
                             <button
+                                className={`nav-link ${activeTab === "evaluations" ? "active" : ""}`}
+                                onClick={() => setActiveTab("evaluations")}
+                                type="button"
+                                role="tab"
+                            >
+                                Evaluaciones guardadas
+                                {exercisesWithEvaluations.length > 0 && (
+                                    <span className="badge bg-success ms-2">{exercisesWithEvaluations.length}</span>
+                                )}
+                            </button>
+                        </li>
+                        <li className="nav-item" role="presentation">
+                            <button
                                 className={`nav-link ${activeTab === "config" ? "active" : ""}`}
                                 onClick={() => setActiveTab("config")}
                                 type="button"
@@ -394,6 +440,46 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                         <div className="d-flex w-100 justify-content-between align-items-center">
                                             <h6 className="mb-0">{exerciseName}</h6>
                                             <span className="badge bg-primary">Ver explicación</span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </>
+                ) : activeTab === "evaluations" ? (
+                    <>
+                        {/* Pestaña de evaluaciones guardadas */}
+                        {isLoadingEvaluations ? (
+                            <div className="card border-primary">
+                                <div className="card-body p-3">
+                                    <div className="d-flex align-items-center">
+                                        <div className="spinner-border spinner-border-sm text-primary me-2">
+                                            <span className="visually-hidden">Cargando...</span>
+                                        </div>
+                                        <span>Cargando evaluaciones...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : exercisesWithEvaluations.length === 0 ? (
+                            <div className="alert alert-info" role="alert">
+                                <strong>No hay evaluaciones guardadas</strong>
+                                <p className="mb-0 mt-2 small">
+                                    Las evaluaciones de tus soluciones se guardarán aquí para que puedas consultar tu
+                                    progreso y revisar el feedback recibido.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="list-group">
+                                {exercisesWithEvaluations.map((exerciseName, index) => (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        className="list-group-item list-group-item-action"
+                                        onClick={() => handleEvaluationClick(exerciseName)}
+                                    >
+                                        <div className="d-flex w-100 justify-content-between align-items-center">
+                                            <h6 className="mb-0">{exerciseName}</h6>
+                                            <span className="badge bg-success">Ver evaluaciones</span>
                                         </div>
                                     </button>
                                 ))}

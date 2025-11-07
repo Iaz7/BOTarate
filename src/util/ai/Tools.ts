@@ -4,7 +4,7 @@ export type { ToolCall, ToolName, ToolResult };
 /**
  * Nombres de las herramientas disponibles para el LLM
  */
-type ToolName = 'getSectionContent' | 'getPageContent' | 'getResourceContent' | 'explainExercise';
+type ToolName = 'getSectionContent' | 'getPageContent' | 'getResourceContent' | 'explainExercise' | 'solveExercise';
 
 /**
  * Estructura de una llamada a herramienta del LLM
@@ -98,6 +98,24 @@ const TOOLS = [
                     exerciseIndex: {
                         type: 'number',
                         description: 'El índice del ejercicio en la lista de ejercicios disponibles (comenzando desde 0). Por ejemplo, si el usuario pide "explica el ejercicio 1", el índice sería 0.'
+                    }
+                },
+                required: ['exerciseIndex'],
+                additionalProperties: false
+            }
+        }
+    },
+    {
+        type: 'function',
+        function: {
+            name: 'solveExercise',
+            description: 'Inicia el proceso de resolución de un ejercicio por parte del estudiante. Esta herramienta abrirá el modal de resolución donde el estudiante puede introducir su solución SQL para ser evaluada. Usa esta herramienta cuando el usuario indique que quiere resolver, intentar, o enviar su solución para un ejercicio.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    exerciseIndex: {
+                        type: 'number',
+                        description: 'El índice del ejercicio en la lista de ejercicios disponibles (comenzando desde 0). Por ejemplo, si el usuario dice "quiero resolver el ejercicio 1", el índice sería 0.'
                     }
                 },
                 required: ['exerciseIndex'],

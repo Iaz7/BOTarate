@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import ChatSidebar from "../components/ChatSidebar";
+import EvaluationListModal from "../components/EvaluationListModal";
 import ExerciseModal from "../components/ExerciseModal";
 import LoadingMessage from "../components/LoadingMessage";
 import NoExercisesMessage from "../components/NoExercisesMessage";
+import SolutionModal from "../components/SolutionModal";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
 // @ts-ignore: allow importing CSS as a side-effect in this content script
@@ -31,11 +33,15 @@ const ExtensionContent: React.FC = () => {
     const [sqlInstructions, setSqlInstructions] = useState<string[] | undefined>(undefined);
     const [learningObjectives, setLearningObjectives] = useState<string | undefined>(undefined);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [isSolutionModalOpen, setIsSolutionModalOpen] = useState<boolean>(false);
+    const [isEvaluationListModalOpen, setIsEvaluationListModalOpen] = useState<boolean>(false);
     const [selectedExerciseIndex, setSelectedExerciseIndex] = useState<number>(0);
+    const [selectedEvaluationExerciseName, setSelectedEvaluationExerciseName] = useState<string>("");
     const [currentPageId, setCurrentPageId] = useState<string | null>(null);
     const [isLoadingExercises, setIsLoadingExercises] = useState<boolean>(false);
     const [modalLoadFromCache, setModalLoadFromCache] = useState<boolean>(false);
     const [reloadExplanationsKey, setReloadExplanationsKey] = useState<number>(0);
+    const [reloadEvaluationsKey, setReloadEvaluationsKey] = useState<number>(0);
 
     useEffect(() => {
         const waitForSessionStorage = (timeoutMs: number = 5000, intervalMs: number = 200) => {
@@ -138,6 +144,10 @@ const ExtensionContent: React.FC = () => {
                 console.log("[content] Recibido mensaje para abrir modal del ejercicio:", message.exerciseIndex);
                 handleOpenExerciseModal(message.exerciseIndex);
             }
+            if (message.action === "openSolutionModal") {
+                console.log("[content] Recibido mensaje para abrir modal de solución:", message.exerciseIndex);
+                handleOpenSolutionModal(message.exerciseIndex);
+            }
         };
 
         chrome.runtime.onMessage.addListener(messageListener);
@@ -220,10 +230,19 @@ const ExtensionContent: React.FC = () => {
         setIsModalOpen(false);
     };
 
+    const handleCloseSolutionModal = () => {
+        setIsSolutionModalOpen(false);
+    };
+
     const handleOpenExerciseModal = (exerciseIndex: number, fromCache: boolean = false) => {
         setSelectedExerciseIndex(exerciseIndex);
         setModalLoadFromCache(fromCache);
         setIsModalOpen(true);
+    };
+
+    const handleOpenSolutionModal = (exerciseIndex: number) => {
+        setSelectedExerciseIndex(exerciseIndex);
+        setIsSolutionModalOpen(true);
     };
 
     const handleOpenExplanationFromCache = async (exerciseName: string) => {
@@ -241,6 +260,20 @@ const ExtensionContent: React.FC = () => {
     const handleExplanationGenerated = () => {
         // Incrementar el trigger para forzar recarga en ChatSidebar
         setReloadExplanationsKey(prev => prev + 1);
+    };
+
+    const handleOpenEvaluationList = (exerciseName: string) => {
+        setSelectedEvaluationExerciseName(exerciseName);
+        setIsEvaluationListModalOpen(true);
+    };
+
+    const handleCloseEvaluationListModal = () => {
+        setIsEvaluationListModalOpen(false);
+    };
+
+    const handleEvaluationGenerated = () => {
+        // Incrementar el trigger para forzar recarga en ChatSidebar
+        setReloadEvaluationsKey(prev => prev + 1);
     };
 
     // No mostrar nada si está oculto o si no hay curso
@@ -267,7 +300,9 @@ const ExtensionContent: React.FC = () => {
                     pageId={currentPageId || undefined}
                     onOpenExplanation={handleOpenExplanationFromCache}
                     onExplanationGenerated={handleExplanationGenerated}
-                    key={reloadExplanationsKey} // Re-renderizar cuando cambie el trigger
+                    onOpenEvaluation={handleOpenEvaluationList}
+                    onEvaluationGenerated={handleEvaluationGenerated}
+                    key={`${reloadExplanationsKey}-${reloadEvaluationsKey}`} // Re-renderizar cuando cambie cualquier trigger
                 />
             )}
 
@@ -283,6 +318,30 @@ const ExtensionContent: React.FC = () => {
                     pageId={currentPageId || undefined}
                     loadFromCache={modalLoadFromCache}
                     onExplanationGenerated={handleExplanationGenerated}
+                />
+            )}
+
+            {/* El modal de solución se muestra cuando el estudiante quiere resolver un ejercicio */}
+            {isSolutionModalOpen && exercises.length > 0 && (
+                <SolutionModal
+                    exercise={exercises[selectedExerciseIndex]}
+                    dbSchema={dbSchema}
+                    sqlInstructions={sqlInstructions}
+                    learningObjectives={learningObjectives}
+                    isOpen={isSolutionModalOpen}
+                    onClose={handleCloseSolutionModal}
+                    pageId={currentPageId || undefined}
+                    onEvaluationGenerated={handleEvaluationGenerated}
+                />
+            )}
+
+            {/* El modal de lista de evaluaciones muestra el historial de evaluaciones de un ejercicio */}
+            {isEvaluationListModalOpen && (
+                <EvaluationListModal
+                    exerciseName={selectedEvaluationExerciseName}
+                    isOpen={isEvaluationListModalOpen}
+                    onClose={handleCloseEvaluationListModal}
+                    pageId={currentPageId || undefined}
                 />
             )}
         </>

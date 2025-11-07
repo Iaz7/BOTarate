@@ -1,12 +1,14 @@
 /// <reference types="chrome"/>
 
 import { CourseAssistant } from "../util/ai/CourseAssistant";
+import { EvaluationAssistant } from "../util/ai/EvaluationAssistant";
 import { ExerciseAssistant } from "../util/ai/ExerciseAssistant";
 import { OpenAIService } from "../util/ai/OpenAIService";
 import { SqlTutorAssistant } from "../util/ai/SqlTutorAssistant";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
 import { Exercise } from "../util/egela/Exercise";
+import { EvaluationStorageManager } from "../util/storage/EvaluationStorageManager";
 import { ExerciseStorageManager } from "../util/storage/ExerciseStorageManager";
 import { ExplanationStorageManager } from "../util/storage/ExplanationStorageManager";
 import { Lab, LabStorageManager } from "../util/storage/LabStorageManager";
@@ -16,6 +18,7 @@ let isConfigLoaded = false;
 const courseAssistant: CourseAssistant = new CourseAssistant();
 const exerciseAssistant: ExerciseAssistant = new ExerciseAssistant();
 const sqlTutorAssistant: SqlTutorAssistant = new SqlTutorAssistant();
+const evaluationAssistant: EvaluationAssistant = new EvaluationAssistant();
 
 (async () => {
     try {
@@ -77,6 +80,12 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleGetLabData(request, sendResponse);
         case "updateLabRequired":
             return handleUpdateLabRequired(request, sendResponse);
+        case "evaluateSolution":
+            return handleEvaluateSolution(request, sendResponse);
+        case "getExercisesWithEvaluations":
+            return handleGetExercisesWithEvaluations(request, sendResponse);
+        case "getEvaluations":
+            return handleGetEvaluations(request, sendResponse);
         default:
             return false;
     }
@@ -118,6 +127,7 @@ function handleGetCourseData(request: any, sendResponse: (response?: any) => voi
                 courseAssistant.setCourse(course);
                 exerciseAssistant.setCourse(course);
                 sqlTutorAssistant.setCourse(course);
+                evaluationAssistant.setCourse(course);
 
                 // Extraer y guardar laboratorios si no existen ya en el storage
                 await initializeLabDataIfNeeded(course);
@@ -452,6 +462,88 @@ function handleUpdateLabRequired(request: any, sendResponse: (response?: any) =>
             sendResponse({ success: true });
         } catch (error: any) {
             console.error('Error al actualizar estado de laboratorio:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+function handleEvaluateSolution(request: any, sendResponse: (response?: any) => void): boolean {
+    const { exerciseName, exerciseStatement, studentSolution, db_schema, sql_instructions, learning_objectives, pageId } = request;
+
+    console.log(`Evaluando solución para ejercicio: ${exerciseName}`);
+
+    (async () => {
+        try {
+            const evaluation = await evaluationAssistant.evaluateSolution(
+                exerciseName,
+                exerciseStatement,
+                studentSolution,
+                db_schema,
+                sql_instructions,
+                learning_objectives
+            );
+
+            console.log(`Solución evaluada con puntuación: ${evaluation.score}/10`);
+
+            // Guardar la evaluación en el storage si se proporciona pageId
+            if (pageId) {
+                await EvaluationStorageManager.saveEvaluation(
+                    pageId,
+                    exerciseName,
+                    studentSolution,
+                    evaluation
+                );
+                console.log(`Evaluación guardada en storage para: ${exerciseName}`);
+            }
+
+            sendResponse({ success: true, evaluation: evaluation });
+        } catch (error: any) {
+            console.error('Error en evaluateSolution:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+function handleGetExercisesWithEvaluations(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId } = request;
+
+    console.log(`Obteniendo lista de ejercicios con evaluaciones para: ${pageId}`);
+
+    (async () => {
+        try {
+            const exerciseNames = await EvaluationStorageManager.getExerciseNamesWithEvaluations(pageId);
+            console.log(`Encontrados ${exerciseNames.length} ejercicios con evaluaciones`);
+            sendResponse({ success: true, exerciseNames: exerciseNames });
+        } catch (error: any) {
+            console.error('Error al obtener ejercicios con evaluaciones:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+function handleGetEvaluations(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId, exerciseName } = request;
+
+    console.log(`Recuperando evaluaciones para: ${exerciseName}`);
+
+    (async () => {
+        try {
+            const evaluations = await EvaluationStorageManager.getEvaluations(pageId, exerciseName);
+
+            if (evaluations.length > 0) {
+                console.log(`Recuperadas ${evaluations.length} evaluaciones para: ${exerciseName}`);
+                sendResponse({ success: true, evaluations: evaluations });
+            } else {
+                sendResponse({ success: false, error: 'No hay evaluaciones guardadas para este ejercicio' });
+            }
+        } catch (error: any) {
+            console.error('Error al recuperar evaluaciones:', error);
             sendResponse({ success: false, error: error.message });
         }
     })();
