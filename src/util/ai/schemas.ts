@@ -22,7 +22,7 @@ export const ExerciseListSchema = z.object({
  * Esquema para un paso de explicación
  */
 export const StepSchema = z.object({
-    explanation: z.string().describe("Explicación detallada del paso en formato Markdown. Puede incluir tablas, código SQL, listas, etc.")
+    explanation: z.string().describe("Explicación detallada del paso en formato Markdown. Cada paso se corresponde a un subproblema/paso de refinamiento sucesivo. Puede incluir tablas, código SQL, listas, etc.")
 });
 
 /**
