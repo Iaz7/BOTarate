@@ -74,8 +74,8 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleUpdateExerciseAllowed(request, sendResponse);
         case "getExerciseData":
             return handleGetExerciseData(request, sendResponse);
-        case "removeBlockedExercisesExplanations":
-            return handleRemoveBlockedExercisesExplanations(request, sendResponse);
+        case "removeChallengeExercisesExplanations":
+            return handleRemoveChallengeExercisesExplanations(request, sendResponse);
         case "getLabData":
             return handleGetLabData(request, sendResponse);
         case "updateLabRequired":
@@ -406,16 +406,16 @@ function handleGetExerciseData(request: any, sendResponse: (response?: any) => v
     return true;
 }
 
-function handleRemoveBlockedExercisesExplanations(request: any, sendResponse: (response?: any) => void): boolean {
+function handleRemoveChallengeExercisesExplanations(request: any, sendResponse: (response?: any) => void): boolean {
     const { pageId, exerciseNames } = request;
 
     (async () => {
         try {
-            // Eliminar las explicaciones de los ejercicios bloqueados
+            // Eliminar las explicaciones de los ejercicios de reto
             for (const exerciseName of exerciseNames) {
                 try {
                     await ExplanationStorageManager.removeExplanation(pageId, exerciseName);
-                    console.log(`Explicación eliminada para ejercicio bloqueado: ${exerciseName}`);
+                    console.log(`Explicación eliminada para ejercicio de reto: ${exerciseName}`);
                 } catch (removeError) {
                     // Es normal que no exista explicación para algunos ejercicios
                     console.log(`No había explicación guardada para: ${exerciseName}`, removeError);
@@ -424,7 +424,7 @@ function handleRemoveBlockedExercisesExplanations(request: any, sendResponse: (r
 
             sendResponse({ success: true });
         } catch (error: any) {
-            console.error('Error al eliminar explicaciones de ejercicios bloqueados:', error);
+            console.error('Error al eliminar explicaciones de ejercicios de reto:', error);
             sendResponse({ success: false, error: error.message });
         }
     })();

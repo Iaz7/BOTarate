@@ -96,16 +96,16 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                 });
             }
 
-            // Eliminar explicaciones de ejercicios bloqueados
-            const blockedExercises = Array.from(pendingChanges.entries())
+            // Eliminar explicaciones de ejercicios de reto
+            const challengeExercises = Array.from(pendingChanges.entries())
                 .filter(([_, allowed]) => !allowed)
                 .map(([name]) => name);
 
-            if (blockedExercises.length > 0) {
+            if (challengeExercises.length > 0) {
                 await chrome.runtime.sendMessage({
-                    action: "removeBlockedExercisesExplanations",
+                    action: "removeChallengeExercisesExplanations",
                     pageId: pageId,
-                    exerciseNames: blockedExercises,
+                    exerciseNames: challengeExercises,
                 });
             }
 
@@ -132,7 +132,7 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
             <div className="alert alert-info" role="alert">
                 <strong>No hay ejercicios disponibles</strong>
                 <p className="mb-0 mt-2 small">
-                    Cuando se detecten ejercicios en la página, podrás configurar cuáles están permitidos para explicar.
+                    Cuando se detecten ejercicios en la página, podrás configurar cuáles son ejercicios de reto.
                 </p>
             </div>
         );
@@ -143,8 +143,8 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
             <div className="alert alert-info small mb-3" role="alert">
                 <strong>Configuración de ejercicios</strong>
                 <p className="mb-0 mt-1">
-                    Controla qué ejercicios pueden ser explicados por el asistente. Los ejercicios bloqueados no podrán
-                    ser resueltos mediante la IA.
+                    Marca los ejercicios que son de reto. Los ejercicios de reto no podrán ser explicados ni resueltos
+                    mediante la IA, pero sí evaluados cuando el estudiante envíe su solución.
                 </p>
             </div>
 
@@ -156,20 +156,21 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                                 Nombre del ejercicio
                             </th>
                             <th scope="col" className="text-center" style={{ width: "30%" }}>
-                                Permitir explicar
+                                Es reto
                             </th>
                         </tr>
                     </thead>
                     <tbody>
                         {exercises.map(exercise => {
                             const isAllowed = exerciseConfig.get(exercise.name) ?? true;
+                            const isChallenge = !isAllowed; // Invertir la lógica para mostrar
                             return (
                                 <tr key={exercise.name}>
                                     <td>
                                         <div className="d-flex align-items-center">
                                             <span>{exercise.name}</span>
-                                            {!isAllowed && (
-                                                <span className="badge bg-warning text-dark ms-2">Bloqueado</span>
+                                            {isChallenge && (
+                                                <span className="badge bg-warning text-dark ms-2">Reto</span>
                                             )}
                                         </div>
                                     </td>
@@ -180,7 +181,7 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                                                 type="checkbox"
                                                 role="switch"
                                                 id={`switch-${exercise.name}`}
-                                                checked={isAllowed}
+                                                checked={isChallenge}
                                                 onChange={() => handleToggle(exercise.name)}
                                                 disabled={isSaving}
                                                 style={{ cursor: "pointer" }}
@@ -189,7 +190,7 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                                                 className="form-check-label visually-hidden"
                                                 htmlFor={`switch-${exercise.name}`}
                                             >
-                                                {isAllowed ? "Permitido" : "Bloqueado"}
+                                                {isChallenge ? "Es reto" : "No es reto"}
                                             </label>
                                         </div>
                                     </td>
@@ -233,7 +234,7 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                     <output className="spinner-border spinner-border-sm me-2">
                         <span className="visually-hidden">Guardando...</span>
                     </output>
-                    Aplicando configuración y eliminando explicaciones de ejercicios bloqueados...
+                    Aplicando configuración y eliminando explicaciones de ejercicios de reto...
                 </div>
             )}
         </div>
