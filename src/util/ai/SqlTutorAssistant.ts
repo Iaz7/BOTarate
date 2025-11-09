@@ -1,5 +1,4 @@
 import { BaseAssistant } from "./BaseAssistant";
-import { OpenAIService } from "./OpenAIService";
 import { ExplanationSchema, ExplanationSchemaType } from "./schemas";
 
 export { SqlTutorAssistant };
@@ -95,10 +94,10 @@ Antes de generar la explicación, considera consultar el material de teoría del
 
         try {
             // Reiniciar historial para esta llamada específica
-            OpenAIService.resetConversation();
+            this.openAIService.resetConversation();
             
             // Usar la nueva función que permite tools con respuestas estructuradas
-            const response = await OpenAIService.generateStructuredResponse(
+            const response = await this.openAIService.generateStructuredResponse(
                 ExplanationSchema,
                 "explanation",
                 userPrompt,

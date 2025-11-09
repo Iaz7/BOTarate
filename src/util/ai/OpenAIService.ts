@@ -2,13 +2,11 @@ import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
 
-export { OpenAIService };
+import { AIProvider, ConfigManager } from "../config/ConfigManager";
+import type { ToolCall } from "./Tools";
+import { TOOLS } from "./Tools";
 
-    import { AIProvider, ConfigManager } from "../config/ConfigManager";
-    import type { ToolCall } from "./Tools";
-    import { TOOLS } from "./Tools";
-
-interface Message {
+export interface Message {
     role: 'system' | 'user' | 'assistant' | 'tool';
     content: string | null | Array<{
         type: 'text' | 'image_url';
@@ -23,15 +21,18 @@ interface Message {
     name?: string;
 }
 
+export { OpenAIService };
+
 class OpenAIService {
 
-    static openai: OpenAI = new OpenAI({
+    // Static configuration shared across all instances
+    private static openai: OpenAI = new OpenAI({
         apiKey: ConfigManager.getSelectedProvider().key,
         baseURL: ConfigManager.getSelectedProvider().baseUrl,
         dangerouslyAllowBrowser: true
     });
 
-    static conversationHistory: Message[] = [];
+    private conversationHistory: Message[] = [];
 
     static loadProviderConfig(): void {
         this.openai.apiKey = ConfigManager.getSelectedProvider().key;
@@ -58,11 +59,19 @@ class OpenAIService {
         return modelList;
     }
 
-    static resetConversation(): void {
+    resetConversation(): void {
         this.conversationHistory = [];
     }
 
-    static async processResponseWithTools(
+    getConversationHistory(): Message[] {
+        return this.conversationHistory;
+    }
+
+    setConversationHistory(messages: Message[]): void {
+        this.conversationHistory = messages;
+    }
+
+    async processResponseWithTools(
         toolExecutor: (name: string, args: any) => Promise<string | { type: 'file'; data: any }>,
         userMessage?: string,
         systemPrompt?: string
@@ -86,12 +95,10 @@ class OpenAIService {
         return this.processResponseWithTools(toolExecutor);
     }
 
-    private static async generateResponseWithTools(
+    private async generateResponseWithTools(
         userMessage?: string,
         systemPrompt?: string
     ): Promise<{ type: 'message'; content: string } | { type: 'tool_calls'; calls: ToolCall[] }> {
-        this.loadProviderConfig();
-
         // Agregar mensaje del sistema si se proporciona y el historial está vacío
         if (systemPrompt && this.conversationHistory.length === 0) {
             this.conversationHistory.push({
@@ -108,7 +115,7 @@ class OpenAIService {
             });
         }
 
-        const response = await this.openai.chat.completions.create({
+        const response = await OpenAIService.openai.chat.completions.create({
             model: ConfigManager.getSelectedModel(),
             messages: this.conversationHistory as any,
             tools: TOOLS as any,
@@ -145,25 +152,25 @@ class OpenAIService {
         };
     }
 
-    static async executeToolCall(toolCall: ToolCall, toolExecutor: (name: string, args: any) => Promise<string | { type: 'file'; data: any }>): Promise<void> {
+    async executeToolCall(toolCall: ToolCall, toolExecutor: (name: string, args: any) => Promise<string | { type: 'file'; data: any }>): Promise<void> {
         console.log(`Ejecutando tool: ${toolCall.function.name}`);
-        
+
         try {
             const args = JSON.parse(toolCall.function.arguments);
             const toolResult = await toolExecutor(toolCall.function.name, args);
 
-            console.log(`Resultado de ${toolCall.function.name}:`, 
+            console.log(`Resultado de ${toolCall.function.name}:`,
                 typeof toolResult === 'string' ? toolResult : '[Archivo]');
 
             // Agregar resultado al historial
             if (typeof toolResult === 'object' && toolResult.type === 'file') {
                 // Para archivos (PDFs/imágenes), agregar el resultado del tool y luego el archivo como mensaje de usuario
                 this.addToolResult(
-                    toolCall.id, 
-                    toolCall.function.name, 
+                    toolCall.id,
+                    toolCall.function.name,
                     `Archivo adjuntado: ${toolResult.data.filename} (${toolResult.data.mimeType}, ${(toolResult.data.size / 1024).toFixed(2)} KB)`
                 );
-                
+
                 // Agregar el archivo como un mensaje multimodal del usuario
                 this.addFileMessage(
                     toolResult.data.filename,
@@ -184,15 +191,13 @@ class OpenAIService {
     }
 
 
-    static async generateStructuredResponse<T extends z.ZodTypeAny>(
+    async generateStructuredResponse<T extends z.ZodTypeAny>(
         schema: T,
         schemaName: string,
         userMessage: string,
         systemPrompt: string,
         files?: Array<{ filename: string; mimeType?: string; dataUrl?: string; text?: string; url?: string }>
     ): Promise<z.infer<T>> {
-        this.loadProviderConfig();
-
         console.log(`[generateStructuredResponse] Generando respuesta estructurada: ${schemaName}`);
 
         // Si hay system prompt, añadirlo
@@ -200,7 +205,7 @@ class OpenAIService {
         if (systemPrompt.length > 0) {
             this.conversationHistory.push({ role: 'system', content: systemPrompt });
         }
-        
+
         this.conversationHistory.push({ role: 'user', content: userMessage });
 
         // Si hay archivos adjuntos, añadirlos al historial
@@ -211,7 +216,7 @@ class OpenAIService {
         }
 
         // Usar la API nativa de OpenAI para respuestas estructuradas
-        const completion = await this.openai.chat.completions.parse({
+        const completion = await OpenAIService.openai.chat.completions.parse({
             model: ConfigManager.getSelectedModel(),
             messages: this.conversationHistory as any,
             // Cast to any to avoid deep/infinite type instantiation from zodResponseFormat
@@ -226,7 +231,7 @@ class OpenAIService {
         }
 
         console.log(`[generateStructuredResponse] Respuesta estructurada recibida exitosamente`);
-        
+
         // Agregar la respuesta del asistente al historial
         this.conversationHistory.push({
             role: 'assistant',
@@ -237,7 +242,7 @@ class OpenAIService {
         return parsed;
     }
 
-    static addToolResult(toolCallId: string, toolName: string, result: string): void {
+    addToolResult(toolCallId: string, toolName: string, result: string): void {
         this.conversationHistory.push({
             role: 'tool',
             tool_call_id: toolCallId,
@@ -251,7 +256,7 @@ class OpenAIService {
      * Si se proporciona dataUrl se envía como image_url; si se proporciona textContent
      * se envía como texto (útil para ficheros SQL/Markdown/texto).
      */
-    private static addFileMessage(filename: string, dataUrl?: string, mimeType?: string, textContent?: string): void {
+    private addFileMessage(filename: string, dataUrl?: string, mimeType?: string, textContent?: string): void {
         const isPdf = mimeType === 'application/pdf';
 
         if (textContent) {

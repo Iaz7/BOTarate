@@ -1,7 +1,6 @@
 import { Exercise } from "../egela/Exercise";
 import { ExerciseStorageManager } from "../storage/ExerciseStorageManager";
 import { BaseAssistant } from "./BaseAssistant";
-import { OpenAIService } from "./OpenAIService";
 import { ExerciseListSchema } from "./schemas";
 
 export { ExerciseAssistant };
@@ -124,12 +123,12 @@ ${pageContent}`;
 
             // 4. FASE 1: Generar respuesta con tools (permitir al LLM consultar recursos)
             // NO resetear la conversación para mantener el historial entre fases
-            OpenAIService.resetConversation();
+            this.openAIService.resetConversation();
             console.log(`[identifyExercises] FASE 1: Iniciando recopilación de información con tools`);
 
             // Permitir que el LLM use tools para consultar recursos adicionales
             // Los archivos adjuntos se pasan aquí para que el LLM pueda ver el contenido de la página
-            await OpenAIService.processResponseWithTools(
+            await this.openAIService.processResponseWithTools(
                 (name, args) => this.executeToolCall(name, args),
                 userPromptPhase1,
                 systemPrompt,
@@ -150,7 +149,7 @@ Basándote en toda la información que has recopilado en la fase anterior, gener
             console.log(`[identifyExercises] FASE 2: Generando respuesta estructurada`);
 
             // NO pasar systemPrompt aquí porque ya está en el historial
-            const response = await OpenAIService.generateStructuredResponse(
+            const response = await this.openAIService.generateStructuredResponse(
                 ExerciseListSchema,
                 "exercise_list",
                 userPromptPhase2,

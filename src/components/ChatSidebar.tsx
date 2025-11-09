@@ -91,6 +91,35 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         }
     }, [pageId]);
 
+    // Cargar historial del chat al inicio
+    React.useEffect(() => {
+        const loadChatHistory = async () => {
+            try {
+                const response: any = await chrome.runtime.sendMessage({ action: "loadChatHistory" });
+
+                if (response && response.success && Array.isArray(response.messages)) {
+                    // Mapear los mensajes almacenados al formato de la UI
+                    const uiMessages: ChatMessage[] = response.messages
+                        .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+                        .map((m: any, idx: number) => ({
+                            role: m.role as "user" | "assistant",
+                            content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content),
+                            id: `${m.role}-${Date.now()}-${idx}`,
+                        }));
+
+                    setMessages(uiMessages);
+                    console.log(`[ChatSidebar] Historial de chat cargado: ${uiMessages.length} mensajes`);
+                } else {
+                    console.log("[ChatSidebar] No hay historial de chat en background");
+                }
+            } catch (error) {
+                console.error("[ChatSidebar] Error cargando historial de chat:", error);
+            }
+        };
+
+        loadChatHistory();
+    }, []);
+
     const loadExercisesWithExplanations = async () => {
         if (!pageId) return;
 
@@ -219,7 +248,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             const response = await chrome.runtime.sendMessage({
                 action: "generateResponse",
                 userMessage: inputValue,
-                resetHistory: messages.length === 0,
+                resetHistory: false, // Nunca resetear automáticamente, se hace manualmente con el botón
                 exercises: exercises.length > 0 ? exercises : undefined,
             });
 
@@ -240,6 +269,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsGenerating(false);
+        }
+    };
+
+    const handleResetChat = async () => {
+        try {
+            await chrome.runtime.sendMessage({ action: "resetChatHistory" });
+            setMessages([]);
+            console.log("[ChatSidebar] Chat reiniciado");
+        } catch (error) {
+            console.error("[ChatSidebar] Error reiniciando chat:", error);
         }
     };
 
@@ -620,8 +659,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         Enviar
                     </button>
                 </div>
-                <button onClick={onClose} className="btn btn-outline-danger btn-sm w-100 mt-2">
-                    Cerrar extensión
+                <button
+                    onClick={handleResetChat}
+                    className="btn btn-outline-warning btn-sm w-100 mt-2"
+                    title="Reiniciar conversación"
+                >
+                    🔄 Reiniciar chat
                 </button>
             </div>
         </div>

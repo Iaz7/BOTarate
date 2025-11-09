@@ -1,5 +1,4 @@
 import { BaseAssistant } from "./BaseAssistant";
-import { OpenAIService } from "./OpenAIService";
 import { EvaluationSchema, EvaluationSchemaType } from "./schemas";
 
 export { EvaluationAssistant };
@@ -105,10 +104,10 @@ Proporciona una evaluación completa con puntuación y feedback detallado.`;
 
         try {
             // Reiniciar historial para esta llamada específica
-            OpenAIService.resetConversation();
+            this.openAIService.resetConversation();
 
             // Usar la función que permite respuestas estructuradas
-            const response = await OpenAIService.generateStructuredResponse(
+            const response = await this.openAIService.generateStructuredResponse(
                 EvaluationSchema,
                 "evaluation",
                 userPrompt,

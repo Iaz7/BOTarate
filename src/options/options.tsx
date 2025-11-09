@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import '../content/bootstrap.css';
+import React, { useEffect, useState } from "react";
+import "../content/bootstrap.css";
+import { OpenAIService } from "../util/ai/OpenAIService";
 
-import { ConfigManager } from '../util/config/ConfigManager';
-import { OpenAIService } from '../util/ai/OpenAIService';
+import { ConfigManager } from "../util/config/ConfigManager";
 
 const Options: React.FC = () => {
     const [selectedProvider, setSelectedProvider] = useState<number>(0);
     const [modelList, setModelList] = useState<string[]>([]);
     const [modelListEnabled, setModelListEnabled] = useState<boolean>(false);
-    const [selectedModel, setSelectedModel] = useState<string>('');
-    const [apiKey, setApiKey] = useState<string>('');
-    const [saveMessage, setSaveMessage] = useState<string>('');
+    const [selectedModel, setSelectedModel] = useState<string>("");
+    const [apiKey, setApiKey] = useState<string>("");
+    const [saveMessage, setSaveMessage] = useState<string>("");
     const [isConfigLoaded, setIsConfigLoaded] = useState<boolean>(false);
 
     const loadModelList = (providerIndex: number, modelToPreselect?: string) => {
@@ -19,19 +19,20 @@ const Options: React.FC = () => {
                 const cleanList = list.map(m => m.replace("models/", ""));
                 setModelList(cleanList);
 
-                const cleanModelToPreselect = modelToPreselect?.replace("models/", "") || '';
+                const cleanModelToPreselect = modelToPreselect?.replace("models/", "") || "";
                 const compatibleModels = cleanList.filter(m => ConfigManager.COMPATIBLE_MODELS.includes(m));
 
-                const modelToSelect = cleanModelToPreselect && compatibleModels.includes(cleanModelToPreselect)
-                    ? cleanModelToPreselect
-                    : compatibleModels[0] || '';
+                const modelToSelect =
+                    cleanModelToPreselect && compatibleModels.includes(cleanModelToPreselect)
+                        ? cleanModelToPreselect
+                        : compatibleModels[0] || "";
 
                 setSelectedModel(modelToSelect);
                 setModelListEnabled(true);
             })
-            .catch((e) => {
+            .catch(e => {
                 console.error("Error al cargar lista de modelos:", e);
-                setModelList(['Set API key first']);
+                setModelList(["Set API key first"]);
                 setModelListEnabled(false);
             });
     };
@@ -45,7 +46,7 @@ const Options: React.FC = () => {
             const currentProvider = ConfigManager.getSelectedProvider();
             const providerIndex = ConfigManager.getProviderList().indexOf(currentProvider.name);
             setSelectedProvider(Math.max(providerIndex, 0));
-            setApiKey(currentProvider.key || '');
+            setApiKey(currentProvider.key || "");
 
             // Obtener el modelo seleccionado guardado
             const savedModel = ConfigManager.getSelectedModel();
@@ -62,8 +63,7 @@ const Options: React.FC = () => {
     const handleProviderChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const providerIndex = Number.parseInt(event.target.value);
         setSelectedProvider(providerIndex);
-        setApiKey(ConfigManager.getProvider(providerIndex).key || '');
-        OpenAIService.loadProviderConfig();
+        setApiKey(ConfigManager.getProvider(providerIndex).key || "");
         loadModelList(providerIndex);
     };
 
@@ -81,25 +81,31 @@ const Options: React.FC = () => {
             console.log("Selected model" + selectedModel);
 
             // Enviar la configuración actualizada al background script
-            chrome.runtime.sendMessage({
-                action: "updateConfig",
-                config: {
-                    providerKeys: ConfigManager.getProviderList().map((_, index) =>
-                        ConfigManager.getProvider(index).key
-                    ),
-                    selectedProvider: selectedProvider,
-                    selectedModel: selectedModel
-                }
-            }).catch(error => {
-                console.error('Error enviando configuración al background:', error);
-            });
+            // El background script se encargará de llamar a OpenAIService.loadProviderConfig()
+            chrome.runtime
+                .sendMessage({
+                    action: "updateConfig",
+                    config: {
+                        providerKeys: ConfigManager.getProviderList().map(
+                            (_, index) => ConfigManager.getProvider(index).key
+                        ),
+                        selectedProvider: selectedProvider,
+                        selectedModel: selectedModel,
+                    },
+                })
+                .catch(error => {
+                    console.error("Error enviando configuración al background:", error);
+                });
 
-            OpenAIService.loadProviderConfig();
-            setSaveMessage('Configuración guardada correctamente. Proveedor: ' + ConfigManager.getSelectedProvider().baseUrl + '. Modelo: ' + ConfigManager.getSelectedModel());
-
+            setSaveMessage(
+                "Configuración guardada correctamente. Proveedor: " +
+                    ConfigManager.getSelectedProvider().baseUrl +
+                    ". Modelo: " +
+                    ConfigManager.getSelectedModel()
+            );
         } catch (error) {
-            console.error('Error al guardar la configuración:', error);
-            setSaveMessage('Error al guardar la configuración');
+            console.error("Error al guardar la configuración:", error);
+            setSaveMessage("Error al guardar la configuración");
         }
     };
 
@@ -128,13 +134,16 @@ const Options: React.FC = () => {
                     <h1 className="h2 mb-4">Configuración</h1>
                     <div className="card mb-4">
                         <div className="card-header">
-                            <h5 className="card-title mb-0">
-                                Proveedores de LLM
-                            </h5>
+                            <h5 className="card-title mb-0">Proveedores de LLM</h5>
                         </div>
                         <div className="card-body">
                             {saveMessage && (
-                                <div className={`alert ${saveMessage.includes('Error') ? 'alert-danger' : 'alert-success'} alert - dismissible fade show`} role="alert">
+                                <div
+                                    className={`alert ${
+                                        saveMessage.includes("Error") ? "alert-danger" : "alert-success"
+                                    } alert - dismissible fade show`}
+                                    role="alert"
+                                >
                                     {saveMessage}
                                 </div>
                             )}
@@ -143,9 +152,16 @@ const Options: React.FC = () => {
                                     <label htmlFor="providerSelect" className="form-label">
                                         Proveedor
                                     </label>
-                                    <select className="form-select" id="providerSelect" value={selectedProvider} onChange={handleProviderChange}>
+                                    <select
+                                        className="form-select"
+                                        id="providerSelect"
+                                        value={selectedProvider}
+                                        onChange={handleProviderChange}
+                                    >
                                         {ConfigManager.getProviderList().map((provider, index) => (
-                                            <option key={provider} value={index}>{provider}</option>
+                                            <option key={provider} value={index}>
+                                                {provider}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -160,23 +176,37 @@ const Options: React.FC = () => {
                                         placeholder="Introduce tu API Key"
                                         autoComplete="off"
                                         value={apiKey}
-                                        onChange={(e) => setApiKey(e.target.value)}
+                                        onChange={e => setApiKey(e.target.value)}
                                     />
                                 </div>
                                 <div className="col-md-3">
                                     <label htmlFor="modelSelect" className="form-label">
                                         Modelo
                                     </label>
-                                    <select className="form-select" id="modelSelect" disabled={!modelListEnabled} value={selectedModel} onChange={e => setSelectedModel(e.target.value)}>
-                                        {modelList.filter(m => ConfigManager.COMPATIBLE_MODELS.includes(m)).map((model, index) => (
-                                            <option key={model} value={model}>{model}</option>
-                                        ))}
+                                    <select
+                                        className="form-select"
+                                        id="modelSelect"
+                                        disabled={!modelListEnabled}
+                                        value={selectedModel}
+                                        onChange={e => setSelectedModel(e.target.value)}
+                                    >
+                                        {modelList
+                                            .filter(m => ConfigManager.COMPATIBLE_MODELS.includes(m))
+                                            .map((model, index) => (
+                                                <option key={model} value={model}>
+                                                    {model}
+                                                </option>
+                                            ))}
                                     </select>
                                 </div>
                             </div>
                             <div className="row mt-3">
                                 <div className="col-12">
-                                    <button type="button" className="btn btn-primary me-2" onClick={handleSaveConfiguration}>
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary me-2"
+                                        onClick={handleSaveConfiguration}
+                                    >
                                         Guardar configuración
                                     </button>
                                 </div>

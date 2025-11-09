@@ -1,5 +1,6 @@
+import { ChatStorageManager } from "../storage/ChatStorageManager";
 import { BaseAssistant } from "./BaseAssistant";
-import { OpenAIService } from "./OpenAIService";
+import type { Message } from "./OpenAIService";
 
 export { CourseAssistant };
 
@@ -8,6 +9,48 @@ export { CourseAssistant };
  * Maneja conversaciones y herramientas relacionadas con el curso
  */
 class CourseAssistant extends BaseAssistant {
+
+    /**
+     * Carga el historial de conversación desde el storage
+     */
+    async loadChatHistory(): Promise<Message[]> {
+        if (!this.course) {
+            console.log('[CourseAssistant] No hay curso activo, no se puede cargar el historial');
+            return [];
+        }
+
+        const messages = await ChatStorageManager.getChatHistory(this.course.id);
+        this.openAIService.setConversationHistory(messages);
+        console.log(`[CourseAssistant] Historial cargado: ${messages.length} mensajes`);
+
+        return messages;
+    }
+
+    /**
+     * Guarda el historial de conversación actual en el storage
+     */
+    async saveChatHistory(): Promise<void> {
+        if (!this.course) {
+            console.log('[CourseAssistant] No hay curso activo, no se puede guardar el historial');
+            return;
+        }
+
+        const messages = this.openAIService.getConversationHistory();
+        await ChatStorageManager.saveChatHistory(this.course.id, messages);
+        console.log(`[CourseAssistant] Historial guardado: ${messages.length} mensajes`);
+    }
+
+    /**
+     * Reinicia el historial de conversación y lo elimina del storage
+     */
+    async resetChatHistory(): Promise<void> {
+        this.openAIService.resetConversation();
+
+        if (this.course) {
+            await ChatStorageManager.clearChatHistory(this.course.id);
+            console.log('[CourseAssistant] Historial reiniciado y eliminado del storage');
+        }
+    }
 
     /**
      * Construye el system prompt completo con información del curso
@@ -79,15 +122,23 @@ ${courseContext}`;
      */
     async generateResponse(userMessage: string, resetHistory: boolean = false, exercises?: any[]): Promise<string> {
         if (resetHistory) {
-            OpenAIService.resetConversation();
+            await this.resetChatHistory();
         }
 
-        const systemPrompt = resetHistory ? this.buildSystemPrompt(exercises) : undefined;
+        // Si el historial está vacío (primera vez o después de reset), agregar el system prompt
+        const conversationHistory = this.openAIService.getConversationHistory();
+        const needsSystemPrompt = conversationHistory.length === 0;
+        const systemPrompt = needsSystemPrompt ? this.buildSystemPrompt(exercises) : undefined;
 
-        return await OpenAIService.processResponseWithTools(
+        const response = await this.openAIService.processResponseWithTools(
             (name, args) => this.executeToolCall(name, args),
             userMessage,
             systemPrompt
         );
+
+        // Guardar el historial después de cada interacción
+        await this.saveChatHistory();
+
+        return response;
     }
 }

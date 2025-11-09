@@ -1,5 +1,6 @@
 import { Course } from "../egela/Course";
 import { ToolFunctions } from "./ToolFunctions";
+import { OpenAIService } from "./OpenAIService";
 
 export { BaseAssistant };
 
@@ -9,6 +10,11 @@ export { BaseAssistant };
  */
 abstract class BaseAssistant {
     protected course: Course | null = null;
+    protected openAIService: OpenAIService;
+
+    constructor() {
+        this.openAIService = new OpenAIService();
+    }
 
     public setCourse(course: Course): void {
         this.course = course;

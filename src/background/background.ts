@@ -23,6 +23,7 @@ const evaluationAssistant: EvaluationAssistant = new EvaluationAssistant();
 (async () => {
     try {
         await ConfigManager.loadConfig();
+        OpenAIService.loadProviderConfig();
         isConfigLoaded = true;
         console.log("Configuración cargada en background script");
     } catch (e) {
@@ -86,6 +87,10 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleGetExercisesWithEvaluations(request, sendResponse);
         case "getEvaluations":
             return handleGetEvaluations(request, sendResponse);
+        case "loadChatHistory":
+            return handleLoadChatHistory(sendResponse);
+        case "resetChatHistory":
+            return handleResetChatHistory(sendResponse);
         default:
             return false;
     }
@@ -112,6 +117,7 @@ function updateConfigFromRequest(config: any): void {
 function handleUpdateConfig(request: any, sendResponse: (response?: any) => void): boolean {
     if (request.config) {
         updateConfigFromRequest(request.config);
+        OpenAIService.loadProviderConfig();
         console.log("Configuración actualizada en background desde options");
         sendResponse({ success: true });
     }
@@ -128,6 +134,9 @@ function handleGetCourseData(request: any, sendResponse: (response?: any) => voi
                 exerciseAssistant.setCourse(course);
                 sqlTutorAssistant.setCourse(course);
                 evaluationAssistant.setCourse(course);
+
+                // Cargar historial de chat para este curso
+                await courseAssistant.loadChatHistory();
 
                 // Extraer y guardar laboratorios si no existen ya en el storage
                 await initializeLabDataIfNeeded(course);
@@ -544,6 +553,38 @@ function handleGetEvaluations(request: any, sendResponse: (response?: any) => vo
             }
         } catch (error: any) {
             console.error('Error al recuperar evaluaciones:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+function handleLoadChatHistory(sendResponse: (response?: any) => void): boolean {
+    console.log('Cargando historial de chat...');
+
+    (async () => {
+        try {
+            const messages = await courseAssistant.loadChatHistory();
+            sendResponse({ success: true, messages });
+        } catch (error: any) {
+            console.error('Error al cargar historial de chat:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+function handleResetChatHistory(sendResponse: (response?: any) => void): boolean {
+    console.log('Reiniciando historial de chat...');
+
+    (async () => {
+        try {
+            await courseAssistant.resetChatHistory();
+            sendResponse({ success: true });
+        } catch (error: any) {
+            console.error('Error al reiniciar historial de chat:', error);
             sendResponse({ success: false, error: error.message });
         }
     })();
