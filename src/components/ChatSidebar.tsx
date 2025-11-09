@@ -11,9 +11,18 @@ interface Exercise {
 }
 
 interface ChatMessage {
-    role: "user" | "assistant";
-    content: string;
+    role: "user" | "assistant" | "tool";
+    content: string | null;
     id: string;
+    tool_calls?: Array<{
+        function: {
+            name: string;
+            arguments: string;
+        };
+        id: string;
+        type: string;
+    }>;
+    name?: string;
 }
 
 interface ChatSidebarProps {
@@ -99,12 +108,15 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
                 if (response && response.success && Array.isArray(response.messages)) {
                     // Mapear los mensajes almacenados al formato de la UI
+                    // Filtramos system y tool, pero incluimos assistant con tool_calls
                     const uiMessages: ChatMessage[] = response.messages
-                        .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+                        .filter((m: any) => m.role === "user" || m.role === "assistant" || m.role === "tool")
                         .map((m: any, idx: number) => ({
-                            role: m.role as "user" | "assistant",
-                            content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content),
+                            role: m.role as "user" | "assistant" | "tool",
+                            content: m.content,
                             id: `${m.role}-${Date.now()}-${idx}`,
+                            tool_calls: m.tool_calls,
+                            name: m.name,
                         }));
 
                     setMessages(uiMessages);
@@ -282,7 +294,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         }
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSendMessage();
@@ -494,19 +506,44 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 ¡Hola! Pregúntame sobre el curso y te ayudaré.
                             </div>
                         ) : (
-                            messages.map(message => (
-                                <div
-                                    key={message.id}
-                                    className={`card ${message.role === "user" ? "bg-primary text-white" : ""}`}
-                                >
-                                    <div className="card-body p-2">
-                                        <div className="small mb-1">
-                                            <strong>{message.role === "user" ? "Tú" : "Asistente"}</strong>
+                            messages.map(message => {
+                                // Mensaje de tipo tool (resultado de herramienta) - recuadro amarillo sin título
+                                if (message.role === "tool") {
+                                    return (
+                                        <div key={message.id} className="card bg-warning bg-opacity-25 border-warning">
+                                            <div className="card-body p-2">
+                                                <div className="small" style={{ whiteSpace: "pre-wrap" }}>
+                                                    {message.content}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div style={{ whiteSpace: "pre-wrap" }}>{message.content}</div>
+                                    );
+                                }
+
+                                // Ignorar mensajes del asistente con tool_calls (no mostrarlos)
+                                if (
+                                    message.role === "assistant" &&
+                                    message.tool_calls &&
+                                    message.tool_calls.length > 0
+                                ) {
+                                    return null;
+                                }
+
+                                // Mensaje normal (usuario o asistente)
+                                return (
+                                    <div
+                                        key={message.id}
+                                        className={`card ${message.role === "user" ? "bg-primary text-white" : ""}`}
+                                    >
+                                        <div className="card-body p-2">
+                                            <div className="small mb-1">
+                                                <strong>{message.role === "user" ? "Tú" : "Asistente"}</strong>
+                                            </div>
+                                            <div style={{ whiteSpace: "pre-wrap" }}>{message.content}</div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
 
                         {isGenerating && (
@@ -632,41 +669,82 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 ) : null}
             </div>
 
-            {/* Input de chat */}
-            <div className="card-footer bg-light border-top">
-                <div className="input-group">
-                    <input
-                        type="text"
-                        className="form-control"
-                        placeholder={
-                            isLabBlocked
-                                ? "Laboratorio bloqueado..."
-                                : isLoadingExercises
-                                ? "Cargando ejercicios..."
-                                : "Escribe tu pregunta..."
-                        }
-                        value={inputValue}
-                        onChange={e => setInputValue(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        disabled={isGenerating || isLoadingExercises || isLabBlocked}
-                    />
-                    <button
-                        className="btn btn-primary"
-                        type="button"
-                        onClick={handleSendMessage}
-                        disabled={isGenerating || !inputValue.trim() || isLoadingExercises || isLabBlocked}
-                    >
-                        Enviar
-                    </button>
+            {/* Input de chat - solo visible en la pestaña de chat */}
+            {activeTab === "chat" && (
+                <div className="card-footer bg-light border-top">
+                    <div className="d-flex gap-2 align-items-center">
+                        <textarea
+                            className="form-control"
+                            placeholder={
+                                isLabBlocked
+                                    ? "Laboratorio bloqueado..."
+                                    : isLoadingExercises
+                                    ? "Cargando ejercicios..."
+                                    : "Escribe tu pregunta..."
+                            }
+                            value={inputValue}
+                            onChange={e => setInputValue(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            disabled={isGenerating || isLoadingExercises || isLabBlocked}
+                            rows={4}
+                            style={{ resize: "none", overflow: "auto", flex: 1 }}
+                        />
+                        <button
+                            className="btn btn-primary"
+                            type="button"
+                            onClick={handleSendMessage}
+                            disabled={isGenerating || !inputValue.trim() || isLoadingExercises || isLabBlocked}
+                            title="Enviar mensaje"
+                            style={{
+                                padding: "8px 12px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                        >
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M22 2L11 13" />
+                                <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={handleResetChat}
+                            title="Reiniciar conversación"
+                            style={{
+                                background: "transparent",
+                                border: "none",
+                                padding: "8px",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                        >
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#6c757d"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <button
-                    onClick={handleResetChat}
-                    className="btn btn-outline-warning btn-sm w-100 mt-2"
-                    title="Reiniciar conversación"
-                >
-                    🔄 Reiniciar chat
-                </button>
-            </div>
+            )}
         </div>
     );
 };
