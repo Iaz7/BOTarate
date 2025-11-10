@@ -1,5 +1,7 @@
 import React, { useState } from "react";
+import { ModeManager } from "../util/config/ModeManager";
 import { ProgressManager } from "../util/progress/ProgressManager";
+import { ConfigurationRequired } from "./ConfigurationRequired";
 import ExerciseConfigTab from "./ExerciseConfigTab";
 import LabConfigTab from "./LabConfigTab";
 import ProgressTab from "./ProgressTab";
@@ -66,6 +68,70 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [isLabBlocked, setIsLabBlocked] = useState<boolean>(false);
     const [isCheckingBlocked, setIsCheckingBlocked] = useState<boolean>(true);
+    const [isTeacherMode, setIsTeacherMode] = useState<boolean>(false);
+    const [needsConfiguration, setNeedsConfiguration] = useState<boolean>(false);
+    const [isCheckingConfig, setIsCheckingConfig] = useState<boolean>(true);
+
+    // Verificar modo y configuración al inicio
+    React.useEffect(() => {
+        checkModeAndConfiguration();
+    }, []);
+
+    const checkModeAndConfiguration = async () => {
+        setIsCheckingConfig(true);
+        try {
+            // Verificar si estamos en modo profesor
+            const teacherMode = await ModeManager.isTeacherMode();
+            setIsTeacherMode(teacherMode);
+
+            // Si es modo alumno, verificar que existe configuración
+            if (!teacherMode) {
+                const hasConfig = await hasRequiredConfiguration();
+                setNeedsConfiguration(!hasConfig);
+            } else {
+                setNeedsConfiguration(false);
+            }
+        } catch (error) {
+            console.error("[ChatSidebar] Error verificando configuración:", error);
+            setNeedsConfiguration(false);
+        } finally {
+            setIsCheckingConfig(false);
+        }
+    };
+
+    const hasRequiredConfiguration = async (): Promise<boolean> => {
+        try {
+            // Verificar que existe configuración de asistentes
+            const allData = await chrome.storage.local.get(null);
+            const hasAssistantConfig = Object.keys(allData).some(key => key.startsWith("assistant_config_"));
+
+            // Si no hay configuración de asistentes, definitivamente falta configuración
+            if (!hasAssistantConfig) {
+                return false;
+            }
+
+            // Verificar que existe al menos algún dato de ejercicios o labs
+            const hasExerciseData = Object.keys(allData).some(key => key.startsWith("exercise_data_"));
+            const hasLabData = Object.keys(allData).some(key => key.startsWith("lab_data_"));
+
+            return hasExerciseData || hasLabData;
+        } catch (error) {
+            console.error("[ChatSidebar] Error verificando configuración:", error);
+            return false;
+        }
+    };
+
+    const handleConfigLoaded = async () => {
+        // Recargar verificación de configuración
+        await checkModeAndConfiguration();
+
+        // Recargar ejercicios si hay pageId
+        if (pageId) {
+            await loadExercises();
+            await loadExercisesWithExplanations();
+            await loadExercisesWithEvaluations();
+        }
+    };
 
     // Verificar si el laboratorio está bloqueado
     React.useEffect(() => {
@@ -356,67 +422,76 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 </p>
 
                 {/* Pestañas */}
-                <ul className="nav nav-tabs mt-3 mb-0" role="tablist">
-                    <li className="nav-item" role="presentation">
-                        <button
-                            className={`nav-link ${activeTab === "chat" ? "active" : ""}`}
-                            onClick={() => setActiveTab("chat")}
-                            type="button"
-                            role="tab"
-                        >
-                            Chat
-                        </button>
-                    </li>
-                    {/* Pestañas solo disponibles cuando hay ejercicios */}
-                    {exercises.length > 0 && (
-                        <>
-                            <li className="nav-item" role="presentation">
-                                <button
-                                    className={`nav-link ${activeTab === "explanations" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("explanations")}
-                                    type="button"
-                                    role="tab"
-                                    disabled={isLabBlocked}
-                                    title={isLabBlocked ? "No disponible mientras el laboratorio esté bloqueado" : ""}
-                                >
-                                    Explicaciones guardadas
-                                    {exercisesWithExplanations.length > 0 && (
-                                        <span className="badge bg-primary ms-2">
-                                            {exercisesWithExplanations.length}
-                                        </span>
-                                    )}
-                                </button>
-                            </li>
-                            <li className="nav-item" role="presentation">
-                                <button
-                                    className={`nav-link ${activeTab === "evaluations" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("evaluations")}
-                                    type="button"
-                                    role="tab"
-                                    disabled={isLabBlocked}
-                                    title={isLabBlocked ? "No disponible mientras el laboratorio esté bloqueado" : ""}
-                                >
-                                    Evaluaciones guardadas
-                                    {exercisesWithEvaluations.length > 0 && (
-                                        <span className="badge bg-success ms-2">{exercisesWithEvaluations.length}</span>
-                                    )}
-                                </button>
-                            </li>
-                            <li className="nav-item" role="presentation">
-                                <button
-                                    className={`nav-link ${activeTab === "config" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("config")}
-                                    type="button"
-                                    role="tab"
-                                >
-                                    Configurar ejercicios
-                                </button>
-                            </li>
-                        </>
-                    )}
-                    {/* Pestaña de laboratorios siempre visible si hay courseId */}
-                    {courseId && (
-                        <>
+                {!needsConfiguration && (
+                    <ul className="nav nav-tabs mt-3 mb-0" role="tablist">
+                        <li className="nav-item" role="presentation">
+                            <button
+                                className={`nav-link ${activeTab === "chat" ? "active" : ""}`}
+                                onClick={() => setActiveTab("chat")}
+                                type="button"
+                                role="tab"
+                            >
+                                Chat
+                            </button>
+                        </li>
+                        {/* Pestañas solo disponibles cuando hay ejercicios */}
+                        {exercises.length > 0 && (
+                            <>
+                                <li className="nav-item" role="presentation">
+                                    <button
+                                        className={`nav-link ${activeTab === "explanations" ? "active" : ""}`}
+                                        onClick={() => setActiveTab("explanations")}
+                                        type="button"
+                                        role="tab"
+                                        disabled={isLabBlocked}
+                                        title={
+                                            isLabBlocked ? "No disponible mientras el laboratorio esté bloqueado" : ""
+                                        }
+                                    >
+                                        Explicaciones guardadas
+                                        {exercisesWithExplanations.length > 0 && (
+                                            <span className="badge bg-primary ms-2">
+                                                {exercisesWithExplanations.length}
+                                            </span>
+                                        )}
+                                    </button>
+                                </li>
+                                <li className="nav-item" role="presentation">
+                                    <button
+                                        className={`nav-link ${activeTab === "evaluations" ? "active" : ""}`}
+                                        onClick={() => setActiveTab("evaluations")}
+                                        type="button"
+                                        role="tab"
+                                        disabled={isLabBlocked}
+                                        title={
+                                            isLabBlocked ? "No disponible mientras el laboratorio esté bloqueado" : ""
+                                        }
+                                    >
+                                        Evaluaciones guardadas
+                                        {exercisesWithEvaluations.length > 0 && (
+                                            <span className="badge bg-success ms-2">
+                                                {exercisesWithEvaluations.length}
+                                            </span>
+                                        )}
+                                    </button>
+                                </li>
+                                {/* Solo mostrar pestaña de configuración de ejercicios en modo profesor */}
+                                {isTeacherMode && (
+                                    <li className="nav-item" role="presentation">
+                                        <button
+                                            className={`nav-link ${activeTab === "config" ? "active" : ""}`}
+                                            onClick={() => setActiveTab("config")}
+                                            type="button"
+                                            role="tab"
+                                        >
+                                            Configurar ejercicios
+                                        </button>
+                                    </li>
+                                )}
+                            </>
+                        )}
+                        {/* Pestaña de laboratorios solo visible en modo profesor */}
+                        {courseId && isTeacherMode && (
                             <li className="nav-item" role="presentation">
                                 <button
                                     className={`nav-link ${activeTab === "labs" ? "active" : ""}`}
@@ -427,6 +502,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                     Configurar laboratorios
                                 </button>
                             </li>
+                        )}
+                        {/* Pestaña de progreso visible para todos si hay courseId */}
+                        {courseId && (
                             <li className="nav-item" role="presentation">
                                 <button
                                     className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
@@ -437,9 +515,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                     Mi progreso
                                 </button>
                             </li>
-                        </>
-                    )}
-                </ul>
+                        )}
+                    </ul>
+                )}
             </div>
 
             {/* Área de contenido (chat o explicaciones) */}
@@ -453,7 +531,18 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     gap: "12px",
                 }}
             >
-                {activeTab === "chat" ? (
+                {isCheckingConfig ? (
+                    <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "400px" }}>
+                        <div className="text-center">
+                            <div className="spinner-border text-primary mb-3" role="status">
+                                <span className="visually-hidden">Verificando configuración...</span>
+                            </div>
+                            <p className="text-muted">Verificando configuración...</p>
+                        </div>
+                    </div>
+                ) : needsConfiguration ? (
+                    <ConfigurationRequired onConfigLoaded={handleConfigLoaded} />
+                ) : activeTab === "chat" ? (
                     <>
                         {isCheckingBlocked ? (
                             <div className="card border-primary">

@@ -4,6 +4,7 @@ import "../content/bootstrap.css";
 import { AssistantConfig } from "../util/ai/AssistantConfig";
 import { OpenAIService } from "../util/ai/OpenAIService";
 import { ConfigManager } from "../util/config/ConfigManager";
+import { ModeManager } from "../util/config/ModeManager";
 import { AssistantConfigStorageManager } from "../util/storage/AssistantConfigStorageManager";
 
 type TabType = "llm" | "assistants" | "import-export";
@@ -55,6 +56,9 @@ const Options: React.FC = () => {
     const [assistantConfig, setAssistantConfig] = useState<AssistantConfig | null>(null);
     const [assistantSaveMessage, setAssistantSaveMessage] = useState<string>("");
 
+    // Mode Configuration
+    const [isTeacherMode, setIsTeacherMode] = useState<boolean>(false);
+
     const loadModelList = (providerIndex: number, modelToPreselect?: string) => {
         OpenAIService.getModelList(ConfigManager.getProvider(providerIndex))
             .then(list => {
@@ -82,6 +86,10 @@ const Options: React.FC = () => {
     // Cargar configuración inicial
     useEffect(() => {
         const loadConfiguration = async () => {
+            // Verificar modo
+            const teacherMode = await ModeManager.isTeacherMode();
+            setIsTeacherMode(teacherMode);
+
             // Cargar configuración LLM
             await ConfigManager.loadConfig();
 
@@ -409,14 +417,17 @@ const Options: React.FC = () => {
                                 Configuración LLM
                             </button>
                         </li>
-                        <li className="nav-item">
-                            <button
-                                className={`nav-link ${activeTab === "assistants" ? "active" : ""}`}
-                                onClick={() => setActiveTab("assistants")}
-                            >
-                                Configuración Asistentes
-                            </button>
-                        </li>
+                        {/* Solo mostrar configuración de asistentes en modo profesor */}
+                        {isTeacherMode && (
+                            <li className="nav-item">
+                                <button
+                                    className={`nav-link ${activeTab === "assistants" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("assistants")}
+                                >
+                                    Configuración Asistentes
+                                </button>
+                            </li>
+                        )}
                         <li className="nav-item">
                             <button
                                 className={`nav-link ${activeTab === "import-export" ? "active" : ""}`}
