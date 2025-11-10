@@ -19,8 +19,8 @@ interface ExerciseModalProps {
     exercise: Exercise;
     isOpen: boolean;
     onClose: () => void;
-    dbSchema?: string | null;
-    sqlInstructions?: string[];
+    exerciseContext?: string | null;
+    concepts?: string[];
     learningObjectives?: string;
     pageId?: string;
     loadFromCache?: boolean; // Si es true, carga del cache. Si es false/undefined, genera nueva
@@ -31,8 +31,8 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
     exercise,
     isOpen,
     onClose,
-    dbSchema,
-    sqlInstructions,
+    exerciseContext,
+    concepts,
     learningObjectives,
     pageId,
     loadFromCache = false,
@@ -101,8 +101,8 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                 action: "generateExplanation",
                 exerciseName: exercise.name,
                 exerciseStatement: exercise.statement,
-                db_schema: dbSchema || undefined,
-                sql_instructions: sqlInstructions || undefined,
+                exercise_context: exerciseContext || undefined,
+                concepts: concepts || undefined,
                 learning_objectives: learningObjectives || undefined,
                 pageId: pageId || undefined,
             });

@@ -1,4 +1,5 @@
 import { ChatStorageManager } from "../storage/ChatStorageManager";
+import { AssistantConfig } from "./AssistantConfig";
 import { BaseAssistant } from "./BaseAssistant";
 import type { Message } from "./OpenAIService";
 
@@ -9,6 +10,10 @@ export { CourseAssistant };
  * Maneja conversaciones y herramientas relacionadas con el curso
  */
 class CourseAssistant extends BaseAssistant {
+
+    constructor(config: AssistantConfig) {
+        super(config);
+    }
 
     /**
      * Carga el historial de conversación desde el storage
@@ -57,6 +62,7 @@ class CourseAssistant extends BaseAssistant {
      */
     private buildSystemPrompt(exercises?: any[]): string {
         const courseContext = JSON.stringify(this.course);
+        const assistantConfig = this.config.courseAssistant;
 
         let exerciseContext = '';
         if (exercises && exercises.length > 0) {
@@ -95,22 +101,32 @@ Cuando el usuario pida ver/explicar un ejercicio PERMITIDO, usa la herramienta e
 Cuando el usuario quiera resolver/intentar/enviar su solución para un ejercicio (PERMITIDO o DE RETO), usa la herramienta solveExercise para abrir el formulario de resolución.`;
         }
 
-        return `Eres un asistente en una extensión de Chrome cuyo objetivo es ayudar a estudiantes con el contenido de sus cursos en Egela (plataforma educativa de la Universidad del País Vasco).
+        // Plantilla genérica del prompt
+        const template = `Eres un asistente en una extensión de Chrome cuyo objetivo es {role}.
+
+{toolsDescription}
 
 INSTRUCCIONES IMPORTANTES:
-- Cuando el usuario mencione una sección por su título/nombre, busca su ID en la lista de sections anterior. El usuario no conoce los IDs, solo los títulos, así que NUNCA debes preguntarle el ID, sino buscarlo en la lista de secciones que se te proporciona al inicio. Si no sabes donde buscar, mira en todas las secciones hasta encontrar lo que buscas. Debes preguntarte "¿dónde es más probable que esté esta información?" y buscar en consecuencia. Nunca decirle al usuario que no sabes el ID o que no tienes acceso a esa información.
-- Para obtener el contenido detallado de una sección, usa la herramienta getSectionContent con el ID de la sección
-- Los IDs de las secciones son los valores del campo "id" (por ejemplo: "1378079")
-- Si el usuario pide información sobre "la sección 2" o "tema 2", busca la sección con sectionNumber: 2 y usa su ID
-- Responde de forma directa, útil y concisa
-- Si necesitas información sobre una sección específica, llama a getSectionContent para obtenerla antes de responder
-- Recuerda que NUNCA debes pedirle al usuario que te proporcione IDs, sino buscarlos tú mismo en la estructura del curso. El usuario no tiene esos IDs ni va a saber dártelos. La información que tienes es suficiente para encontrar los IDs necesarios.
-${exerciseContext}
+{instructions}
+{exerciseContext}
+{additionalRules}
 
 INFORMACIÓN DEL CURSO:
 A continuación tienes la estructura completa del curso con todas las secciones disponibles. Cada sección tiene un ID único que debes usar cuando necesites obtener su contenido detallado.
 
-${courseContext}`;
+{courseContext}`;
+
+        // Variables para sustituir en la plantilla
+        const variables = {
+            role: assistantConfig.role,
+            toolsDescription: assistantConfig.toolsDescription,
+            instructions: assistantConfig.instructions,
+            exerciseContext: exerciseContext,
+            additionalRules: assistantConfig.additionalRules || '',
+            courseContext: courseContext
+        };
+
+        return this.buildPromptFromTemplate(template, variables);
     }
 
     /**

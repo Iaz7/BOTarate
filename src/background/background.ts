@@ -3,8 +3,9 @@
 import { CourseAssistant } from "../util/ai/CourseAssistant";
 import { EvaluationAssistant } from "../util/ai/EvaluationAssistant";
 import { ExerciseAssistant } from "../util/ai/ExerciseAssistant";
+import { ExplanationAssistant } from "../util/ai/ExplanationAssistant";
 import { OpenAIService } from "../util/ai/OpenAIService";
-import { SqlTutorAssistant } from "../util/ai/SqlTutorAssistant";
+import { SqlAssistantsConfig } from "../util/ai/SqlAssistantsConfig";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
 import { Exercise } from "../util/egela/Exercise";
@@ -15,10 +16,14 @@ import { Lab, LabStorageManager } from "../util/storage/LabStorageManager";
 
 let isConfigLoaded = false;
 
-const courseAssistant: CourseAssistant = new CourseAssistant();
-const exerciseAssistant: ExerciseAssistant = new ExerciseAssistant();
-const sqlTutorAssistant: SqlTutorAssistant = new SqlTutorAssistant();
-const evaluationAssistant: EvaluationAssistant = new EvaluationAssistant();
+// Configuración de asistentes - actualmente configurada para la asignatura de Bases de Datos
+// En el futuro, esto podría cargarse desde la configuración de la extensión
+const assistantsConfig = new SqlAssistantsConfig();
+
+const courseAssistant: CourseAssistant = new CourseAssistant(assistantsConfig);
+const exerciseAssistant: ExerciseAssistant = new ExerciseAssistant(assistantsConfig);
+const explanationAssistant: ExplanationAssistant = new ExplanationAssistant(assistantsConfig);
+const evaluationAssistant: EvaluationAssistant = new EvaluationAssistant(assistantsConfig);
 
 (async () => {
     try {
@@ -132,7 +137,7 @@ function handleGetCourseData(request: any, sendResponse: (response?: any) => voi
             if (course) {
                 courseAssistant.setCourse(course);
                 exerciseAssistant.setCourse(course);
-                sqlTutorAssistant.setCourse(course);
+                explanationAssistant.setCourse(course);
                 evaluationAssistant.setCourse(course);
 
                 // Cargar historial de chat para este curso
@@ -231,8 +236,8 @@ function handleGetExerciseList(request: any, sendResponse: (response?: any) => v
                 sendResponse({
                     success: true,
                     exercises: exercises,
-                    db_schema: cachedData.dbSchema,
-                    sql_instructions: cachedData.sqlInstructions,
+                    exercise_context: cachedData.exerciseContext,
+                    concepts: cachedData.concepts,
                     learning_objectives: cachedData.learningObjectives,
                     fromCache: true
                 });
@@ -244,15 +249,15 @@ function handleGetExerciseList(request: any, sendResponse: (response?: any) => v
             const result = await exerciseAssistant.identifyExercises(pageId, resourceId);
 
             console.log(`Ejercicios identificados:`, result.exercises);
-            console.log(`DB Schema presente:`, !!result.dbSchema);
-            console.log(`Instrucciones SQL:`, result.sqlInstructions);
+            console.log(`Exercise Context presente:`, !!result.exerciseContext);
+            console.log(`Conceptos:`, result.concepts);
             console.log(`Objetivos de aprendizaje:`, result.learningObjectives);
 
             sendResponse({
                 success: true,
                 exercises: result.exercises,
-                db_schema: result.dbSchema,
-                sql_instructions: result.sqlInstructions,
+                exercise_context: result.exerciseContext,
+                concepts: result.concepts,
                 learning_objectives: result.learningObjectives,
                 fromCache: false
             });
@@ -266,7 +271,7 @@ function handleGetExerciseList(request: any, sendResponse: (response?: any) => v
 }
 
 function handleGenerateExplanation(request: any, sendResponse: (response?: any) => void): boolean {
-    const { exerciseName, exerciseStatement, db_schema, sql_instructions, learning_objectives, pageId } = request;
+    const { exerciseName, exerciseStatement, exercise_context, concepts, learning_objectives, pageId } = request;
 
     console.log(`Generando explicación para ejercicio: ${exerciseName}`);
 
@@ -289,11 +294,11 @@ function handleGenerateExplanation(request: any, sendResponse: (response?: any) 
             }
 
             // Siempre generar nueva explicación (no usar cache)
-            const explanation = await sqlTutorAssistant.generateExplanation(
+            const explanation = await explanationAssistant.generateExplanation(
                 exerciseName,
                 exerciseStatement,
-                db_schema,
-                sql_instructions,
+                exercise_context,
+                concepts,
                 learning_objectives
             );
 
@@ -479,7 +484,7 @@ function handleUpdateLabRequired(request: any, sendResponse: (response?: any) =>
 }
 
 function handleEvaluateSolution(request: any, sendResponse: (response?: any) => void): boolean {
-    const { exerciseName, exerciseStatement, studentSolution, db_schema, sql_instructions, learning_objectives, pageId } = request;
+    const { exerciseName, exerciseStatement, studentSolution, exercise_context, concepts, learning_objectives, pageId } = request;
 
     console.log(`Evaluando solución para ejercicio: ${exerciseName}`);
 
@@ -489,8 +494,8 @@ function handleEvaluateSolution(request: any, sendResponse: (response?: any) => 
                 exerciseName,
                 exerciseStatement,
                 studentSolution,
-                db_schema,
-                sql_instructions,
+                exercise_context,
+                concepts,
                 learning_objectives
             );
 

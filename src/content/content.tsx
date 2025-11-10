@@ -29,8 +29,8 @@ const ExtensionContent: React.FC = () => {
     const [providerName, setProviderName] = useState<string>("");
     const [modelName, setModelName] = useState<string>("");
     const [exercises, setExercises] = useState<Exercise[]>([]);
-    const [dbSchema, setDbSchema] = useState<string | undefined>(undefined);
-    const [sqlInstructions, setSqlInstructions] = useState<string[] | undefined>(undefined);
+    const [exerciseContext, setExerciseContext] = useState<string | undefined>(undefined);
+    const [concepts, setConcepts] = useState<string[] | undefined>(undefined);
     const [learningObjectives, setLearningObjectives] = useState<string | undefined>(undefined);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isSolutionModalOpen, setIsSolutionModalOpen] = useState<boolean>(false);
@@ -181,17 +181,17 @@ const ExtensionContent: React.FC = () => {
                     `[content] Se han identificado ${response.exercises.length} ejercicios:`,
                     response.exercises
                 );
-                if (response.db_schema) {
-                    setDbSchema(response.db_schema);
+                if (response.exercise_context) {
+                    setExerciseContext(response.exercise_context);
                 } else {
-                    setDbSchema(undefined);
+                    setExerciseContext(undefined);
                 }
 
-                if (response.sql_instructions) {
-                    setSqlInstructions(response.sql_instructions);
-                    console.log("[content] Instrucciones SQL:", response.sql_instructions);
+                if (response.concepts) {
+                    setConcepts(response.concepts);
+                    console.log("[content] Conceptos:", response.concepts);
                 } else {
-                    setSqlInstructions(undefined);
+                    setConcepts(undefined);
                 }
 
                 if (response.learning_objectives) {
@@ -310,8 +310,8 @@ const ExtensionContent: React.FC = () => {
             {isModalOpen && exercises.length > 0 && (
                 <ExerciseModal
                     exercise={exercises[selectedExerciseIndex]}
-                    dbSchema={dbSchema}
-                    sqlInstructions={sqlInstructions}
+                    exerciseContext={exerciseContext}
+                    concepts={concepts}
                     learningObjectives={learningObjectives}
                     isOpen={isModalOpen}
                     onClose={handleCloseModal}
@@ -325,8 +325,8 @@ const ExtensionContent: React.FC = () => {
             {isSolutionModalOpen && exercises.length > 0 && (
                 <SolutionModal
                     exercise={exercises[selectedExerciseIndex]}
-                    dbSchema={dbSchema}
-                    sqlInstructions={sqlInstructions}
+                    exerciseContext={exerciseContext}
+                    concepts={concepts}
                     learningObjectives={learningObjectives}
                     isOpen={isSolutionModalOpen}
                     onClose={handleCloseSolutionModal}

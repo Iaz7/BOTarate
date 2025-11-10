@@ -16,8 +16,8 @@ interface SolutionModalProps {
     exercise: Exercise;
     isOpen: boolean;
     onClose: () => void;
-    dbSchema?: string | null;
-    sqlInstructions?: string[];
+    exerciseContext?: string | null;
+    concepts?: string[];
     learningObjectives?: string;
     pageId?: string;
     onEvaluationGenerated?: () => void;
@@ -27,8 +27,8 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
     exercise,
     isOpen,
     onClose,
-    dbSchema,
-    sqlInstructions,
+    exerciseContext,
+    concepts,
     learningObjectives,
     pageId,
     onEvaluationGenerated,
@@ -65,8 +65,8 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
                 exerciseName: exercise.name,
                 exerciseStatement: exercise.statement,
                 studentSolution: solution,
-                db_schema: dbSchema || undefined,
-                sql_instructions: sqlInstructions || undefined,
+                exercise_context: exerciseContext || undefined,
+                concepts: concepts || undefined,
                 learning_objectives: learningObjectives || undefined,
                 pageId: pageId || undefined,
             });

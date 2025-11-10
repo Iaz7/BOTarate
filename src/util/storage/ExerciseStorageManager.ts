@@ -6,8 +6,8 @@ import { BaseStorageManager } from "./BaseStorageManager";
 export interface ExerciseData {
     pageId: string;
     exercises: Array<{ name: string; statement: string; allowed?: boolean }>;
-    dbSchema?: string;
-    sqlInstructions?: string[];
+    exerciseContext?: string;
+    concepts?: string[];
     learningObjectives?: string;
 }
 
@@ -22,22 +22,22 @@ export class ExerciseStorageManager extends BaseStorageManager {
      * Guarda los datos de ejercicios de una página en el storage
      * @param pageId ID de la página
      * @param exercises Lista de ejercicios
-     * @param dbSchema Esquema de BD opcional
-     * @param sqlInstructions Instrucciones SQL opcionales
+     * @param exerciseContext Contexto de ejercicios opcional (ej. esquema de BD, especificaciones)
+     * @param concepts Conceptos trabajados en los ejercicios
      * @param learningObjectives Objetivos de aprendizaje opcionales
      */
     static async saveExerciseData(
         pageId: string,
         exercises: Array<{ name: string; statement: string; allowed?: boolean }>,
-        dbSchema?: string,
-        sqlInstructions?: string[],
+        exerciseContext?: string,
+        concepts?: string[],
         learningObjectives?: string
     ): Promise<void> {
         const data: ExerciseData = {
             pageId,
             exercises,
-            dbSchema,
-            sqlInstructions,
+            exerciseContext,
+            concepts,
             learningObjectives
         };
 
@@ -108,8 +108,8 @@ export class ExerciseStorageManager extends BaseStorageManager {
         await this.saveExerciseData(
             pageId,
             data.exercises,
-            data.dbSchema,
-            data.sqlInstructions,
+            data.exerciseContext,
+            data.concepts,
             data.learningObjectives
         );
     }
