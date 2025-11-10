@@ -1,33 +1,45 @@
 /// <reference types="chrome"/>
 
+import { AssistantConfig } from "../util/ai/AssistantConfig";
 import { CourseAssistant } from "../util/ai/CourseAssistant";
 import { EvaluationAssistant } from "../util/ai/EvaluationAssistant";
 import { ExerciseAssistant } from "../util/ai/ExerciseAssistant";
 import { ExplanationAssistant } from "../util/ai/ExplanationAssistant";
 import { OpenAIService } from "../util/ai/OpenAIService";
-import { SqlAssistantsConfig } from "../util/ai/SqlAssistantsConfig";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
 import { Exercise } from "../util/egela/Exercise";
+import { AssistantConfigStorageManager } from "../util/storage/AssistantConfigStorageManager";
 import { EvaluationStorageManager } from "../util/storage/EvaluationStorageManager";
 import { ExerciseStorageManager } from "../util/storage/ExerciseStorageManager";
 import { ExplanationStorageManager } from "../util/storage/ExplanationStorageManager";
 import { Lab, LabStorageManager } from "../util/storage/LabStorageManager";
 
 let isConfigLoaded = false;
+let assistantsConfig: AssistantConfig;
 
-// Configuración de asistentes - actualmente configurada para la asignatura de Bases de Datos
-// En el futuro, esto podría cargarse desde la configuración de la extensión
-const assistantsConfig = new SqlAssistantsConfig();
+// Inicializar asistentes (se crearán cuando se cargue la configuración)
+let courseAssistant: CourseAssistant;
+let exerciseAssistant: ExerciseAssistant;
+let explanationAssistant: ExplanationAssistant;
+let evaluationAssistant: EvaluationAssistant;
 
-const courseAssistant: CourseAssistant = new CourseAssistant(assistantsConfig);
-const exerciseAssistant: ExerciseAssistant = new ExerciseAssistant(assistantsConfig);
-const explanationAssistant: ExplanationAssistant = new ExplanationAssistant(assistantsConfig);
-const evaluationAssistant: EvaluationAssistant = new EvaluationAssistant(assistantsConfig);
+// Función para inicializar los asistentes con la configuración cargada
+async function initializeAssistants() {
+    assistantsConfig = await AssistantConfigStorageManager.loadConfig();
+
+    courseAssistant = new CourseAssistant(assistantsConfig);
+    exerciseAssistant = new ExerciseAssistant(assistantsConfig);
+    explanationAssistant = new ExplanationAssistant(assistantsConfig);
+    evaluationAssistant = new EvaluationAssistant(assistantsConfig);
+
+    console.log("Asistentes inicializados con configuración cargada");
+}
 
 (async () => {
     try {
         await ConfigManager.loadConfig();
+        await initializeAssistants();
         OpenAIService.loadProviderConfig();
         isConfigLoaded = true;
         console.log("Configuración cargada en background script");
@@ -60,6 +72,8 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
     switch (request.action) {
         case "updateConfig":
             return handleUpdateConfig(request, sendResponse);
+        case "reloadAssistantConfig":
+            return handleReloadAssistantConfig(sendResponse);
         case "getCourseData":
             return handleGetCourseData(request, sendResponse);
         case "getModelList":
@@ -127,6 +141,20 @@ function handleUpdateConfig(request: any, sendResponse: (response?: any) => void
         sendResponse({ success: true });
     }
     return false;
+}
+
+function handleReloadAssistantConfig(sendResponse: (response?: any) => void): boolean {
+    (async () => {
+        try {
+            await initializeAssistants();
+            console.log("Configuración de asistentes recargada");
+            sendResponse({ success: true });
+        } catch (error: any) {
+            console.error("Error al recargar configuración de asistentes:", error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+    return true; // Mantener el canal abierto para respuesta asíncrona
 }
 
 function handleGetCourseData(request: any, sendResponse: (response?: any) => void): boolean {
