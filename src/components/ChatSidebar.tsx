@@ -71,61 +71,60 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const [isTeacherMode, setIsTeacherMode] = useState<boolean>(false);
     const [needsConfiguration, setNeedsConfiguration] = useState<boolean>(false);
     const [isCheckingConfig, setIsCheckingConfig] = useState<boolean>(true);
+    const [reloadKey, setReloadKey] = useState<number>(0);
 
-    // Verificar modo y configuración al inicio
     React.useEffect(() => {
+        const checkModeAndConfiguration = async () => {
+            setIsCheckingConfig(true);
+            try {
+                ModeManager.clearCache();
+                const teacherMode = await ModeManager.isTeacherMode();
+                setIsTeacherMode(teacherMode);
+
+                if (!teacherMode) {
+                    const allData = await chrome.storage.local.get(null);
+                    const hasAssistantConfig = Object.keys(allData).some(key => key.startsWith("assistant_config_"));
+                    const hasExerciseData = Object.keys(allData).some(key => key.startsWith("exercise_data_"));
+                    const hasLabData = Object.keys(allData).some(key => key.startsWith("lab_data_"));
+                    const hasConfig = hasAssistantConfig && (hasExerciseData || hasLabData);
+                    setNeedsConfiguration(!hasConfig);
+                } else {
+                    setNeedsConfiguration(false);
+                }
+            } catch (error) {
+                console.error("[ChatSidebar] Error verificando configuración:", error);
+                setNeedsConfiguration(false);
+            } finally {
+                setIsCheckingConfig(false);
+            }
+        };
+
         checkModeAndConfiguration();
+    }, [reloadKey]);
+
+    React.useEffect(() => {
+        const messageListener = (
+            message: any,
+            sender: chrome.runtime.MessageSender,
+            sendResponse: (response?: any) => void
+        ) => {
+            if (message.action === "reloadSidebar") {
+                setReloadKey(prev => prev + 1);
+                sendResponse({ success: true });
+                return true;
+            }
+        };
+
+        chrome.runtime.onMessage.addListener(messageListener);
+
+        return () => {
+            chrome.runtime.onMessage.removeListener(messageListener);
+        };
     }, []);
 
-    const checkModeAndConfiguration = async () => {
-        setIsCheckingConfig(true);
-        try {
-            // Verificar si estamos en modo profesor
-            const teacherMode = await ModeManager.isTeacherMode();
-            setIsTeacherMode(teacherMode);
-
-            // Si es modo alumno, verificar que existe configuración
-            if (!teacherMode) {
-                const hasConfig = await hasRequiredConfiguration();
-                setNeedsConfiguration(!hasConfig);
-            } else {
-                setNeedsConfiguration(false);
-            }
-        } catch (error) {
-            console.error("[ChatSidebar] Error verificando configuración:", error);
-            setNeedsConfiguration(false);
-        } finally {
-            setIsCheckingConfig(false);
-        }
-    };
-
-    const hasRequiredConfiguration = async (): Promise<boolean> => {
-        try {
-            // Verificar que existe configuración de asistentes
-            const allData = await chrome.storage.local.get(null);
-            const hasAssistantConfig = Object.keys(allData).some(key => key.startsWith("assistant_config_"));
-
-            // Si no hay configuración de asistentes, definitivamente falta configuración
-            if (!hasAssistantConfig) {
-                return false;
-            }
-
-            // Verificar que existe al menos algún dato de ejercicios o labs
-            const hasExerciseData = Object.keys(allData).some(key => key.startsWith("exercise_data_"));
-            const hasLabData = Object.keys(allData).some(key => key.startsWith("lab_data_"));
-
-            return hasExerciseData || hasLabData;
-        } catch (error) {
-            console.error("[ChatSidebar] Error verificando configuración:", error);
-            return false;
-        }
-    };
-
     const handleConfigLoaded = async () => {
-        // Recargar verificación de configuración
-        await checkModeAndConfiguration();
+        setReloadKey(prev => prev + 1);
 
-        // Recargar ejercicios si hay pageId
         if (pageId) {
             await loadExercises();
             await loadExercisesWithExplanations();
@@ -133,7 +132,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         }
     };
 
-    // Verificar si el laboratorio está bloqueado
     React.useEffect(() => {
         const checkLabBlocked = async () => {
             if (!pageId || !courseId) {
@@ -157,16 +155,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         checkLabBlocked();
     }, [pageId, courseId]);
 
-    // Cargar ejercicios cuando cambie pageId
     React.useEffect(() => {
-        if (pageId) {
+        if (pageId && !needsConfiguration) {
             loadExercises();
             loadExercisesWithExplanations();
             loadExercisesWithEvaluations();
         }
-    }, [pageId]);
+    }, [pageId, reloadKey, needsConfiguration]);
 
-    // Cargar historial del chat al inicio
     React.useEffect(() => {
         const loadChatHistory = async () => {
             try {
@@ -423,7 +419,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
                 {/* Pestañas */}
                 {!needsConfiguration && (
-                    <ul className="nav nav-tabs mt-3 mb-0" role="tablist">
+                    <ul className="nav nav-tabs mt-3 mb-0" role="tablist" key={`tabs-${isTeacherMode}-${reloadKey}`}>
                         <li className="nav-item" role="presentation">
                             <button
                                 className={`nav-link ${activeTab === "chat" ? "active" : ""}`}

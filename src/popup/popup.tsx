@@ -26,10 +26,21 @@ const Popup: React.FC = () => {
             const newMode = await ModeManager.toggleMode();
             setMode(newMode);
 
-            // Recargar las páginas abiertas para aplicar el cambio
             const tabs = await chrome.tabs.query({});
+
             for (const tab of tabs) {
-                if (tab.id && tab.url?.includes("chrome-extension://")) {
+                if (tab.id && tab.url && !tab.url.startsWith("chrome://")) {
+                    try {
+                        await chrome.tabs.sendMessage(tab.id, { action: "reloadSidebar" });
+                    } catch (error) {
+                        // Ignorar errores si el content script no está cargado
+                    }
+                }
+            }
+
+            const extensionTabs = tabs.filter(tab => tab.url?.includes("chrome-extension://"));
+            for (const tab of extensionTabs) {
+                if (tab.id) {
                     chrome.tabs.reload(tab.id);
                 }
             }
