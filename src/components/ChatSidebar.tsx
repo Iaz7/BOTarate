@@ -296,9 +296,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         // Recargar lista de explicaciones
         await loadExercisesWithExplanations();
 
-        // Limpiar el historial del chat para forzar regeneración con nuevo prompt
-        setMessages([]);
-
         // Notificar al padre si es necesario
         if (onExplanationGenerated) {
             onExplanationGenerated();
@@ -592,17 +589,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             </div>
                         ) : (
                             messages.map(message => {
-                                // Mensaje de tipo tool (resultado de herramienta) - recuadro amarillo sin título
+                                // Ignorar mensajes de tipo tool (no mostrarlos)
                                 if (message.role === "tool") {
-                                    return (
-                                        <div key={message.id} className="card bg-warning bg-opacity-25 border-warning">
-                                            <div className="card-body p-2">
-                                                <div className="small" style={{ whiteSpace: "pre-wrap" }}>
-                                                    {message.content}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
+                                    return null;
                                 }
 
                                 // Ignorar mensajes del asistente con tool_calls (no mostrarlos)
@@ -611,6 +600,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                     message.tool_calls &&
                                     message.tool_calls.length > 0
                                 ) {
+                                    return null;
+                                }
+
+                                // Ignorar mensajes sin contenido o con contenido vacío
+                                if (!message.content || message.content.trim() === "") {
                                     return null;
                                 }
 

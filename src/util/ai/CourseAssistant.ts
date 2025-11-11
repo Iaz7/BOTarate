@@ -66,42 +66,65 @@ class CourseAssistant extends BaseAssistant {
 
         let exerciseContext = '';
         if (exercises && exercises.length > 0) {
-            // Crear lista manteniendo el orden original e indicando estado y un índice explícito
-            // Mostramos tanto el número de posición (1..N) como un índice entre corchetes junto al nombre
-            const exerciseList = exercises.map((ex, index) => {
-                const pos = index + 1;
-                const status = ex.allowed === false ? '[RETO]' : '[PERMITIDO]';
-                // Formato: "1. [ÍNDICE:1] Nombre del ejercicio [PERMITIDO]"
-                return `${pos}. [ÍNDICE:${pos}] ${ex.name} ${status}`;
-            }).join('\n');
+            // Crear lista de ejercicios en formato JSON para mayor claridad
+            const exerciseList = exercises.map((ex, index) => ({
+                index: index + 1,
+                name: ex.name,
+                isChallenge: ex.allowed === false
+            }));
 
             const challengeCount = exercises.filter(ex => ex.allowed === false).length;
             const allowedCount = exercises.length - challengeCount;
 
             exerciseContext = `\n\nEJERCICIOS DISPONIBLES EN ESTA PÁGINA:
-El usuario está actualmente en una página con ${exercises.length} ejercicios (${allowedCount} permitidos, ${challengeCount} de reto). Cuando el usuario solicite la explicación de un ejercicio específico (por ejemplo: "explica el ejercicio 3", "¿cómo se resuelve el segundo ejercicio?", etc.), debes verificar primero si es un ejercicio de reto.
+El usuario está actualmente en una página con ${exercises.length} ejercicios (${allowedCount} permitidos, ${challengeCount} de reto).
 
-Lista de ejercicios en orden (cada línea muestra: posición. [ÍNDICE:pos] Nombre DEL EJERCICIO [ESTADO]):
-${exerciseList}
+Lista de ejercicios en formato JSON:
+${JSON.stringify(exerciseList, null, 2)}
+
+IMPORTANTE - CÓMO USAR EL ÍNDICE:
+- Cuando el usuario pida ver/explicar/resolver un ejercicio (por ejemplo: "explica el ejercicio 3", "el segundo ejercicio", etc.), usa el campo "index" del JSON correspondiente.
+- Por ejemplo, si el usuario pide "explica el ejercicio 2", busca el objeto con "index": 2 en el JSON y usa ese valor (2) en la herramienta.
 
 IMPORTANTE SOBRE EJERCICIOS DE RETO:
-- Los ejercicios marcados como [RETO] NO pueden ser explicados.
-- Si el usuario solicita la explicación de un ejercicio de reto, debes informarle que la resolución de ese ejercicio está bloqueada por el profesor para que lo resuelva por su cuenta como desafío.
-- Menciona también qué otros ejercicios son de reto (si los hay).
+- Los ejercicios con "isChallenge": true NO pueden ser explicados.
+- Si el usuario solicita la explicación de un ejercicio de reto, infórmale que está bloqueado por el profesor para que lo resuelva por su cuenta como desafío.
 - NO uses la herramienta explainExercise para ejercicios de reto.
 - Los ejercicios de reto SÍ pueden ser resueltos por el estudiante usando la herramienta solveExercise.
 
-IMPORTANTE SOBRE REFERENCIAS A EJERCICIOS:
-- El usuario podrá referirse a los ejercicios por su número de posición (ejercicio 1, ejercicio 2, etc.), por nombre, o de forma relativa ("el siguiente", "el anterior").
-- El número de posición (1..${exercises.length}) corresponde al orden listado arriba.
-- Además, justo al lado del nombre incluimos la etiqueta [ÍNDICE:pos] — ESTE ES EL VALOR QUE DEBES PROPORCIONAR cuando el usuario te pida el índice de un ejercicio. Por ejemplo, si la línea es "2. [ÍNDICE:2] Ejercicio X [PERMITIDO]", y el usuario pide "dame el índice del ejercicio X", debes responder "2".
-- Mantén siempre presente el orden de la lista para identificar correctamente los ejercicios.
+INTERPRETAR LA INTENCIÓN DEL USUARIO:
+Hay dos acciones posibles con los ejercicios:
+1. EXPLICAR (tú explicas el ejercicio): Usa explainExercise
+2. SOLUCIONAR (el alumno proporciona su solución): Usa solveExercise
 
-Cuando el usuario pida ver/explicar un ejercicio PERMITIDO, usa la herramienta explainExercise para abrir el modal de explicación.
-Cuando el usuario quiera resolver/intentar/enviar su solución para un ejercicio (PERMITIDO o DE RETO), usa la herramienta solveExercise para abrir el formulario de resolución.`;
-        }
+Interpreta la intención según estas pautas:
 
-        // Plantilla genérica del prompt
+PEDIR EXPLICACIÓN (usa explainExercise):
+- "explica el ejercicio 3"
+- "soluciona el ejercicio 3"
+- "haz el ejercicio 3"
+- "resuelve el ejercicio 3"
+- "ayúdame con el ejercicio 3"
+- "muéstrame cómo hacer el ejercicio 3"
+→ El alumno quiere que TÚ le expliques/muestres la solución
+
+ENTREGAR SOLUCIÓN (usa solveExercise):
+- "quiero solucionar el ejercicio 3"
+- "quiero darte mi solución del ejercicio 3"
+- "voy a resolver el ejercicio 3"
+- "estoy listo para hacer el ejercicio 3"
+- "quiero intentar el ejercicio 3"
+- "enviar mi respuesta del ejercicio 3"
+→ El alumno quiere abrir el formulario para ENVIAR su propia solución
+
+CASOS AMBIGUOS:
+Si la petición es ambigua (por ejemplo: "quiero hacer el ejercicio 3"), pregunta al usuario:
+"¿Quieres que te explique cómo resolver el ejercicio 3, o prefieres intentarlo por tu cuenta y enviar tu solución?"
+
+ACCIONES DISPONIBLES:
+- Para explicar un ejercicio PERMITIDO (isChallenge: false): usa la herramienta explainExercise con el "index" del ejercicio.
+- Para que el alumno envíe su solución (cualquier ejercicio): usa la herramienta solveExercise con el "index" del ejercicio.`;
+        }        // Plantilla genérica del prompt
         const template = `Eres un asistente en una extensión de Chrome cuyo objetivo es {role}.
 
 {toolsDescription}
@@ -141,10 +164,9 @@ A continuación tienes la estructura completa del curso con todas las secciones 
             await this.resetChatHistory();
         }
 
-        // Si el historial está vacío (primera vez o después de reset), agregar el system prompt
-        const conversationHistory = this.openAIService.getConversationHistory();
-        const needsSystemPrompt = conversationHistory.length === 0;
-        const systemPrompt = needsSystemPrompt ? this.buildSystemPrompt(exercises) : undefined;
+        // Siempre construir el system prompt con los ejercicios actuales
+        // Esto asegura que el contexto esté actualizado incluso si cambia la página
+        const systemPrompt = this.buildSystemPrompt(exercises);
 
         const response = await this.openAIService.processResponseWithTools(
             (name, args) => this.executeToolCall(name, args),

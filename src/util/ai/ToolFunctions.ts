@@ -112,6 +112,9 @@ export class ToolFunctions {
      * Esta función enviará un mensaje al content script para abrir el modal de explicación
      */
     static async explainExercise(args: { exerciseIndex: number }): Promise<string> {
+        // El LLM envía índices basados en 1 (1, 2, 3...), pero los arrays usan índices basados en 0
+        const arrayIndex = args.exerciseIndex - 1;
+
         // Enviar mensaje a todos los tabs activos para abrir el modal
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
 
@@ -119,13 +122,13 @@ export class ToolFunctions {
             try {
                 await chrome.tabs.sendMessage(tabs[0].id, {
                     action: 'openExerciseModal',
-                    exerciseIndex: args.exerciseIndex
+                    exerciseIndex: arrayIndex
                 });
 
-                return `Abriendo el modal con la explicación del ejercicio #${args.exerciseIndex + 1}...`;
+                return `Abriendo el modal con la explicación del ejercicio #${args.exerciseIndex}...`;
             } catch (error) {
                 console.error('[explainExercise] Error enviando mensaje al content script:', error);
-                return `Error al abrir el modal del ejercicio #${args.exerciseIndex + 1}`;
+                return `Error al abrir el modal del ejercicio #${args.exerciseIndex}`;
             }
         }
 
@@ -137,6 +140,9 @@ export class ToolFunctions {
      * Esta función enviará un mensaje al content script para abrir el modal de resolución
      */
     static async solveExercise(args: { exerciseIndex: number }): Promise<string> {
+        // El LLM envía índices basados en 1 (1, 2, 3...), pero los arrays usan índices basados en 0
+        const arrayIndex = args.exerciseIndex - 1;
+
         // Enviar mensaje a todos los tabs activos para abrir el modal
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
 
@@ -144,13 +150,13 @@ export class ToolFunctions {
             try {
                 await chrome.tabs.sendMessage(tabs[0].id, {
                     action: 'openSolutionModal',
-                    exerciseIndex: args.exerciseIndex
+                    exerciseIndex: arrayIndex
                 });
 
-                return `Abriendo el formulario para que introduzcas tu solución del ejercicio #${args.exerciseIndex + 1}...`;
+                return `Abriendo el formulario para que introduzcas tu solución del ejercicio #${args.exerciseIndex}...`;
             } catch (error) {
                 console.error('[solveExercise] Error enviando mensaje al content script:', error);
-                return `Error al abrir el formulario del ejercicio #${args.exerciseIndex + 1}`;
+                return `Error al abrir el formulario del ejercicio #${args.exerciseIndex}`;
             }
         }
 

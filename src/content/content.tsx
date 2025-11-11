@@ -42,6 +42,7 @@ const ExtensionContent: React.FC = () => {
     const [modalLoadFromCache, setModalLoadFromCache] = useState<boolean>(false);
     const [reloadExplanationsKey, setReloadExplanationsKey] = useState<number>(0);
     const [reloadEvaluationsKey, setReloadEvaluationsKey] = useState<number>(0);
+    const [reloadSidebarKey, setReloadSidebarKey] = useState<number>(0);
 
     useEffect(() => {
         const waitForSessionStorage = (timeoutMs: number = 5000, intervalMs: number = 200) => {
@@ -161,6 +162,55 @@ const ExtensionContent: React.FC = () => {
         };
     }, []);
 
+    // Detectar cambios en la URL para actualizar el contexto cuando se cambia de página
+    useEffect(() => {
+        let lastPageId = currentPageId;
+
+        const checkUrlChange = async () => {
+            const currentUrl = globalThis.location.href;
+
+            if (currentUrl.includes(PAGE_VIEW_HREF)) {
+                const urlParams = new URLSearchParams(globalThis.location.search);
+                const newPageId = urlParams.get("id");
+
+                // Si hay un cambio de página
+                if (newPageId && newPageId !== lastPageId) {
+                    console.log(`[content] Cambio de página detectado: ${lastPageId} -> ${newPageId}`);
+
+                    // NO reseteamos el historial, solo actualizamos el contexto
+                    // El system prompt se actualizará automáticamente con los nuevos ejercicios
+
+                    // Actualizar el pageId y cargar nuevos ejercicios
+                    setCurrentPageId(newPageId);
+                    lastPageId = newPageId;
+                    setIsLoadingExercises(true);
+                    await identifyExercisesInPage(newPageId);
+                    setReloadSidebarKey(prev => prev + 1);
+                }
+            } else if (lastPageId !== null) {
+                // Ya no estamos en una página de ejercicios
+                console.log(`[content] Saliendo de página de ejercicios`);
+
+                // NO reseteamos el historial, solo limpiamos el contexto local
+                // El system prompt se actualizará sin ejercicios en la próxima interacción
+                setCurrentPageId(null);
+                lastPageId = null;
+                setExercises([]);
+                setReloadSidebarKey(prev => prev + 1);
+            }
+        };
+
+        // Verificar inmediatamente
+        checkUrlChange();
+
+        // Monitorear cambios de URL
+        const intervalId = setInterval(checkUrlChange, 1000);
+
+        return () => {
+            clearInterval(intervalId);
+        };
+    }, [currentPageId]);
+
     const identifyExercisesInPage = async (pageId: string) => {
         try {
             // Extraer el resourceId de la URL (parámetro 'id' es el resourceId en páginas de Egela)
@@ -203,6 +253,8 @@ const ExtensionContent: React.FC = () => {
 
                 if (response.exercises.length > 0) {
                     setExercises(response.exercises);
+                    // Forzar recarga del sidebar para que muestre las pestañas de configuración
+                    setReloadSidebarKey(prev => prev + 1);
                 } else {
                     setViewState("no-exercises");
                 }
@@ -302,7 +354,7 @@ const ExtensionContent: React.FC = () => {
                     onExplanationGenerated={handleExplanationGenerated}
                     onOpenEvaluation={handleOpenEvaluationList}
                     onEvaluationGenerated={handleEvaluationGenerated}
-                    key={`${reloadExplanationsKey}-${reloadEvaluationsKey}`} // Re-renderizar cuando cambie cualquier trigger
+                    key={`${reloadExplanationsKey}-${reloadEvaluationsKey}-${reloadSidebarKey}`} // Re-renderizar cuando cambie cualquier trigger
                 />
             )}
 

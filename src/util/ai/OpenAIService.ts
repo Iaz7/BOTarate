@@ -99,12 +99,26 @@ class OpenAIService {
         userMessage?: string,
         systemPrompt?: string
     ): Promise<{ type: 'message'; content: string } | { type: 'tool_calls'; calls: ToolCall[] }> {
-        // Agregar mensaje del sistema si se proporciona y el historial está vacío
-        if (systemPrompt && this.conversationHistory.length === 0) {
-            this.conversationHistory.push({
-                role: 'system',
-                content: systemPrompt
-            });
+        // Actualizar o agregar el system prompt si se proporciona
+        if (systemPrompt) {
+            // Buscar si ya existe un mensaje del sistema (primer mensaje con role='system')
+            const systemMessageIndex = this.conversationHistory.findIndex(msg => msg.role === 'system');
+
+            if (systemMessageIndex >= 0) {
+                // Actualizar el system prompt existente
+                this.conversationHistory[systemMessageIndex] = {
+                    role: 'system',
+                    content: systemPrompt
+                };
+                console.log('[OpenAIService] System prompt actualizado');
+            } else {
+                // Agregar el system prompt al inicio del historial
+                this.conversationHistory.unshift({
+                    role: 'system',
+                    content: systemPrompt
+                });
+                console.log('[OpenAIService] System prompt agregado');
+            }
         }
 
         // Agregar mensaje del usuario si se proporciona
