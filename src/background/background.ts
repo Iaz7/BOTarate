@@ -299,7 +299,7 @@ function handleGetExerciseList(request: any, sendResponse: (response?: any) => v
 }
 
 function handleGenerateExplanation(request: any, sendResponse: (response?: any) => void): boolean {
-    const { exerciseName, exerciseStatement, exercise_context, concepts, learning_objectives, pageId } = request;
+    const { exerciseName, exerciseStatement, exercise_context, concepts, learning_objectives, pageId, courseId } = request;
 
     console.log(`Generando explicación para ejercicio: ${exerciseName}`);
 
@@ -321,13 +321,91 @@ function handleGenerateExplanation(request: any, sendResponse: (response?: any) 
                 }
             }
 
-            // Siempre generar nueva explicación (no usar cache)
+            // Obtener el resumen de progreso si hay courseId
+            let progressSummary = undefined;
+            if (courseId) {
+                // Obtener la lista de laboratorios
+                const labData = await LabStorageManager.getLabData(courseId);
+
+                if (labData?.labs) {
+                    const requiredLabs = labData.labs.filter(lab => lab.required);
+
+                    if (requiredLabs.length > 0) {
+                        const completedLabs: string[] = [];
+                        const completedExercises: Map<string, string[]> = new Map();
+
+                        // Para cada laboratorio requerido, obtener ejercicios y evaluaciones
+                        for (const lab of requiredLabs) {
+                            // Obtener ejercicios del laboratorio
+                            const exerciseData = await ExerciseStorageManager.getExerciseData(lab.id);
+
+                            if (exerciseData) {
+                                const challengeExercises = exerciseData.exercises.filter((ex: any) => ex.allowed === false);
+
+                                if (challengeExercises.length > 0) {
+                                    let allCompleted = true;
+                                    const completedInLab: string[] = [];
+
+                                    for (const exercise of challengeExercises) {
+                                        const evaluations = await EvaluationStorageManager.getEvaluations(lab.id, exercise.name);
+
+                                        if (!evaluations || evaluations.length === 0) {
+                                            allCompleted = false;
+                                        } else {
+                                            const bestScore = Math.max(...evaluations.map((e: any) => e.score));
+                                            if (bestScore >= 5) {
+                                                completedInLab.push(exercise.name);
+                                            } else {
+                                                allCompleted = false;
+                                            }
+                                        }
+                                    }
+
+                                    // Si completó todos los ejercicios de reto, el lab está completado
+                                    if (allCompleted) {
+                                        completedLabs.push(lab.name);
+                                    }
+
+                                    if (completedInLab.length > 0) {
+                                        completedExercises.set(lab.name, completedInLab);
+                                    }
+                                }
+                                // Si no hay ejercicios de reto (challengeExercises.length === 0), no se cuenta como completado
+                            }
+                        }
+
+                        // Construir resumen
+                        let summary = "";
+
+                        if (completedLabs.length === 0 && completedExercises.size === 0) {
+                            summary += "El alumno aún no ha completado ningún laboratorio ni ejercicio.\n";
+                        } else {
+                            if (completedLabs.length > 0) {
+                                summary += `- Laboratorios completados: ${completedLabs.join(', ')}\n`;
+                            }
+
+                            if (completedExercises.size > 0) {
+                                summary += "- Ejercicios completados por laboratorio:\n";
+                                for (const [labName, exercises] of completedExercises) {
+                                    summary += `  * ${labName}: ${exercises.join(', ')}\n`;
+                                }
+                            }
+                        }
+
+                        progressSummary = summary;
+                        console.log(`Resumen de progreso generado para la explicación`);
+                    }
+                }
+            }
+
+            // Generar nueva explicación con el resumen de progreso
             const explanation = await explanationAssistant.generateExplanation(
                 exerciseName,
                 exerciseStatement,
                 exercise_context,
                 concepts,
-                learning_objectives
+                learning_objectives,
+                progressSummary
             );
 
             console.log(`Explicación generada:`, explanation);

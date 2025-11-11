@@ -20,6 +20,7 @@ class ExplanationAssistant extends BaseAssistant {
      * @param exerciseContext - Contexto adicional del ejercicio (ej. esquema de BD, especificaciones)
      * @param concepts - Conceptos que se trabajan en la página (opcional)
      * @param learningObjectives - Objetivos de aprendizaje de la página (opcional)
+     * @param progressSummary - Resumen del progreso del alumno (opcional)
      * @returns Explicación estructurada con pasos
      */
     async generateExplanation(
@@ -27,11 +28,16 @@ class ExplanationAssistant extends BaseAssistant {
         exerciseStatement: string,
         exerciseContext?: string,
         concepts?: string[],
-        learningObjectives?: string
+        learningObjectives?: string,
+        progressSummary?: string
     ): Promise<ExplanationSchemaType> {
         console.log(`[generateExplanation] Generando explicación para: ${exerciseName}`);
 
         const assistantConfig = this.config.explanationAssistant;
+
+        const progressContext = progressSummary
+            ? `PROGRESO DEL ALUMNO:\n${progressSummary}\nCONSIDERACIONES:\n- Reduce la verbosidad para conceptos que el alumno ya ha trabajado en laboratorios/ejercicios completados.\n- Puedes asumir familiaridad con los conceptos básicos de los laboratorios completados.\n- Enfócate en los aspectos nuevos o más avanzados del ejercicio actual.`
+            : '';
 
         // Construir contexto pedagógico
         const conceptsContext = concepts && concepts.length > 0
@@ -62,6 +68,8 @@ CONTEXTO PEDAGÓGICO:
 {objectivesContext}
 {alignmentNote}
 
+{progressContext}
+
 {importantNotes}`;
 
         const systemPromptVariables = {
@@ -74,6 +82,7 @@ CONTEXTO PEDAGÓGICO:
             conceptsContext: conceptsContext,
             objectivesContext: objectivesContext,
             alignmentNote: alignmentNote,
+            progressContext: progressContext,
             importantNotes: assistantConfig.importantNotes || ''
         };
 

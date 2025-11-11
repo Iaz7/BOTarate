@@ -29,7 +29,7 @@ export const StepSchema = z.object({
  * Esquema para la explicación estructurada de un ejercicio
  */
 export const ExplanationSchema = z.object({
-    steps: z.array(StepSchema).describe("Lista ordenada de pasos para resolver el ejercicio. Cada paso debe ser claro y progresivo.")
+    steps: z.array(StepSchema).describe("Lista ordenada de pasos para resolver el ejercicio. Cada paso debe ser claro y progresivo. Si el alumno ya ha completado ejercicios relacionados, reduce la verbosidad en conceptos básicos y enfócate en los aspectos nuevos o avanzados.")
 });
 
 /**

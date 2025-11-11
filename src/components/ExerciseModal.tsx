@@ -23,6 +23,7 @@ interface ExerciseModalProps {
     concepts?: string[];
     learningObjectives?: string;
     pageId?: string;
+    courseId?: string;
     loadFromCache?: boolean; // Si es true, carga del cache. Si es false/undefined, genera nueva
     onExplanationGenerated?: () => void; // Callback cuando se genera una nueva explicación
 }
@@ -35,6 +36,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
     concepts,
     learningObjectives,
     pageId,
+    courseId,
     loadFromCache = false,
     onExplanationGenerated,
 }) => {
@@ -105,6 +107,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                 concepts: concepts || undefined,
                 learning_objectives: learningObjectives || undefined,
                 pageId: pageId || undefined,
+                courseId: courseId || undefined,
             });
 
             if (response.success) {

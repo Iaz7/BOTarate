@@ -316,6 +316,7 @@ const ExtensionContent: React.FC = () => {
                     isOpen={isModalOpen}
                     onClose={handleCloseModal}
                     pageId={currentPageId || undefined}
+                    courseId={courseId || undefined}
                     loadFromCache={modalLoadFromCache}
                     onExplanationGenerated={handleExplanationGenerated}
                 />
