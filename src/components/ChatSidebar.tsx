@@ -39,6 +39,7 @@ interface ChatSidebarProps {
     onExplanationGenerated?: () => void; // Callback para recargar lista cuando se genera explicación
     onOpenEvaluation?: (exerciseName: string) => void;
     onEvaluationGenerated?: () => void; // Callback para recargar lista cuando se genera evaluación
+    isExplanationModalOpen?: boolean; // Indica si el modal de explicaciones está abierto
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -53,6 +54,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     onExplanationGenerated,
     onOpenEvaluation,
     onEvaluationGenerated,
+    isExplanationModalOpen = false,
 }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -755,7 +757,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         <textarea
                             className="form-control"
                             placeholder={
-                                isLabBlocked
+                                isExplanationModalOpen
+                                    ? "Chat deshabilitado (modal abierto)..."
+                                    : isLabBlocked
                                     ? "Laboratorio bloqueado..."
                                     : isLoadingExercises
                                     ? "Cargando ejercicios..."
@@ -764,7 +768,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             value={inputValue}
                             onChange={e => setInputValue(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            disabled={isGenerating || isLoadingExercises || isLabBlocked}
+                            disabled={isGenerating || isLoadingExercises || isLabBlocked || isExplanationModalOpen}
                             rows={4}
                             style={{ resize: "none", overflow: "auto", flex: 1 }}
                         />
@@ -772,7 +776,13 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             className="btn btn-primary"
                             type="button"
                             onClick={handleSendMessage}
-                            disabled={isGenerating || !inputValue.trim() || isLoadingExercises || isLabBlocked}
+                            disabled={
+                                isGenerating ||
+                                !inputValue.trim() ||
+                                isLoadingExercises ||
+                                isLabBlocked ||
+                                isExplanationModalOpen
+                            }
                             title="Enviar mensaje"
                             style={{
                                 padding: "8px 12px",
@@ -798,14 +808,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         <button
                             onClick={handleResetChat}
                             title="Reiniciar conversación"
+                            disabled={isExplanationModalOpen}
                             style={{
                                 background: "transparent",
                                 border: "none",
                                 padding: "8px",
-                                cursor: "pointer",
+                                cursor: isExplanationModalOpen ? "not-allowed" : "pointer",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
+                                opacity: isExplanationModalOpen ? 0.5 : 1,
                             }}
                         >
                             <svg

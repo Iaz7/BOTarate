@@ -110,6 +110,12 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleLoadChatHistory(sendResponse);
         case "resetChatHistory":
             return handleResetChatHistory(sendResponse);
+        case "initializeExplanationChat":
+            return handleInitializeExplanationChat(request, sendResponse);
+        case "sendExplanationChatMessage":
+            return handleSendExplanationChatMessage(request, sendResponse);
+        case "saveChatHistory":
+            return handleSaveChatHistory(request, sendResponse);
         default:
             return false;
     }
@@ -412,7 +418,13 @@ function handleGenerateExplanation(request: any, sendResponse: (response?: any) 
 
             // Guardar en cache si se proporciona pageId
             if (pageId) {
-                await ExplanationStorageManager.saveExplanation(pageId, exerciseName, explanation);
+                await ExplanationStorageManager.saveExplanation(
+                    pageId,
+                    exerciseName,
+                    exerciseStatement,
+                    explanation,
+                    exercise_context
+                );
                 console.log(`Explicación guardada en cache para: ${exerciseName}`);
             }
 
@@ -696,6 +708,176 @@ function handleResetChatHistory(sendResponse: (response?: any) => void): boolean
             sendResponse({ success: true });
         } catch (error: any) {
             console.error('Error al reiniciar historial de chat:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+/**
+ * Inicializa el contexto del chat de explicación
+ * Caso 1: Explicación recién generada - el contexto ya está en explanationAssistant
+ * Caso 2: Explicación cargada del storage - necesita cargar el contexto completo
+ */
+function handleInitializeExplanationChat(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId, exerciseName, courseId, fromCache } = request;
+
+    console.log(`Inicializando chat de explicación para: ${exerciseName} (fromCache: ${fromCache})`);
+
+    (async () => {
+        try {
+            if (fromCache) {
+                // Caso 2: Cargar explicación del storage y reconstruir contexto
+                const explanation = await ExplanationStorageManager.getExplanation(pageId, exerciseName);
+
+                if (!explanation) {
+                    sendResponse({ success: false, error: 'No se encontró la explicación en el storage' });
+                    return;
+                }
+
+                // Cargar datos del laboratorio (concepts, learningObjectives)
+                const exerciseData = await ExerciseStorageManager.getExerciseData(pageId);
+                let concepts: string[] | undefined = undefined;
+                let learningObjectives: string | undefined = undefined;
+
+                if (exerciseData) {
+                    concepts = exerciseData.concepts;
+                    learningObjectives = exerciseData.learningObjectives;
+                }
+
+                // Obtener resumen de progreso si hay courseId
+                let progressSummary: string | undefined = undefined;
+                if (courseId) {
+                    const labData = await LabStorageManager.getLabData(courseId);
+
+                    if (labData?.labs) {
+                        const requiredLabs = labData.labs.filter(lab => lab.required);
+
+                        if (requiredLabs.length > 0) {
+                            const completedLabs: string[] = [];
+                            const completedExercises: Map<string, string[]> = new Map();
+
+                            for (const lab of requiredLabs) {
+                                const labExerciseData = await ExerciseStorageManager.getExerciseData(lab.id);
+
+                                if (labExerciseData) {
+                                    const challengeExercises = labExerciseData.exercises.filter((ex: any) => ex.allowed === false);
+
+                                    if (challengeExercises.length > 0) {
+                                        let allCompleted = true;
+                                        const completedInLab: string[] = [];
+
+                                        for (const exercise of challengeExercises) {
+                                            const evaluations = await EvaluationStorageManager.getEvaluations(lab.id, exercise.name);
+
+                                            if (!evaluations || evaluations.length === 0) {
+                                                allCompleted = false;
+                                            } else {
+                                                const bestScore = Math.max(...evaluations.map((e: any) => e.score));
+                                                if (bestScore >= 5) {
+                                                    completedInLab.push(exercise.name);
+                                                } else {
+                                                    allCompleted = false;
+                                                }
+                                            }
+                                        }
+
+                                        if (allCompleted) {
+                                            completedLabs.push(lab.name);
+                                        }
+
+                                        if (completedInLab.length > 0) {
+                                            completedExercises.set(lab.name, completedInLab);
+                                        }
+                                    }
+                                }
+                            }
+
+                            let summary = "";
+                            if (completedLabs.length === 0 && completedExercises.size === 0) {
+                                summary += "El alumno aún no ha completado ningún laboratorio ni ejercicio.\n";
+                            } else {
+                                if (completedLabs.length > 0) {
+                                    summary += `- Laboratorios completados: ${completedLabs.join(', ')}\n`;
+                                }
+
+                                if (completedExercises.size > 0) {
+                                    summary += "- Ejercicios completados por laboratorio:\n";
+                                    for (const [labName, exercises] of completedExercises) {
+                                        summary += `  * ${labName}: ${exercises.join(', ')}\n`;
+                                    }
+                                }
+                            }
+
+                            progressSummary = summary;
+                        }
+                    }
+                }
+
+                // Inicializar contexto con los datos cargados
+                await explanationAssistant.initializeContextForFollowUp(
+                    explanation.exerciseName,
+                    explanation.exerciseStatement,
+                    { steps: explanation.steps },
+                    explanation.exerciseContext,
+                    concepts,
+                    learningObjectives,
+                    progressSummary
+                );
+
+                console.log(`Contexto de chat inicializado desde storage para: ${exerciseName}`);
+                sendResponse({ success: true });
+            } else {
+                // Caso 1: Explicación recién generada, el contexto ya está en explanationAssistant
+                // No necesitamos hacer nada, el contexto ya está listo
+                console.log(`Contexto de chat ya inicializado para explicación recién generada: ${exerciseName}`);
+                sendResponse({ success: true });
+            }
+        } catch (error: any) {
+            console.error('Error al inicializar chat de explicación:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+/**
+ * Envía un mensaje en el chat de explicación y obtiene la respuesta
+ */
+function handleSendExplanationChatMessage(request: any, sendResponse: (response?: any) => void): boolean {
+    const { message } = request;
+
+    console.log(`Procesando mensaje de chat de explicación: ${message}`);
+
+    (async () => {
+        try {
+            const response = await explanationAssistant.continueConversation(message);
+            sendResponse({ success: true, response });
+        } catch (error: any) {
+            console.error('Error al procesar mensaje de chat de explicación:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+/**
+ * Guarda el historial del chat de explicación en el storage
+ */
+function handleSaveChatHistory(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId, exerciseName, chatHistory } = request;
+
+    console.log(`Guardando historial de chat para: ${exerciseName}`);
+
+    (async () => {
+        try {
+            await ExplanationStorageManager.updateChatHistory(pageId, exerciseName, chatHistory);
+            sendResponse({ success: true });
+        } catch (error: any) {
+            console.error('Error al guardar historial de chat:', error);
             sendResponse({ success: false, error: error.message });
         }
     })();

@@ -354,6 +354,7 @@ const ExtensionContent: React.FC = () => {
                     onExplanationGenerated={handleExplanationGenerated}
                     onOpenEvaluation={handleOpenEvaluationList}
                     onEvaluationGenerated={handleEvaluationGenerated}
+                    isExplanationModalOpen={isModalOpen}
                     key={`${reloadExplanationsKey}-${reloadEvaluationsKey}-${reloadSidebarKey}`} // Re-renderizar cuando cambie cualquier trigger
                 />
             )}

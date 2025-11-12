@@ -14,6 +14,33 @@ class ExplanationAssistant extends BaseAssistant {
     }
 
     /**
+     * Construye el contexto pedagógico común para prompts
+     */
+    private buildPedagogicalContext(
+        concepts?: string[],
+        learningObjectives?: string,
+        progressSummary?: string
+    ): { conceptsContext: string; objectivesContext: string; alignmentNote: string; progressContext: string } {
+        const progressContext = progressSummary
+            ? `PROGRESO DEL ALUMNO:\n${progressSummary}\nCONSIDERACIONES:\n- Reduce la verbosidad para conceptos que el alumno ya ha trabajado en laboratorios/ejercicios completados.\n- Puedes asumir familiaridad con los conceptos básicos de los laboratorios completados.\n- Enfócate en los aspectos nuevos o más avanzados del ejercicio actual.`
+            : '';
+
+        const conceptsContext = concepts && concepts.length > 0
+            ? `- Este ejercicio trabaja los siguientes conceptos: ${concepts.join(', ')}`
+            : '';
+
+        const objectivesContext = learningObjectives
+            ? `- Objetivos de aprendizaje de la página: ${learningObjectives}`
+            : '';
+
+        const alignmentNote = concepts || learningObjectives
+            ? '- Asegúrate de que tu explicación se alinee con estos objetivos de aprendizaje y enfoque especialmente en los conceptos mencionados.'
+            : '';
+
+        return { conceptsContext, objectivesContext, alignmentNote, progressContext };
+    }
+
+    /**
      * Genera una explicación estructurada paso a paso para un ejercicio
      * @param exerciseName - Nombre del ejercicio
      * @param exerciseStatement - Enunciado completo del ejercicio
@@ -34,21 +61,7 @@ class ExplanationAssistant extends BaseAssistant {
         console.log(`[generateExplanation] Generando explicación para: ${exerciseName}`);
 
         const assistantConfig = this.config.explanationAssistant;
-
-        const progressContext = progressSummary
-            ? `PROGRESO DEL ALUMNO:\n${progressSummary}\nCONSIDERACIONES:\n- Reduce la verbosidad para conceptos que el alumno ya ha trabajado en laboratorios/ejercicios completados.\n- Puedes asumir familiaridad con los conceptos básicos de los laboratorios completados.\n- Enfócate en los aspectos nuevos o más avanzados del ejercicio actual.`
-            : '';
-
-        // Construir contexto pedagógico
-        const conceptsContext = concepts && concepts.length > 0
-            ? `- Este ejercicio trabaja los siguientes conceptos: ${concepts.join(', ')}`
-            : '';
-        const objectivesContext = learningObjectives
-            ? `- Objetivos de aprendizaje de la página: ${learningObjectives}`
-            : '';
-        const alignmentNote = concepts || learningObjectives
-            ? '- Asegúrate de que tu explicación se alinee con estos objetivos de aprendizaje y enfoque especialmente en los conceptos mencionados.'
-            : '';
+        const pedagogicalContext = this.buildPedagogicalContext(concepts, learningObjectives, progressSummary);
 
         // Plantilla genérica del system prompt
         const systemPromptTemplate = `Eres un {role}.
@@ -79,10 +92,7 @@ CONTEXTO PEDAGÓGICO:
             outputFormat: assistantConfig.outputFormat,
             contextNote: exerciseContext ? '- Incluye ejemplos concretos usando el contexto del ejercicio proporcionado.' : '',
             additionalRules: assistantConfig.additionalRules || '',
-            conceptsContext: conceptsContext,
-            objectivesContext: objectivesContext,
-            alignmentNote: alignmentNote,
-            progressContext: progressContext,
+            ...pedagogicalContext,
             importantNotes: assistantConfig.importantNotes || ''
         };
 
@@ -96,7 +106,9 @@ ${exerciseStatement}
 
 ${exerciseContext ? `Contexto del ejercicio:\n\`\`\`\n${exerciseContext}\n\`\`\`` : ''}
 
-Antes de generar la explicación, considera consultar el material de teoría del curso para asegurarte de que tu explicación se alinea con lo que se ha enseñado en clase.`;
+Antes de generar la explicación, considera consultar el material de teoría del curso para asegurarte de que tu explicación se alinea con lo que se ha enseñado en clase.
+
+NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de hacer preguntas de seguimiento sobre la explicación proporcionada.`;
 
         try {
             // Reiniciar historial para esta llamada específica
@@ -120,5 +132,122 @@ Antes de generar la explicación, considera consultar el material de teoría del
             }
             throw new Error('Error desconocido al generar explicación');
         }
+    }
+
+    /**
+     * Continúa la conversación después de generar una explicación
+     * Permite al alumno hacer preguntas de seguimiento
+     * @param userMessage Pregunta del alumno
+     * @returns Respuesta del asistente
+     */
+    async continueConversation(userMessage: string): Promise<string> {
+        console.log(`[continueConversation] Procesando pregunta de seguimiento`);
+
+        try {
+            // Usar processResponseWithTools sin resetear el historial
+            const response = await this.openAIService.processResponseWithTools(
+                this.executeToolCall.bind(this),
+                userMessage
+            );
+
+            console.log(`[continueConversation] Respuesta generada`);
+            return response;
+
+        } catch (error) {
+            console.error(`[continueConversation] Error:`, error);
+            if (error instanceof Error) {
+                throw new Error(`Error al responder pregunta: ${error.message}`);
+            }
+            throw new Error('Error desconocido al responder pregunta');
+        }
+    }
+
+    /**
+     * Inicializa el contexto para preguntas de seguimiento cuando se carga una explicación guardada
+     * @param exerciseName - Nombre del ejercicio
+     * @param exerciseStatement - Enunciado completo del ejercicio
+     * @param explanation - Explicación generada previamente
+     * @param exerciseContext - Contexto adicional del ejercicio
+     * @param concepts - Conceptos que se trabajan en la página
+     * @param learningObjectives - Objetivos de aprendizaje de la página
+     * @param progressSummary - Resumen del progreso del alumno
+     */
+    async initializeContextForFollowUp(
+        exerciseName: string,
+        exerciseStatement: string,
+        explanation: ExplanationSchemaType,
+        exerciseContext?: string,
+        concepts?: string[],
+        learningObjectives?: string,
+        progressSummary?: string
+    ): Promise<void> {
+        console.log(`[initializeContextForFollowUp] Inicializando contexto para: ${exerciseName}`);
+
+        const assistantConfig = this.config.explanationAssistant;
+        const pedagogicalContext = this.buildPedagogicalContext(concepts, learningObjectives, progressSummary);
+
+        const systemPromptTemplate = `Eres un {role}.
+Has generado una explicación paso a paso para el siguiente ejercicio, y ahora el alumno está haciendo preguntas de seguimiento sobre la explicación.
+
+EJERCICIO: {exerciseName}
+
+ENUNCIADO:
+{exerciseStatement}
+
+{contextNote}
+
+METODOLOGÍA:
+
+{methodology}
+
+{additionalRules}
+
+CONTEXTO PEDAGÓGICO:
+{conceptsContext}
+{objectivesContext}
+{alignmentNote}
+
+{progressContext}
+
+{importantNotes}
+
+NOTA: El alumno puede hacer preguntas sobre cualquier aspecto de la explicación. Sé claro, conciso y pedagógico en tus respuestas.`;
+
+        const systemPromptVariables = {
+            role: assistantConfig.role,
+            exerciseName: exerciseName,
+            exerciseStatement: exerciseStatement,
+            methodology: assistantConfig.methodology,
+            contextNote: exerciseContext ? `CONTEXTO DEL EJERCICIO:\n\`\`\`\n${exerciseContext}\n\`\`\`` : '',
+            additionalRules: assistantConfig.additionalRules || '',
+            ...pedagogicalContext,
+            importantNotes: assistantConfig.importantNotes || ''
+        };
+
+        const systemPrompt = this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);
+
+        // Crear un resumen de la explicación para el contexto
+        const explanationSummary = explanation.steps.map((step, i) =>
+            `Paso ${i + 1}: ${step.explanation.substring(0, 200)}...`
+        ).join('\n\n');
+
+        const assistantMessage = `Ya has generado la siguiente explicación para el ejercicio:
+
+${explanationSummary}
+
+El alumno ahora hará preguntas de seguimiento sobre esta explicación.`;
+
+        // Resetear e inicializar el contexto
+        this.openAIService.resetConversation();
+
+        // Agregar el system prompt y el contexto de la explicación al historial
+        const history: any[] = [
+            { role: 'system', content: systemPrompt },
+            { role: 'assistant', content: assistantMessage }
+        ];
+
+        this.openAIService.setConversationHistory(history);
+
+        console.log(`[initializeContextForFollowUp] Contexto inicializado`);
     }
 }

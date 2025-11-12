@@ -8,10 +8,23 @@ export interface ExplanationStep {
 }
 
 /**
- * Estructura de una explicación completa
+ * Mensaje del chat de explicación
+ */
+export interface ExplanationChatMessage {
+    role: "user" | "assistant";
+    content: string;
+    id: string;
+}
+
+/**
+ * Estructura de una explicación completa con contexto
  */
 export interface Explanation {
     steps: ExplanationStep[];
+    exerciseName: string;
+    exerciseStatement: string;
+    exerciseContext?: string;
+    chatHistory?: ExplanationChatMessage[]; // Historial de chat de seguimiento
 }
 
 /**
@@ -20,7 +33,7 @@ export interface Explanation {
  */
 export interface ExplanationData {
     pageId: string;
-    explanations: Record<string, Explanation>; // { "Ejercicio 1": { steps: [...] }, ... }
+    explanations: Record<string, Explanation>; // { "Ejercicio 1": { steps: [...], ... }, ... }
 }
 
 /**
@@ -34,21 +47,32 @@ export class ExplanationStorageManager extends BaseStorageManager {
      * Guarda la explicación de un ejercicio específico
      * @param pageId ID de la página
      * @param exerciseName Nombre del ejercicio
-     * @param explanation Explicación generada
+     * @param exerciseStatement Enunciado del ejercicio
+     * @param explanation Explicación generada (solo steps)
+     * @param exerciseContext Contexto del ejercicio (opcional)
      */
     static async saveExplanation(
         pageId: string,
         exerciseName: string,
-        explanation: Explanation
+        exerciseStatement: string,
+        explanation: { steps: ExplanationStep[] },
+        exerciseContext?: string
     ): Promise<void> {
         // Obtener las explicaciones existentes para esta página
         const existingData = await this.getExplanationData(pageId);
 
+        const fullExplanation: Explanation = {
+            steps: explanation.steps,
+            exerciseName,
+            exerciseStatement,
+            exerciseContext
+        };
+
         const data: ExplanationData = {
             pageId,
             explanations: existingData?.explanations
-                ? { ...existingData.explanations, [exerciseName]: explanation }
-                : { [exerciseName]: explanation }
+                ? { ...existingData.explanations, [exerciseName]: fullExplanation }
+                : { [exerciseName]: fullExplanation }
         };
 
         await this.saveData(this.STORAGE_KEY_PREFIX, pageId, data);
@@ -75,6 +99,32 @@ export class ExplanationStorageManager extends BaseStorageManager {
             return null;
         }
         return data.explanations[exerciseName];
+    }
+
+    /**
+     * Actualiza el historial de chat de una explicación
+     * @param pageId ID de la página
+     * @param exerciseName Nombre del ejercicio
+     * @param chatHistory Historial de mensajes del chat
+     */
+    static async updateChatHistory(
+        pageId: string,
+        exerciseName: string,
+        chatHistory: ExplanationChatMessage[]
+    ): Promise<void> {
+        const data = await this.getExplanationData(pageId);
+        if (!data || !data.explanations[exerciseName]) {
+            console.error(`No se encontró la explicación para actualizar el chat: ${exerciseName}`);
+            return;
+        }
+
+        // Actualizar el historial de chat
+        data.explanations[exerciseName].chatHistory = chatHistory;
+
+        await this.saveData(this.STORAGE_KEY_PREFIX, pageId, {
+            pageId: data.pageId,
+            explanations: data.explanations
+        });
     }
 
     /**
