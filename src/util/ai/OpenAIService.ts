@@ -134,7 +134,7 @@ class OpenAIService {
             messages: this.conversationHistory as any,
             tools: TOOLS as any,
             tool_choice: 'auto',
-            max_tokens: 1000000
+            max_tokens: 32768
         });
 
         const choice = response.choices[0];
@@ -176,23 +176,14 @@ class OpenAIService {
             console.log(`Resultado de ${toolCall.function.name}:`,
                 typeof toolResult === 'string' ? toolResult : '[Archivo]');
 
-            // Agregar resultado al historial
             if (typeof toolResult === 'object' && toolResult.type === 'file') {
-                // Para archivos (PDFs/imágenes), agregar el resultado del tool y luego el archivo como mensaje de usuario
+                this.handleToolFileResult(toolCall, toolResult.data);
+            } else {
                 this.addToolResult(
                     toolCall.id,
                     toolCall.function.name,
-                    `Archivo adjuntado: ${toolResult.data.filename} (${toolResult.data.mimeType}, ${(toolResult.data.size / 1024).toFixed(2)} KB)`
+                    typeof toolResult === 'string' ? toolResult : String(toolResult)
                 );
-
-                // Agregar el archivo como un mensaje multimodal del usuario
-                this.addFileMessage(
-                    toolResult.data.filename,
-                    toolResult.data.dataUrl,
-                    toolResult.data.mimeType
-                );
-            } else {
-                this.addToolResult(toolCall.id, toolCall.function.name, toolResult as string);
             }
         } catch (error) {
             console.error(`Error ejecutando ${toolCall.function.name}:`, error);
@@ -235,7 +226,7 @@ class OpenAIService {
             messages: this.conversationHistory as any,
             // Cast to any to avoid deep/infinite type instantiation from zodResponseFormat
             response_format: zodResponseFormat(schema, schemaName) as any,
-            max_tokens: 1000000
+            max_tokens: 32768
         });
 
         const parsed = completion.choices[0]?.message?.parsed;
@@ -271,10 +262,10 @@ class OpenAIService {
      * se envía como texto (útil para ficheros SQL/Markdown/texto).
      */
     private addFileMessage(filename: string, dataUrl?: string, mimeType?: string, textContent?: string): void {
-        const isPdf = mimeType === 'application/pdf';
+        const usingOpenAI = this.isUsingOpenAIProvider();
+        const isImage = this.isImageMimeType(mimeType);
 
         if (textContent) {
-            // Enviar el contenido del archivo como texto editable
             this.conversationHistory.push({
                 role: 'user',
                 content: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}).\n\nCONTENIDO:\n${textContent}`
@@ -282,13 +273,13 @@ class OpenAIService {
             return;
         }
 
-        if (dataUrl) {
+        if (dataUrl && isImage) {
             this.conversationHistory.push({
                 role: 'user',
                 content: [
                     {
                         type: 'text',
-                        text: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}). ${isPdf ? 'Por favor analiza el contenido de este PDF.' : ''}`
+                        text: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}).`
                     },
                     {
                         type: 'image_url',
@@ -302,10 +293,105 @@ class OpenAIService {
             return;
         }
 
-        // Si no hay contenido, enviar al menos metadatos
+        if (usingOpenAI) {
+            this.conversationHistory.push({
+                role: 'user',
+                content: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}). El proveedor OpenAI solo permite adjuntar imágenes en este flujo, por lo que se omitió el archivo.`
+            });
+            return;
+        }
+
+        if (dataUrl) {
+            this.conversationHistory.push({
+                role: 'user',
+                content: [
+                    {
+                        type: 'text',
+                        text: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}).`
+                    },
+                    {
+                        type: 'image_url',
+                        image_url: {
+                            url: dataUrl,
+                            detail: 'high'
+                        }
+                    }
+                ]
+            });
+            return;
+        }
+
         this.conversationHistory.push({
             role: 'user',
             content: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}). El archivo está disponible pero no se ha incluido su contenido.`
         });
+    }
+
+    private handleToolFileResult(toolCall: ToolCall, fileData: {
+        filename: string;
+        mimeType?: string;
+        size?: number;
+        dataUrl?: string;
+        text?: string;
+    }): void {
+        const description = `Archivo adjuntado: ${fileData.filename} (${fileData.mimeType || 'unknown'}${fileData.size ? `, ${(fileData.size / 1024).toFixed(2)} KB` : ''})`;
+
+        if (this.isUsingOpenAIProvider()) {
+            if (fileData.text) {
+                this.addToolResult(
+                    toolCall.id,
+                    toolCall.function.name,
+                    `${description}.\n\nCONTENIDO:\n${fileData.text}`
+                );
+                return;
+            }
+
+            if (fileData.dataUrl && this.isImageMimeType(fileData.mimeType)) {
+                this.addToolMessageWithContent(toolCall.id, toolCall.function.name, [
+                    {
+                        type: 'text',
+                        text: description
+                    },
+                    {
+                        type: 'image_url',
+                        image_url: {
+                            url: fileData.dataUrl,
+                            detail: 'high'
+                        }
+                    }
+                ]);
+                return;
+            }
+
+            this.addToolResult(
+                toolCall.id,
+                toolCall.function.name,
+                `${description}. El proveedor OpenAI solo admite adjuntar imágenes en este flujo, por lo que el archivo se omitió.`
+            );
+            return;
+        }
+
+        this.addToolResult(toolCall.id, toolCall.function.name, description);
+        this.addFileMessage(fileData.filename, fileData.dataUrl, fileData.mimeType, fileData.text);
+    }
+
+    private addToolMessageWithContent(toolCallId: string, toolName: string, content: Exclude<Message['content'], string | null>): void {
+        this.conversationHistory.push({
+            role: 'tool',
+            tool_call_id: toolCallId,
+            name: toolName,
+            content
+        });
+    }
+
+    private isUsingOpenAIProvider(): boolean {
+        const provider = ConfigManager.getSelectedProvider();
+        const normalizedName = provider.name.toLowerCase();
+        const normalizedUrl = provider.baseUrl.toLowerCase();
+        return normalizedName.includes('openai') || normalizedUrl.includes('openai.com');
+    }
+
+    private isImageMimeType(mimeType?: string): boolean {
+        return typeof mimeType === 'string' && mimeType.startsWith('image/');
     }
 }
