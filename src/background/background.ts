@@ -248,38 +248,40 @@ function handleGenerateResponse(request: any, sendResponse: (response?: any) => 
 }
 
 function handleGetExerciseList(request: any, sendResponse: (response?: any) => void): boolean {
-    const { pageId, resourceId } = request;
+    const { pageId, resourceId, forceRefresh } = request;
 
-    console.log(`Identificando ejercicios en página: ${pageId}, recurso: ${resourceId || 'N/A'}`);
+    console.log(`Identificando ejercicios en página: ${pageId}, recurso: ${resourceId || 'N/A'}, forceRefresh: ${!!forceRefresh}`);
 
-    // Primero intentamos obtener los datos del storage
+    // Primero intentamos obtener los datos del storage (solo si no se fuerza refresh)
     (async () => {
         try {
-            const cachedData = await ExerciseStorageManager.getExerciseData(pageId);
+            if (!forceRefresh) {
+                const cachedData = await ExerciseStorageManager.getExerciseData(pageId);
 
-            if (cachedData) {
-                // Datos encontrados en cache
-                console.log(`Ejercicios recuperados del storage (${cachedData.exercises.length} ejercicios)`);
+                if (cachedData) {
+                    // Datos encontrados en cache
+                    console.log(`Ejercicios recuperados del storage (${cachedData.exercises.length} ejercicios)`);
 
-                // Convertir los datos a objetos Exercise
-                const exercises = cachedData.exercises.map(
-                    (ex: { name: string; statement: string; allowed?: boolean }) =>
-                        new Exercise(ex.name, ex.statement, ex.allowed ?? true)
-                );
+                    // Convertir los datos a objetos Exercise
+                    const exercises = cachedData.exercises.map(
+                        (ex: { name: string; statement: string; allowed?: boolean }) =>
+                            new Exercise(ex.name, ex.statement, ex.allowed ?? true)
+                    );
 
-                sendResponse({
-                    success: true,
-                    exercises: exercises,
-                    exercise_context: cachedData.exerciseContext,
-                    concepts: cachedData.concepts,
-                    learning_objectives: cachedData.learningObjectives,
-                    fromCache: true
-                });
-                return;
+                    sendResponse({
+                        success: true,
+                        exercises: exercises,
+                        exercise_context: cachedData.exerciseContext,
+                        concepts: cachedData.concepts,
+                        learning_objectives: cachedData.learningObjectives,
+                        fromCache: true
+                    });
+                    return;
+                }
             }
 
-            // No hay datos en cache, llamar al asistente
-            console.log('No hay datos en cache, llamando al asistente...');
+            // No hay datos en cache o se forzó refresh, llamar al asistente
+            console.log(forceRefresh ? 'Forzando re-identificación...' : 'No hay datos en cache, llamando al asistente...');
             const result = await exerciseAssistant.identifyExercises(pageId, resourceId);
 
             console.log(`Ejercicios identificados:`, result.exercises);

@@ -52,7 +52,6 @@ const ExtensionContent: React.FC = () => {
     const [reloadSidebarKey, setReloadSidebarKey] = useState<number>(0);
     const [pendingModalOpen, setPendingModalOpen] = useState<{ index: number, fromCache: boolean } | null>(null);
     const [pendingSolutionModalOpen, setPendingSolutionModalOpen] = useState<number | null>(null);
-    const [loadingExercisesFromStorage, setLoadingExercisesFromStorage] = useState<boolean>(false);
     const identifyingExercisesRef = React.useRef<boolean>(false);
 
     // Efecto para abrir modales pendientes cuando los ejercicios se cargan
@@ -140,7 +139,8 @@ const ExtensionContent: React.FC = () => {
                         console.log(`[content] Detectada página de Egela, ID: ${pageId}`);
                         setCurrentPageId(pageId);
                         setViewState("chat");
-                        // No identificamos ejercicios automáticamente, esperamos que el usuario presione el botón
+                        // Cargar ejercicios desde cache al detectar la página
+                        await loadExercisesFromCache(pageId);
                     }
                 } else {
                     console.error("[content] No se pudo cargar el curso:", response.error);
@@ -195,7 +195,7 @@ const ExtensionContent: React.FC = () => {
     useEffect(() => {
         let lastPageId = currentPageId;
 
-        const checkUrlChange = () => {
+        const checkUrlChange = async () => {
             const newPageId = getPageIdFromUrl();
 
             // Si hay un cambio de página
@@ -205,6 +205,8 @@ const ExtensionContent: React.FC = () => {
                     setCurrentPageId(newPageId);
                     setExercises([]);
                     setIsLoadingExercises(false);
+                    // Cargar ejercicios desde cache al cambiar de página
+                    await loadExercisesFromCache(newPageId);
                     setReloadSidebarKey(prev => prev + 1);
                 } else if (lastPageId !== null) {
                     // Ya no estamos en una página de ejercicios
@@ -238,7 +240,8 @@ const ExtensionContent: React.FC = () => {
         };
     }, [currentPageId]);
 
-    const identifyExercisesInPage = async (pageId: string) => {
+    // Función para generar ejercicios con LLM (llamada manualmente con botones)
+    const generateExercises = async (pageId: string) => {
         // Prevenir múltiples identificaciones simultáneas
         if (identifyingExercisesRef.current) {
             console.log("[content] Ya hay una identificación en curso, ignorando solicitud");
@@ -252,13 +255,14 @@ const ExtensionContent: React.FC = () => {
             const urlParams = new URLSearchParams(globalThis.location.search);
             const resourceId = urlParams.get("id"); // El ID del recurso (página) actual
 
-            console.log("[content] Enviando solicitud para identificar ejercicios...");
+            console.log("[content] Generando ejercicios con LLM...");
             console.log("[content] PageId:", pageId, "ResourceId:", resourceId);
 
             const response = await chrome.runtime.sendMessage({
                 action: "getExerciseList",
                 pageId: pageId,
                 resourceId: resourceId || undefined,
+                forceRefresh: true, // Siempre generar nuevos, nunca usar cache
             });
 
             if (response.success) {
@@ -320,49 +324,40 @@ const ExtensionContent: React.FC = () => {
         setLearningObjectives(data.learning_objectives);
     };
 
-    // Helper para cargar ejercicios desde storage si no están en memoria
-    const loadExercisesFromStorageIfNeeded = async (): Promise<string | null> => {
-        const pageId = currentPageId || getPageIdFromUrl();
-
-        // Si ya hay ejercicios cargados o ya estamos cargando, no hacer nada
-        if (exercises.length > 0 || loadingExercisesFromStorage || !pageId) {
-            return exercises.length > 0 ? pageId : null;
-        }
-
-        console.log("[content] Cargando ejercicios desde storage...");
-        setLoadingExercisesFromStorage(true);
-
+    // Función para cargar ejercicios desde cache (llamada automáticamente al cargar página)
+    const loadExercisesFromCache = async (pageId: string): Promise<boolean> => {
+        console.log("[content] Intentando cargar ejercicios desde cache...");
         try {
             const response = await chrome.runtime.sendMessage({
                 action: "getExerciseData",
                 pageId: pageId,
             });
 
-            if (response.success && response.data) {
-                console.log("[content] Ejercicios cargados desde storage:", response.data.exercises?.length || 0);
+            if (response.success && response.data && response.data.exercises && response.data.exercises.length > 0) {
+                console.log("[content] Ejercicios cargados desde cache:", response.data.exercises.length);
                 updateExerciseContext(response.data);
-                return pageId;
+                return true;
             } else {
-                console.error("[content] No se pudieron cargar ejercicios desde storage");
+                console.log("[content] No hay ejercicios en cache para esta página");
             }
         } catch (error) {
-            console.error("[content] Error cargando ejercicios desde storage:", error);
-        } finally {
-            setLoadingExercisesFromStorage(false);
+            console.error("[content] Error cargando ejercicios desde cache:", error);
         }
-
-        return null;
+        return false;
     };
 
     const handleOpenExerciseModal = async (exerciseIndex: number, fromCache: boolean = false) => {
         console.log("[content] handleOpenExerciseModal - Index:", exerciseIndex, "Ejercicios:", exercises.length);
 
-        // Si no hay ejercicios, intentar cargarlos y marcar como pendiente
+        // Si no hay ejercicios, intentar cargarlos desde cache y marcar como pendiente
         if (exercises.length === 0) {
-            const loaded = await loadExercisesFromStorageIfNeeded();
-            if (loaded) {
-                setPendingModalOpen({ index: exerciseIndex, fromCache });
-                return;
+            const pageId = currentPageId || getPageIdFromUrl();
+            if (pageId) {
+                const loaded = await loadExercisesFromCache(pageId);
+                if (loaded) {
+                    setPendingModalOpen({ index: exerciseIndex, fromCache });
+                    return;
+                }
             }
         }
 
@@ -375,12 +370,15 @@ const ExtensionContent: React.FC = () => {
     const handleOpenSolutionModal = async (exerciseIndex: number) => {
         console.log("[content] handleOpenSolutionModal - Index:", exerciseIndex, "Ejercicios:", exercises.length);
 
-        // Si no hay ejercicios, intentar cargarlos y marcar como pendiente
+        // Si no hay ejercicios, intentar cargarlos desde cache y marcar como pendiente
         if (exercises.length === 0) {
-            const loaded = await loadExercisesFromStorageIfNeeded();
-            if (loaded) {
-                setPendingSolutionModalOpen(exerciseIndex);
-                return;
+            const pageId = currentPageId || getPageIdFromUrl();
+            if (pageId) {
+                const loaded = await loadExercisesFromCache(pageId);
+                if (loaded) {
+                    setPendingSolutionModalOpen(exerciseIndex);
+                    return;
+                }
             }
         }
 
@@ -428,7 +426,7 @@ const ExtensionContent: React.FC = () => {
         }
 
         setIsLoadingExercises(true);
-        await identifyExercisesInPage(pageId);
+        await generateExercises(pageId);
     };
 
     // No mostrar nada si está oculto o si no hay curso
@@ -451,7 +449,8 @@ const ExtensionContent: React.FC = () => {
                     onExplanationGenerated={handleExplanationGenerated}
                     onOpenEvaluation={handleOpenEvaluationList}
                     onEvaluationGenerated={handleEvaluationGenerated}
-                    isExplanationModalOpen={isModalOpen}
+                    isAnyModalOpen={isModalOpen || isSolutionModalOpen || isEvaluationListModalOpen}
+                    hasExercisesLoaded={exercises.length > 0}
                     onIdentifyExercises={handleIdentifyExercises}
                     key={`${reloadExplanationsKey}-${reloadEvaluationsKey}-${reloadSidebarKey}`} // Re-renderizar cuando cambie cualquier trigger
                 />

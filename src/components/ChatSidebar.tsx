@@ -39,8 +39,9 @@ interface ChatSidebarProps {
     onExplanationGenerated?: () => void; // Callback para recargar lista cuando se genera explicación
     onOpenEvaluation?: (exerciseName: string) => void;
     onEvaluationGenerated?: () => void; // Callback para recargar lista cuando se genera evaluación
-    isExplanationModalOpen?: boolean; // Indica si el modal de explicaciones está abierto
-    onIdentifyExercises?: () => void; // Callback para identificar ejercicios manualmente
+    isAnyModalOpen?: boolean; // Indica si hay algún modal abierto
+    hasExercisesLoaded?: boolean; // Indica si hay ejercicios cargados
+    onIdentifyExercises?: () => void; // Callback para generar ejercicios manualmente
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -55,7 +56,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     onExplanationGenerated,
     onOpenEvaluation,
     onEvaluationGenerated,
-    isExplanationModalOpen = false,
+    isAnyModalOpen = false,
+    hasExercisesLoaded = false,
     onIdentifyExercises,
 }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -76,6 +78,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const [needsConfiguration, setNeedsConfiguration] = useState<boolean>(false);
     const [isCheckingConfig, setIsCheckingConfig] = useState<boolean>(true);
     const [reloadKey, setReloadKey] = useState<number>(0);
+
+    // Calcular si el chat debe estar deshabilitado
+    const isChatDisabled = isAnyModalOpen || isGenerating || isLoadingExercises || isLabBlocked || (!!pageId && !hasExercisesLoaded);
+    const getChatPlaceholder = () => {
+        if (isAnyModalOpen) return "Chat deshabilitado (modal abierto)...";
+        if (isLabBlocked) return "Laboratorio bloqueado...";
+        if (isLoadingExercises) return "Cargando ejercicios...";
+        if (pageId && !hasExercisesLoaded) return "No hay ejercicios cargados. Presiona 'Identificar' para analizarlos...";
+        return "Escribe tu pregunta...";
+    };
 
     React.useEffect(() => {
         const checkModeAndConfiguration = async () => {
@@ -420,14 +432,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             <strong>Proveedor:</strong> {providerName} | <strong>Modelo:</strong> {modelName}
                         </p>
                     </div>
-                    {/* Botón para identificar ejercicios - solo visible si hay pageId */}
+                    {/* Botón para identificar/generar ejercicios - solo visible si hay pageId */}
                     {pageId && !needsConfiguration && (
                         <button
                             type="button"
                             className="btn btn-sm btn-outline-primary"
                             onClick={onIdentifyExercises}
                             disabled={isLoadingExercises}
-                            title={exercises.length > 0 ? "Re-identificar ejercicios" : "Identificar ejercicios"}
+                            title={exercises.length > 0 ? "Re-generar ejercicios" : "Identificar ejercicios"}
                         >
                             {isLoadingExercises ? (
                                 <>
@@ -613,6 +625,26 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                     </p>
                                 </div>
                             </div>
+                        ) : pageId && !hasExercisesLoaded && !isLoadingExercises ? (
+                            <>
+                                <div className="alert alert-warning" role="alert">
+                                    <h6 className="alert-heading mb-2">
+                                        <i className="bi bi-exclamation-triangle me-2"></i>
+                                        No hay ejercicios cargados
+                                    </h6>
+                                    <p className="mb-3 small">
+                                        Para poder usar el chat con el contexto de los ejercicios, primero debes identificarlos.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary btn-sm"
+                                        onClick={onIdentifyExercises}
+                                    >
+                                        <i className="bi bi-play-circle me-1"></i>
+                                        Identificar ejercicios ahora
+                                    </button>
+                                </div>
+                            </>
                         ) : messages.length === 0 ? (
                             <>
                                 <div className="alert alert-info" role="alert">
@@ -808,19 +840,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     <div className="d-flex gap-2 align-items-center">
                         <textarea
                             className="form-control"
-                            placeholder={
-                                isExplanationModalOpen
-                                    ? "Chat deshabilitado (modal abierto)..."
-                                    : isLabBlocked
-                                        ? "Laboratorio bloqueado..."
-                                        : isLoadingExercises
-                                            ? "Cargando ejercicios..."
-                                            : "Escribe tu pregunta..."
-                            }
+                            placeholder={getChatPlaceholder()}
                             value={inputValue}
                             onChange={e => setInputValue(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            disabled={isGenerating || isLoadingExercises || isLabBlocked || isExplanationModalOpen}
+                            disabled={isChatDisabled}
                             rows={4}
                             style={{ resize: "none", overflow: "auto", flex: 1 }}
                         />
@@ -829,11 +853,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             type="button"
                             onClick={handleSendMessage}
                             disabled={
-                                isGenerating ||
-                                !inputValue.trim() ||
-                                isLoadingExercises ||
-                                isLabBlocked ||
-                                isExplanationModalOpen
+                                isChatDisabled ||
+                                !inputValue.trim()
                             }
                             title="Enviar mensaje"
                             style={{
@@ -860,16 +881,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         <button
                             onClick={handleResetChat}
                             title="Reiniciar conversación"
-                            disabled={isExplanationModalOpen}
+                            disabled={isAnyModalOpen}
                             style={{
                                 background: "transparent",
                                 border: "none",
                                 padding: "8px",
-                                cursor: isExplanationModalOpen ? "not-allowed" : "pointer",
+                                cursor: isAnyModalOpen ? "not-allowed" : "pointer",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                opacity: isExplanationModalOpen ? 0.5 : 1,
+                                opacity: isAnyModalOpen ? 0.5 : 1,
                             }}
                         >
                             <svg
