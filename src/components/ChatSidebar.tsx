@@ -80,12 +80,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const [reloadKey, setReloadKey] = useState<number>(0);
 
     // Calcular si el chat debe estar deshabilitado
-    const isChatDisabled = isAnyModalOpen || isGenerating || isLoadingExercises || isLabBlocked || (!!pageId && !hasExercisesLoaded);
+    const isChatDisabled =
+        isAnyModalOpen || isGenerating || isLoadingExercises || isLabBlocked || (!!pageId && !hasExercisesLoaded);
     const getChatPlaceholder = () => {
         if (isAnyModalOpen) return "Chat deshabilitado (modal abierto)...";
         if (isLabBlocked) return "Laboratorio bloqueado...";
         if (isLoadingExercises) return "Cargando ejercicios...";
-        if (pageId && !hasExercisesLoaded) return "No hay ejercicios cargados. Presiona 'Identificar' para analizarlos...";
+        if (pageId && !hasExercisesLoaded)
+            return "No hay ejercicios cargados. Presiona 'Identificar' para analizarlos...";
         return "Escribe tu pregunta...";
     };
 
@@ -443,7 +445,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         >
                             {isLoadingExercises ? (
                                 <>
-                                    <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                    <span
+                                        className="spinner-border spinner-border-sm me-1"
+                                        role="status"
+                                        aria-hidden="true"
+                                    ></span>
                                     Analizando...
                                 </>
                             ) : (
@@ -538,6 +544,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 </button>
                             </li>
                         )}
+                        {/* Pestaña de progreso solo para modo profesor */}
                         {/* Pestaña de progreso visible para todos si hay courseId */}
                         {courseId && (
                             <li className="nav-item" role="presentation">
@@ -605,8 +612,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                     <strong>Para desbloquear este laboratorio:</strong>
                                 </p>
                                 <ul className="mb-0 mt-2">
-                                    <li>Completa todos los ejercicios de reto del laboratorio anterior</li>
-                                    <li>Obtén una calificación mínima de 5.0 en cada ejercicio de reto</li>
+                                    <li>Completa los ejercicios de reto requeridos del laboratorio anterior</li>
+                                    <li>
+                                        Cumple los criterios definidos por tu profesor en las opciones de la extensión o
+                                        consulta los detalles en "Mi progreso"
+                                    </li>
                                     <li>Revisa tu progreso en la pestaña "Mi progreso"</li>
                                 </ul>
                             </div>
@@ -633,7 +643,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                         No hay ejercicios cargados
                                     </h6>
                                     <p className="mb-3 small">
-                                        Para poder usar el chat con el contexto de los ejercicios, primero debes identificarlos.
+                                        Para poder usar el chat con el contexto de los ejercicios, primero debes
+                                        identificarlos.
                                     </p>
                                     <button
                                         type="button"
@@ -659,7 +670,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                                 Identificar ejercicios
                                             </h6>
                                             <p className="card-text small text-muted mb-3">
-                                                Presiona el botón para analizar la página e identificar los ejercicios disponibles.
+                                                Presiona el botón para analizar la página e identificar los ejercicios
+                                                disponibles.
                                             </p>
                                             <button
                                                 type="button"
@@ -852,10 +864,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             className="btn btn-primary"
                             type="button"
                             onClick={handleSendMessage}
-                            disabled={
-                                isChatDisabled ||
-                                !inputValue.trim()
-                            }
+                            disabled={isChatDisabled || !inputValue.trim()}
                             title="Enviar mensaje"
                             style={{
                                 padding: "8px 12px",

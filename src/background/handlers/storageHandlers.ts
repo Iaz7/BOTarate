@@ -1,6 +1,7 @@
 import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManager";
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
 import { LabStorageManager } from "../../util/storage/LabStorageManager";
+import { ProgressConfigStorageManager } from "../../util/storage/ProgressConfigStorageManager";
 
 export function handleRemoveExerciseData(request: any, sendResponse: (response?: any) => void): boolean {
     const { pageId } = request;
@@ -72,6 +73,28 @@ export function handleUpdateLabRequired(request: any, sendResponse: (response?: 
             sendResponse({ success: true });
         } catch (error: any) {
             console.error('Error al actualizar estado de laboratorio:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+export function handleSaveProgressConfig(request: any, sendResponse: (response?: any) => void): boolean {
+    const { config } = request;
+
+    (async () => {
+        try {
+            const sanitizedConfig = {
+                minScoreToPass: Math.min(Math.max(Number(config?.minScoreToPass ?? 5), 0), 10),
+                minChallengesPercentage: Math.min(Math.max(Number(config?.minChallengesPercentage ?? 100), 0), 100),
+            };
+
+            await ProgressConfigStorageManager.saveConfig(sanitizedConfig);
+            console.log("Configuración de progreso global guardada");
+            sendResponse({ success: true, config: sanitizedConfig });
+        } catch (error: any) {
+            console.error("Error al guardar configuración de progreso:", error);
             sendResponse({ success: false, error: error.message });
         }
     })();

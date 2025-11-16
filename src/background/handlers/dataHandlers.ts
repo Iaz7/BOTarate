@@ -4,6 +4,7 @@ import { EvaluationStorageManager } from "../../util/storage/EvaluationStorageMa
 import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManager";
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
 import { Lab, LabStorageManager } from "../../util/storage/LabStorageManager";
+import { ProgressConfigStorageManager } from "../../util/storage/ProgressConfigStorageManager";
 import { getCourseAssistant, getEvaluationAssistant, getExerciseAssistant, getExplanationAssistant } from "../context";
 
 export function handleGetCourseData(request: any, sendResponse: (response?: any) => void): boolean {
@@ -171,6 +172,26 @@ export function handleGetLabData(request: any, sendResponse: (response?: any) =>
             }
         } catch (error: any) {
             console.error('Error al obtener datos de laboratorios:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+export function handleGetProgressConfig(_request: any, sendResponse: (response?: any) => void): boolean {
+    (async () => {
+        try {
+            const storedConfig = await ProgressConfigStorageManager.getConfig();
+            if (storedConfig) {
+                const { timestamp, ...config } = storedConfig;
+                sendResponse({ success: true, config, timestamp });
+            } else {
+                const defaultConfig = ProgressConfigStorageManager.getDefaultConfig();
+                sendResponse({ success: true, config: defaultConfig, isDefault: true });
+            }
+        } catch (error: any) {
+            console.error("Error al obtener configuración de progreso:", error);
             sendResponse({ success: false, error: error.message });
         }
     })();

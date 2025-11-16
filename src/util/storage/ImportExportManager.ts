@@ -1,6 +1,7 @@
 import { AssistantConfigStorageManager } from "./AssistantConfigStorageManager";
 import { ExerciseStorageManager } from "./ExerciseStorageManager";
 import { LabStorageManager } from "./LabStorageManager";
+import { ProgressConfigStorageManager } from "./ProgressConfigStorageManager";
 
 /**
  * Estructura de datos para la exportación
@@ -13,6 +14,10 @@ export interface ExportData {
         data: any;
     }>;
     labData: Array<{
+        key: string;
+        data: any;
+    }>;
+    progressConfigData: Array<{
         key: string;
         data: any;
     }>;
@@ -32,6 +37,23 @@ export interface ImportExportResult {
  * Permite guardar y restaurar toda la configuración de la extensión en formato JSON
  */
 export class ImportExportManager {
+    private static async restoreCollection(
+        prefix: string,
+        items?: Array<{ key: string; data: any }>
+    ): Promise<number> {
+        if (!items || items.length === 0) {
+            return 0;
+        }
+
+        for (const item of items) {
+            await chrome.storage.local.set({
+                [`${prefix}${item.key}`]: item.data,
+            });
+        }
+
+        return items.length;
+    }
+
     /**
      * Obtiene todos los datos del storage para exportarlos
      * @returns Objeto con toda la configuración
@@ -56,6 +78,13 @@ export class ImportExportManager {
                 data: allData[key],
             }));
 
+        const progressConfigData = Object.keys(allData)
+            .filter(key => key.startsWith("progress_config_"))
+            .map(key => ({
+                key: key.replace("progress_config_", ""),
+                data: allData[key],
+            }));
+
         // Obtener configuración de asistentes
         const assistantConfig = await AssistantConfigStorageManager.loadConfig();
 
@@ -64,6 +93,7 @@ export class ImportExportManager {
             assistantConfig,
             exerciseData,
             labData,
+            progressConfigData,
         };
     }
 
@@ -159,27 +189,9 @@ export class ImportExportManager {
                 console.log("[ImportExportManager] Configuración de asistentes importada");
             }
 
-            // Importar datos de ejercicios
-            if (data.exerciseData && data.exerciseData.length > 0) {
-                for (const item of data.exerciseData) {
-                    await chrome.storage.local.set({
-                        [`exercise_data_${item.key}`]: item.data,
-                    });
-                }
-                importedCount += data.exerciseData.length;
-                console.log(`[ImportExportManager] ${data.exerciseData.length} ejercicios importados`);
-            }
-
-            // Importar datos de laboratorios
-            if (data.labData && data.labData.length > 0) {
-                for (const item of data.labData) {
-                    await chrome.storage.local.set({
-                        [`lab_data_${item.key}`]: item.data,
-                    });
-                }
-                importedCount += data.labData.length;
-                console.log(`[ImportExportManager] ${data.labData.length} laboratorios importados`);
-            }
+            importedCount += await this.restoreCollection("exercise_data_", data.exerciseData);
+            importedCount += await this.restoreCollection("lab_data_", data.labData);
+            importedCount += await this.restoreCollection("progress_config_", data.progressConfigData);
 
             // Notificar al background script para recargar configuración
             try {
@@ -219,6 +231,7 @@ export class ImportExportManager {
             await ExerciseStorageManager.clearAllExerciseData();
             await LabStorageManager.clearAllLabData();
             await AssistantConfigStorageManager.clearConfig();
+            await ProgressConfigStorageManager.clearAll();
 
             console.log("[ImportExportManager] Todos los datos han sido eliminados");
 
@@ -248,11 +261,13 @@ export class ImportExportManager {
 
         const exerciseCount = Object.keys(allData).filter(key => key.startsWith("exercise_data_")).length;
         const labCount = Object.keys(allData).filter(key => key.startsWith("lab_data_")).length;
+        const progressConfigCount = Object.keys(allData).filter(key => key.startsWith("progress_config_")).length;
         const hasAssistantConfig = Object.keys(allData).some(key => key.startsWith("assistant_config_"));
 
         return {
             exerciseCount,
             labCount,
+            progressConfigCount,
             hasAssistantConfig,
         };
     }

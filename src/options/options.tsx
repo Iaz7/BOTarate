@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ImportExportTab } from "../components/ImportExportTab";
+import ProgressConfigTab from "../components/ProgressConfigTab";
 import "../content/bootstrap.css";
 import { AssistantConfig } from "../util/ai/AssistantConfig";
 import { OpenAIService } from "../util/ai/OpenAIService";
@@ -7,7 +8,7 @@ import { ConfigManager } from "../util/config/ConfigManager";
 import { ModeManager } from "../util/config/ModeManager";
 import { AssistantConfigStorageManager } from "../util/storage/AssistantConfigStorageManager";
 
-type TabType = "llm" | "assistants" | "import-export";
+type TabType = "llm" | "assistants" | "progress" | "import-export";
 type AssistantSection = "general" | "course" | "exercise" | "evaluation" | "explanation";
 
 // Componentes reutilizables para campos de configuración
@@ -208,9 +209,9 @@ const Options: React.FC = () => {
                 <div className="row justify-content-center">
                     <div className="col-11 col-xl-10">
                         <div className="text-center">
-                            <div className="spinner-border" role="status">
+                            <output className="spinner-border">
                                 <span className="visually-hidden">Cargando configuración...</span>
-                            </div>
+                            </output>
                             <p className="mt-2">Cargando configuración...</p>
                         </div>
                     </div>
@@ -401,6 +402,21 @@ const Options: React.FC = () => {
         }
     };
 
+    const renderProgressTab = () => {
+        if (!isTeacherMode) return null;
+
+        return (
+            <div className="card mb-4">
+                <div className="card-header">
+                    <h5 className="card-title mb-0">Criterios globales de progreso</h5>
+                </div>
+                <div className="card-body">
+                    <ProgressConfigTab isActive={activeTab === "progress"} />
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="container-fluid py-4">
             <div className="row justify-content-center">
@@ -425,6 +441,16 @@ const Options: React.FC = () => {
                                     onClick={() => setActiveTab("assistants")}
                                 >
                                     Configuración Asistentes
+                                </button>
+                            </li>
+                        )}
+                        {isTeacherMode && (
+                            <li className="nav-item">
+                                <button
+                                    className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("progress")}
+                                >
+                                    Configurar Progreso
                                 </button>
                             </li>
                         )}
@@ -615,6 +641,8 @@ const Options: React.FC = () => {
                             </div>
                         </div>
                     )}
+
+                    {activeTab === "progress" && renderProgressTab()}
 
                     {/* Contenido de Importar/Exportar */}
                     {activeTab === "import-export" && <ImportExportTab />}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { LabProgress, ProgressManager, SavedEvaluation } from "../util/progress/ProgressManager";
+import { LabProgress, ProgressManager, ProgressRequirements, SavedEvaluation } from "../util/progress/ProgressManager";
 
 interface ProgressTabProps {
     courseId: string;
@@ -8,6 +8,7 @@ interface ProgressTabProps {
 const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
     const [labProgress, setLabProgress] = useState<LabProgress[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [requirements, setRequirements] = useState<ProgressRequirements | null>(null);
 
     useEffect(() => {
         loadProgressData();
@@ -17,7 +18,8 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
         setIsLoading(true);
         try {
             const progressData = await ProgressManager.loadProgressData(courseId);
-            setLabProgress(progressData);
+            setLabProgress(progressData.labs);
+            setRequirements(progressData.requirements);
         } catch (error) {
             console.error("[ProgressTab] Error loading progress data:", error);
         } finally {
@@ -26,7 +28,7 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
     };
 
     const isLabCompleted = (progress: LabProgress): boolean => {
-        return ProgressManager.isLabCompleted(progress);
+        return ProgressManager.isLabCompleted(progress, requirements || undefined);
     };
 
     const getLabBackgroundColor = (progress: LabProgress): string => {
@@ -48,8 +50,26 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
 
     const getScoreBadgeClass = (score: number | null): string => {
         if (score === null) return "bg-secondary";
-        if (score >= 5) return "bg-success";
+        const minScore = requirements?.minScoreToPass ?? 5;
+        if (score >= minScore) return "bg-success";
         return "bg-danger";
+    };
+
+    const getRequiredChallengesLabel = (progress: LabProgress): string | null => {
+        if (!requirements || progress.challengeExercises.length === 0) {
+            return null;
+        }
+
+        const required = Math.min(
+            progress.challengeExercises.length,
+            Math.ceil((requirements.minChallengesPercentage / 100) * progress.challengeExercises.length)
+        );
+
+        if (required === 0) {
+            return null;
+        }
+
+        return `Necesitas aprobar ${required} de ${progress.challengeExercises.length} retos.`;
     };
 
     if (isLoading) {
@@ -82,9 +102,9 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                     <i className="bi bi-info-circle"></i> Sistema de Progresión
                 </h6>
                 <p className="mb-2">
-                    Los laboratorios se desbloquean secuencialmente. Para acceder a un laboratorio, debes completar
-                    todos los <strong>ejercicios de reto</strong> del laboratorio anterior con una nota mínima de{" "}
-                    <strong>5.0</strong>.
+                    Los laboratorios se desbloquean secuencialmente. Para acceder a un laboratorio, debes completar los{" "}
+                    <strong>ejercicios de reto</strong> del laboratorio anterior siguiendo los criterios definidos por
+                    tu profesor.
                 </p>
                 <ul className="mb-0 small">
                     <li>
@@ -100,6 +120,19 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                     </li>
                 </ul>
             </div>
+
+            {requirements && (
+                <div className="alert alert-secondary small mb-3" role="alert">
+                    <strong>Criterios actuales:</strong>
+                    <ul className="mb-0 mt-2">
+                        <li>Nota mínima por reto: {requirements.minScoreToPass.toFixed(1)} / 10</li>
+                        <li>
+                            Porcentaje mínimo de retos aprobados: {requirements.minChallengesPercentage}% del total de
+                            retos del laboratorio
+                        </li>
+                    </ul>
+                </div>
+            )}
 
             {/* Lista de laboratorios */}
             <div className="list-group">
@@ -136,6 +169,12 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                         <small className="text-muted d-block mb-1">
                                             <strong>Ejercicios de reto:</strong>
                                         </small>
+                                        {(() => {
+                                            const requiredLabel = getRequiredChallengesLabel(progress);
+                                            return requiredLabel ? (
+                                                <small className="text-muted d-block mb-2">{requiredLabel}</small>
+                                            ) : null;
+                                        })()}
                                         <div className="d-flex flex-wrap gap-2">
                                             {progress.challengeExercises.map(exercise => {
                                                 const evaluations = progress.challengeEvaluations.get(exercise.name);
@@ -165,7 +204,8 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                             </>
                         ) : (
                             <p className="small mb-0">
-                                <i className="bi bi-lock"></i> Laboratorio bloqueado. Completa el laboratorio anterior.
+                                <i className="bi bi-lock"></i> Laboratorio bloqueado. Completa el laboratorio anterior
+                                siguiendo los criterios configurados.
                             </p>
                         )}
                     </div>

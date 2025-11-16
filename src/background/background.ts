@@ -21,12 +21,14 @@ import {
     handleGetExerciseList,
     handleGetExercisesWithEvaluations,
     handleGetExercisesWithExplanations,
-    handleGetLabData
+    handleGetLabData,
+    handleGetProgressConfig
 } from "./handlers/dataHandlers";
 import {
     handleRemoveChallengeExercisesExplanations,
     handleRemoveExerciseData,
     handleSaveChatHistory,
+    handleSaveProgressConfig,
     handleUpdateExerciseAllowed,
     handleUpdateLabRequired
 } from "./handlers/storageHandlers";
@@ -97,8 +99,12 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleRemoveChallengeExercisesExplanations(request, sendResponse);
         case "getLabData":
             return handleGetLabData(request, sendResponse);
+        case "getProgressConfig":
+            return handleGetProgressConfig(request, sendResponse);
         case "updateLabRequired":
             return handleUpdateLabRequired(request, sendResponse);
+        case "saveProgressConfig":
+            return handleSaveProgressConfig(request, sendResponse);
         case "evaluateSolution":
             return handleEvaluateSolution(request, sendResponse);
         case "getExercisesWithEvaluations":
