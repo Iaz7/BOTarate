@@ -97,7 +97,7 @@ const TOOLS = [
                 properties: {
                     exerciseIndex: {
                         type: 'number',
-                        description: 'El índice del ejercicio en la lista de ejercicios disponibles (comenzando desde 0). Por ejemplo, si el usuario pide "explica el ejercicio 1", el índice sería 0.'
+                        description: 'El índice del ejercicio en la lista de ejercicios disponibles. No es 0-based, sino directamente el que aparece al lado del ejercicio.'
                     }
                 },
                 required: ['exerciseIndex'],
@@ -115,7 +115,7 @@ const TOOLS = [
                 properties: {
                     exerciseIndex: {
                         type: 'number',
-                        description: 'El índice del ejercicio en la lista de ejercicios disponibles (comenzando desde 0). Por ejemplo, si el usuario dice "quiero resolver el ejercicio 1", el índice sería 0.'
+                        description: 'El índice del ejercicio en la lista de ejercicios disponibles. No es 0-based, sino directamente el que aparece al lado del ejercicio.'
                     }
                 },
                 required: ['exerciseIndex'],
