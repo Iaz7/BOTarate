@@ -40,6 +40,7 @@ interface ChatSidebarProps {
     onOpenEvaluation?: (exerciseName: string) => void;
     onEvaluationGenerated?: () => void; // Callback para recargar lista cuando se genera evaluación
     isExplanationModalOpen?: boolean; // Indica si el modal de explicaciones está abierto
+    onIdentifyExercises?: () => void; // Callback para identificar ejercicios manualmente
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -55,6 +56,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     onOpenEvaluation,
     onEvaluationGenerated,
     isExplanationModalOpen = false,
+    onIdentifyExercises,
 }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -408,13 +410,39 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
             {/* Header */}
             <div className="card-header bg-light border-bottom">
-                <h3 className="h5 mb-2">Asistente IA</h3>
-                <p className="small text-muted mb-1">
-                    <strong>Curso:</strong> {courseName}
-                </p>
-                <p className="small text-muted mb-0">
-                    <strong>Proveedor:</strong> {providerName} | <strong>Modelo:</strong> {modelName}
-                </p>
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h3 className="h5 mb-2">Asistente IA</h3>
+                        <p className="small text-muted mb-1">
+                            <strong>Curso:</strong> {courseName}
+                        </p>
+                        <p className="small text-muted mb-0">
+                            <strong>Proveedor:</strong> {providerName} | <strong>Modelo:</strong> {modelName}
+                        </p>
+                    </div>
+                    {/* Botón para identificar ejercicios - solo visible si hay pageId */}
+                    {pageId && !needsConfiguration && (
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={onIdentifyExercises}
+                            disabled={isLoadingExercises}
+                            title={exercises.length > 0 ? "Re-identificar ejercicios" : "Identificar ejercicios"}
+                        >
+                            {isLoadingExercises ? (
+                                <>
+                                    <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                    Analizando...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="bi bi-arrow-clockwise me-1"></i>
+                                    {exercises.length > 0 ? "Re-identificar" : "Identificar"}
+                                </>
+                            )}
+                        </button>
+                    )}
+                </div>
 
                 {/* Pestañas */}
                 {!needsConfiguration && (
@@ -586,9 +614,33 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 </div>
                             </div>
                         ) : messages.length === 0 ? (
-                            <div className="alert alert-info" role="alert">
-                                ¡Hola! Pregúntame sobre el curso y te ayudaré.
-                            </div>
+                            <>
+                                <div className="alert alert-info" role="alert">
+                                    ¡Hola! Pregúntame sobre el curso y te ayudaré.
+                                </div>
+                                {/* Botón para identificar ejercicios si estamos en una página y no hay ejercicios */}
+                                {pageId && exercises.length === 0 && !isLoadingExercises && (
+                                    <div className="card border-primary">
+                                        <div className="card-body p-3">
+                                            <h6 className="card-title mb-2">
+                                                <i className="bi bi-search me-2"></i>
+                                                Identificar ejercicios
+                                            </h6>
+                                            <p className="card-text small text-muted mb-3">
+                                                Presiona el botón para analizar la página e identificar los ejercicios disponibles.
+                                            </p>
+                                            <button
+                                                type="button"
+                                                className="btn btn-primary btn-sm"
+                                                onClick={onIdentifyExercises}
+                                            >
+                                                <i className="bi bi-play-circle me-1"></i>
+                                                Identificar ejercicios
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         ) : (
                             messages.map(message => {
                                 // Ignorar mensajes de tipo tool (no mostrarlos)
@@ -760,10 +812,10 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 isExplanationModalOpen
                                     ? "Chat deshabilitado (modal abierto)..."
                                     : isLabBlocked
-                                    ? "Laboratorio bloqueado..."
-                                    : isLoadingExercises
-                                    ? "Cargando ejercicios..."
-                                    : "Escribe tu pregunta..."
+                                        ? "Laboratorio bloqueado..."
+                                        : isLoadingExercises
+                                            ? "Cargando ejercicios..."
+                                            : "Escribe tu pregunta..."
                             }
                             value={inputValue}
                             onChange={e => setInputValue(e.target.value)}

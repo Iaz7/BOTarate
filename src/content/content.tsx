@@ -4,8 +4,6 @@ import { createRoot } from "react-dom/client";
 import ChatSidebar from "../components/ChatSidebar";
 import EvaluationListModal from "../components/EvaluationListModal";
 import ExerciseModal from "../components/ExerciseModal";
-import LoadingMessage from "../components/LoadingMessage";
-import NoExercisesMessage from "../components/NoExercisesMessage";
 import SolutionModal from "../components/SolutionModal";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
@@ -19,7 +17,16 @@ interface Exercise {
     statement: string;
 }
 
-type ViewState = "loading" | "no-exercises" | "chat" | "hidden";
+type ViewState = "loading" | "chat" | "hidden";
+
+// Helper para obtener el pageId de la URL actual
+const getPageIdFromUrl = (): string | null => {
+    if (!globalThis.location.href.includes(PAGE_VIEW_HREF)) {
+        return null;
+    }
+    const urlParams = new URLSearchParams(globalThis.location.search);
+    return urlParams.get("id");
+};
 
 const ExtensionContent: React.FC = () => {
     const [viewState, setViewState] = useState<ViewState>("chat");
@@ -43,6 +50,29 @@ const ExtensionContent: React.FC = () => {
     const [reloadExplanationsKey, setReloadExplanationsKey] = useState<number>(0);
     const [reloadEvaluationsKey, setReloadEvaluationsKey] = useState<number>(0);
     const [reloadSidebarKey, setReloadSidebarKey] = useState<number>(0);
+    const [pendingModalOpen, setPendingModalOpen] = useState<{ index: number, fromCache: boolean } | null>(null);
+    const [pendingSolutionModalOpen, setPendingSolutionModalOpen] = useState<number | null>(null);
+    const [loadingExercisesFromStorage, setLoadingExercisesFromStorage] = useState<boolean>(false);
+    const identifyingExercisesRef = React.useRef<boolean>(false);
+
+    // Efecto para abrir modales pendientes cuando los ejercicios se cargan
+    useEffect(() => {
+        if (exercises.length > 0) {
+            if (pendingModalOpen !== null) {
+                console.log("[content] Abriendo modal pendiente, ejercicio:", pendingModalOpen.index);
+                setSelectedExerciseIndex(pendingModalOpen.index);
+                setModalLoadFromCache(pendingModalOpen.fromCache);
+                setIsModalOpen(true);
+                setPendingModalOpen(null);
+            }
+            if (pendingSolutionModalOpen !== null) {
+                console.log("[content] Abriendo modal de solución pendiente, ejercicio:", pendingSolutionModalOpen);
+                setSelectedExerciseIndex(pendingSolutionModalOpen);
+                setIsSolutionModalOpen(true);
+                setPendingSolutionModalOpen(null);
+            }
+        }
+    }, [exercises, pendingModalOpen, pendingSolutionModalOpen]);
 
     useEffect(() => {
         const waitForSessionStorage = (timeoutMs: number = 5000, intervalMs: number = 200) => {
@@ -105,17 +135,12 @@ const ExtensionContent: React.FC = () => {
                     console.log("[content] Datos del curso cargados:", response.course);
 
                     // Detectar si estamos en una página de ejercicios
-                    if (globalThis.location.href.includes(PAGE_VIEW_HREF)) {
-                        const urlParams = new URLSearchParams(globalThis.location.search);
-                        const pageId = urlParams.get("id");
-
-                        if (pageId) {
-                            console.log(`[content] Detectada página de Egela, ID: ${pageId}`);
-                            setCurrentPageId(pageId);
-                            setViewState("chat"); // Abrir el chat en lugar del loading
-                            setIsLoadingExercises(true); // Activar el estado de carga
-                            await identifyExercisesInPage(pageId);
-                        }
+                    const pageId = getPageIdFromUrl();
+                    if (pageId) {
+                        console.log(`[content] Detectada página de Egela, ID: ${pageId}`);
+                        setCurrentPageId(pageId);
+                        setViewState("chat");
+                        // No identificamos ejercicios automáticamente, esperamos que el usuario presione el botón
                     }
                 } else {
                     console.error("[content] No se pudo cargar el curso:", response.error);
@@ -143,11 +168,15 @@ const ExtensionContent: React.FC = () => {
         const messageListener = (message: any) => {
             if (message.action === "openExerciseModal") {
                 console.log("[content] Recibido mensaje para abrir modal del ejercicio:", message.exerciseIndex);
-                handleOpenExerciseModal(message.exerciseIndex);
+                handleOpenExerciseModal(message.exerciseIndex).catch(err => {
+                    console.error("[content] Error al abrir modal de ejercicio:", err);
+                });
             }
             if (message.action === "openSolutionModal") {
                 console.log("[content] Recibido mensaje para abrir modal de solución:", message.exerciseIndex);
-                handleOpenSolutionModal(message.exerciseIndex);
+                handleOpenSolutionModal(message.exerciseIndex).catch(err => {
+                    console.error("[content] Error al abrir modal de solución:", err);
+                });
             }
         };
 
@@ -166,52 +195,58 @@ const ExtensionContent: React.FC = () => {
     useEffect(() => {
         let lastPageId = currentPageId;
 
-        const checkUrlChange = async () => {
-            const currentUrl = globalThis.location.href;
+        const checkUrlChange = () => {
+            const newPageId = getPageIdFromUrl();
 
-            if (currentUrl.includes(PAGE_VIEW_HREF)) {
-                const urlParams = new URLSearchParams(globalThis.location.search);
-                const newPageId = urlParams.get("id");
-
-                // Si hay un cambio de página
-                if (newPageId && newPageId !== lastPageId) {
+            // Si hay un cambio de página
+            if (newPageId !== lastPageId) {
+                if (newPageId) {
                     console.log(`[content] Cambio de página detectado: ${lastPageId} -> ${newPageId}`);
-
-                    // NO reseteamos el historial, solo actualizamos el contexto
-                    // El system prompt se actualizará automáticamente con los nuevos ejercicios
-
-                    // Actualizar el pageId y cargar nuevos ejercicios
                     setCurrentPageId(newPageId);
-                    lastPageId = newPageId;
-                    setIsLoadingExercises(true);
-                    await identifyExercisesInPage(newPageId);
+                    setExercises([]);
+                    setIsLoadingExercises(false);
+                    setReloadSidebarKey(prev => prev + 1);
+                } else if (lastPageId !== null) {
+                    // Ya no estamos en una página de ejercicios
+                    console.log(`[content] Saliendo de página de ejercicios`);
+                    setCurrentPageId(null);
+                    setExercises([]);
                     setReloadSidebarKey(prev => prev + 1);
                 }
-            } else if (lastPageId !== null) {
-                // Ya no estamos en una página de ejercicios
-                console.log(`[content] Saliendo de página de ejercicios`);
-
-                // NO reseteamos el historial, solo limpiamos el contexto local
-                // El system prompt se actualizará sin ejercicios en la próxima interacción
-                setCurrentPageId(null);
-                lastPageId = null;
-                setExercises([]);
-                setReloadSidebarKey(prev => prev + 1);
+                lastPageId = newPageId;
             }
         };
 
         // Verificar inmediatamente
         checkUrlChange();
 
-        // Monitorear cambios de URL
+        // Monitorear cambios de URL usando popstate y pushstate
+        const handleUrlChange = () => checkUrlChange();
+
+        window.addEventListener('popstate', handleUrlChange);
+        window.addEventListener('pushstate', handleUrlChange);
+        window.addEventListener('replacestate', handleUrlChange);
+
+        // Fallback con interval por si los eventos no se disparan
         const intervalId = setInterval(checkUrlChange, 1000);
 
         return () => {
+            window.removeEventListener('popstate', handleUrlChange);
+            window.removeEventListener('pushstate', handleUrlChange);
+            window.removeEventListener('replacestate', handleUrlChange);
             clearInterval(intervalId);
         };
     }, [currentPageId]);
 
     const identifyExercisesInPage = async (pageId: string) => {
+        // Prevenir múltiples identificaciones simultáneas
+        if (identifyingExercisesRef.current) {
+            console.log("[content] Ya hay una identificación en curso, ignorando solicitud");
+            return;
+        }
+
+        identifyingExercisesRef.current = true;
+
         try {
             // Extraer el resourceId de la URL (parámetro 'id' es el resourceId en páginas de Egela)
             const urlParams = new URLSearchParams(globalThis.location.search);
@@ -231,51 +266,40 @@ const ExtensionContent: React.FC = () => {
                     `[content] Se han identificado ${response.exercises.length} ejercicios:`,
                     response.exercises
                 );
-                if (response.exercise_context) {
-                    setExerciseContext(response.exercise_context);
-                } else {
-                    setExerciseContext(undefined);
-                }
+
+                // Actualizar el contexto usando el helper
+                updateExerciseContext({
+                    exercises: response.exercises.length > 0 ? response.exercises : [],
+                    exercise_context: response.exercise_context,
+                    concepts: response.concepts,
+                    learning_objectives: response.learning_objectives
+                });
 
                 if (response.concepts) {
-                    setConcepts(response.concepts);
                     console.log("[content] Conceptos:", response.concepts);
-                } else {
-                    setConcepts(undefined);
                 }
-
                 if (response.learning_objectives) {
-                    setLearningObjectives(response.learning_objectives);
                     console.log("[content] Objetivos de aprendizaje:", response.learning_objectives);
-                } else {
-                    setLearningObjectives(undefined);
                 }
 
                 if (response.exercises.length > 0) {
-                    setExercises(response.exercises);
                     // Forzar recarga del sidebar para que muestre las pestañas de configuración
                     setReloadSidebarKey(prev => prev + 1);
-                } else {
-                    setViewState("no-exercises");
                 }
+                // Si no hay ejercicios, simplemente mantenemos la vista del chat sin ejercicios
             } else {
                 console.error("[content] Error al identificar ejercicios:", response.error);
-                setViewState("chat");
             }
         } catch (error) {
             console.error("[content] Error al solicitar identificación de ejercicios:", error);
-            setViewState("chat");
         } finally {
-            setIsLoadingExercises(false); // Desactivar el estado de carga
+            setIsLoadingExercises(false);
+            identifyingExercisesRef.current = false;
         }
     };
 
     const handleCloseExtension = () => {
         setViewState("hidden");
-    };
-
-    const handleNoExercisesTimeout = () => {
-        setViewState("chat");
     };
 
     const handleCloseModal = () => {
@@ -286,13 +310,81 @@ const ExtensionContent: React.FC = () => {
         setIsSolutionModalOpen(false);
     };
 
-    const handleOpenExerciseModal = (exerciseIndex: number, fromCache: boolean = false) => {
+    // Helper para actualizar el contexto de ejercicios (usado por ambas funciones de carga)
+    const updateExerciseContext = (data: any) => {
+        if (data.exercises) {
+            setExercises(data.exercises);
+        }
+        setExerciseContext(data.exercise_context);
+        setConcepts(data.concepts);
+        setLearningObjectives(data.learning_objectives);
+    };
+
+    // Helper para cargar ejercicios desde storage si no están en memoria
+    const loadExercisesFromStorageIfNeeded = async (): Promise<string | null> => {
+        const pageId = currentPageId || getPageIdFromUrl();
+
+        // Si ya hay ejercicios cargados o ya estamos cargando, no hacer nada
+        if (exercises.length > 0 || loadingExercisesFromStorage || !pageId) {
+            return exercises.length > 0 ? pageId : null;
+        }
+
+        console.log("[content] Cargando ejercicios desde storage...");
+        setLoadingExercisesFromStorage(true);
+
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: "getExerciseData",
+                pageId: pageId,
+            });
+
+            if (response.success && response.data) {
+                console.log("[content] Ejercicios cargados desde storage:", response.data.exercises?.length || 0);
+                updateExerciseContext(response.data);
+                return pageId;
+            } else {
+                console.error("[content] No se pudieron cargar ejercicios desde storage");
+            }
+        } catch (error) {
+            console.error("[content] Error cargando ejercicios desde storage:", error);
+        } finally {
+            setLoadingExercisesFromStorage(false);
+        }
+
+        return null;
+    };
+
+    const handleOpenExerciseModal = async (exerciseIndex: number, fromCache: boolean = false) => {
+        console.log("[content] handleOpenExerciseModal - Index:", exerciseIndex, "Ejercicios:", exercises.length);
+
+        // Si no hay ejercicios, intentar cargarlos y marcar como pendiente
+        if (exercises.length === 0) {
+            const loaded = await loadExercisesFromStorageIfNeeded();
+            if (loaded) {
+                setPendingModalOpen({ index: exerciseIndex, fromCache });
+                return;
+            }
+        }
+
+        // Abrir modal directamente
         setSelectedExerciseIndex(exerciseIndex);
         setModalLoadFromCache(fromCache);
         setIsModalOpen(true);
     };
 
-    const handleOpenSolutionModal = (exerciseIndex: number) => {
+    const handleOpenSolutionModal = async (exerciseIndex: number) => {
+        console.log("[content] handleOpenSolutionModal - Index:", exerciseIndex, "Ejercicios:", exercises.length);
+
+        // Si no hay ejercicios, intentar cargarlos y marcar como pendiente
+        if (exercises.length === 0) {
+            const loaded = await loadExercisesFromStorageIfNeeded();
+            if (loaded) {
+                setPendingSolutionModalOpen(exerciseIndex);
+                return;
+            }
+        }
+
+        // Abrir modal directamente
         setSelectedExerciseIndex(exerciseIndex);
         setIsSolutionModalOpen(true);
     };
@@ -328,19 +420,24 @@ const ExtensionContent: React.FC = () => {
         setReloadEvaluationsKey(prev => prev + 1);
     };
 
+    const handleIdentifyExercises = async () => {
+        const pageId = currentPageId || getPageIdFromUrl();
+        if (!pageId) {
+            console.warn("[content] No hay pageId para identificar ejercicios");
+            return;
+        }
+
+        setIsLoadingExercises(true);
+        await identifyExercisesInPage(pageId);
+    };
+
     // No mostrar nada si está oculto o si no hay curso
     if (viewState === "hidden" || !course) return null;
 
     // Renderizar según el estado
     return (
         <>
-            {viewState === "loading" && <LoadingMessage />}
-
-            {viewState === "no-exercises" && (
-                <NoExercisesMessage onTimeout={handleNoExercisesTimeout} duration={3000} />
-            )}
-
-            {/* El chat siempre se muestra si el estado es "chat" */}
+            {/* El chat se muestra si el estado es "chat" */}
             {viewState === "chat" && (
                 <ChatSidebar
                     courseName={courseName}
@@ -355,12 +452,13 @@ const ExtensionContent: React.FC = () => {
                     onOpenEvaluation={handleOpenEvaluationList}
                     onEvaluationGenerated={handleEvaluationGenerated}
                     isExplanationModalOpen={isModalOpen}
+                    onIdentifyExercises={handleIdentifyExercises}
                     key={`${reloadExplanationsKey}-${reloadEvaluationsKey}-${reloadSidebarKey}`} // Re-renderizar cuando cambie cualquier trigger
                 />
             )}
 
             {/* El modal se muestra sobre el chat cuando se selecciona un ejercicio */}
-            {isModalOpen && exercises.length > 0 && (
+            {isModalOpen && exercises.length > 0 && exercises[selectedExerciseIndex] && (
                 <ExerciseModal
                     exercise={exercises[selectedExerciseIndex]}
                     exerciseContext={exerciseContext}
@@ -376,7 +474,7 @@ const ExtensionContent: React.FC = () => {
             )}
 
             {/* El modal de solución se muestra cuando el estudiante quiere resolver un ejercicio */}
-            {isSolutionModalOpen && exercises.length > 0 && (
+            {isSolutionModalOpen && exercises.length > 0 && exercises[selectedExerciseIndex] && (
                 <SolutionModal
                     exercise={exercises[selectedExerciseIndex]}
                     exerciseContext={exerciseContext}
