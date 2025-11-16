@@ -33,14 +33,8 @@ export class SqlAssistantsConfig implements AssistantConfig {
 - Si hay tablas asociadas a un ejercicio, inclúyelas en el enunciado en formato Markdown. 
 - IMPORTANTE: Las tablas pueden venir en formato texto plano. Debes identificar cuando hay una tabla (buscando patrones como líneas de -, valores separados por espacios, saltos de línea...) y convertirla a tabla en formato Markdown para incluirla en el enunciado.`,
         learningObjectivesGuidance: "Basándote en los ejercicios, su contenido y las diapositivas previas que consultaste, infiere cuál es el objetivo pedagógico de la página. Escribe una descripción breve (1-3 frases). Ejemplo: 'Practicar consultas con múltiples tablas usando diferentes tipos de JOIN y entender cuándo usar cada uno.'",
-        additionalPhase1Instructions: `⚠️ OBLIGATORIO - EN LA FASE 1:
-1. Localiza el recurso en la estructura del curso (si se proporciona resourceId)
-2. Identifica los recursos (especialmente PDFs) que vienen INMEDIATAMENTE ANTES en la misma sección
-3. USA la herramienta getResourceContent para consultar esos recursos (las diapositivas de teoría)
-4. Analiza el contenido de las diapositivas para entender qué conceptos SQL se han explicado
-5. Responde brevemente confirmando qué información has recopilado
-6. Identifica las páginas de los laboratorios realizados antes que el actual
-7. Usa getPageContent para consultar esas páginas de laboratorios previos y entender sus objetivos pedagógicos. Los objetivos que establezcas deberían incluir también los de estos laboratorios anteriores`
+        additionalPhase1Instructions: `
+Usa getPageContent para consultar páginas de laboratorios previos si están marcados como requeridos y entender sus objetivos pedagógicos. Los objetivos que establezcas deberían incluir también los de estos laboratorios anteriores`
     };
 
     public readonly evaluationAssistant = {

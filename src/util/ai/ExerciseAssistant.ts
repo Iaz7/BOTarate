@@ -1,5 +1,6 @@
 import { Exercise } from "../egela/Exercise";
 import { ExerciseStorageManager } from "../storage/ExerciseStorageManager";
+import { LabStorageManager } from "../storage/LabStorageManager";
 import { AssistantConfig } from "./AssistantConfig";
 import { BaseAssistant } from "./BaseAssistant";
 import { ExerciseListSchema } from "./schemas";
@@ -28,7 +29,7 @@ class ExerciseAssistant extends BaseAssistant {
         concepts?: string[];
         learningObjectives?: string;
     }> {
-        console.log(`[identifyExercises] Identificando ejercicios en página: ${pageId}`);
+        console.log(`[identifyExercises] Identificando ejercicios en página: ${pageId}. Course ID: ${this.course?.id}`);
 
         try {
             // 1. Obtener el contenido de la página en formato Markdown + archivos detectados
@@ -42,6 +43,22 @@ class ExerciseAssistant extends BaseAssistant {
 
             // 3. Construir el system prompt usando la configuración
             const assistantConfig = this.config.exerciseAssistant;
+            const courseId = this.course?.id;
+            const labData = courseId ? await LabStorageManager.getLabData(courseId) : null;
+            const allLabs = labData?.labs ?? [];
+            const requiredLabs = allLabs.filter(lab => lab.required);
+
+            const labConfigurationDescription = allLabs.length > 0
+                ? allLabs
+                    .map(lab => `- ${lab.name} (ID: ${lab.id}) | requerido: ${lab.required ? 'sí' : 'no'}`)
+                    .join('\n')
+                : 'No hay laboratorios configurados para este curso.';
+
+            const requiredLabsGuidance = requiredLabs.length > 0
+                ? `Solo consulta los laboratorios marcados como REQUERIDOS cuando necesites teoría previa. Lista:
+${requiredLabs.map(lab => `  * ${lab.name} (ID: ${lab.id})`).join('\n')}
+Limita cualquier búsqueda de recursos adicionales a estos laboratorios y a los recursos inmediatamente anteriores dentro de cada uno.`
+                : 'Actualmente no hay laboratorios marcados como requeridos. No revises laboratorios previos automáticamente; utiliza únicamente el recurso actual u otros recursos explícitamente solicitados.';
 
             const resourceInstructions = resourceId ? `
 UBICACIÓN DE LOS EJERCICIOS:
@@ -66,6 +83,12 @@ La información obtenida en la FASE 1 se mantiene en el historial y estará disp
 ACCESO A RECURSOS DEL CURSO:
 Tienes acceso a las herramientas getSectionContent, getPageContent y getResourceContent para consultar material del curso.
 {resourceInstructions}
+
+CONFIGURACIÓN DE LABORATORIOS:
+{labConfigurationDescription}
+
+REGLAS PARA CONSULTAR LABORATORIOS:
+{requiredLabsGuidance}
 
 INFORMACIÓN DEL CURSO:
 A continuación tienes la estructura completa del curso con todas las secciones y recursos. Cada sección y recurso tiene un ID único.
@@ -106,7 +129,9 @@ OBJETIVOS DE APRENDIZAJE (FASE 2):
                 conceptsFieldDescription: assistantConfig.conceptsFieldDescription,
                 conceptsFieldName: assistantConfig.conceptsFieldName,
                 conceptsExamples: assistantConfig.conceptsExamples,
-                learningObjectivesGuidance: assistantConfig.learningObjectivesGuidance
+                learningObjectivesGuidance: assistantConfig.learningObjectivesGuidance,
+                labConfigurationDescription: labConfigurationDescription,
+                requiredLabsGuidance: requiredLabsGuidance
             };
 
             const systemPrompt = this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);
@@ -114,8 +139,7 @@ OBJETIVOS DE APRENDIZAJE (FASE 2):
             const userPromptPhase1 = `FASE 1: RECOPILACIÓN DE INFORMACIÓN
 
 Analiza el siguiente contenido de una página educativa. Por favor, recopila toda la información necesaria consultando los recursos del curso que consideres relevantes.
-
-${resourceId ? '⚠️ RECUERDA: Debes consultar OBLIGATORIAMENTE las diapositivas de teoría que vienen antes de este recurso en el curso.\n\n' : ''}Contenido de la página:
+Contenido de la página:
 
 ${pageContent}`;
 
@@ -140,7 +164,7 @@ ${pageContent}`;
 
 Basándote en toda la información que has recopilado en la fase anterior, genera ahora la respuesta estructurada con:
 1. Todos los ejercicios identificados en la página
-2. El esquema de base de datos si existe
+2. El esquema de base de datos si existe. Esquema se refiere al script de creación de tablas y relaciones entre ellas, de modo que sirva para entender cómo se estructura la base de datos.
 3. Las instrucciones SQL que se trabajan en los ejercicios
 4. Los objetivos de aprendizaje de la página`;
 
