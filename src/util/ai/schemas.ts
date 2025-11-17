@@ -44,7 +44,7 @@ export const ExerciseListSchema = {
             description: "Descripción breve de los objetivos de aprendizaje o conceptos que se pretenden trabajar con estos ejercicios"
         }
     },
-    required: ["exercises"],
+    required: ["exercises", "exercise_context", "concepts", "learning_objectives"],
     additionalProperties: false
 } as const;
 
@@ -107,9 +107,9 @@ export type ExerciseSchemaType = {
 
 export type ExerciseListSchemaType = {
     exercises: ExerciseSchemaType[];
-    exercise_context?: string | null;
-    concepts?: string[] | null;
-    learning_objectives?: string | null;
+    exercise_context: string | null;
+    concepts: string[] | null;
+    learning_objectives: string | null;
 };
 
 export type StepSchemaType = {
