@@ -1,6 +1,5 @@
 import OpenAI from "openai";
-import { zodResponseFormat } from "openai/helpers/zod";
-import { z } from "zod";
+import type { ResponseFormatJSONSchema } from "openai/resources/shared";
 
 import { AIProvider, ConfigManager } from "../config/ConfigManager";
 import type { ToolCall } from "./Tools";
@@ -196,13 +195,13 @@ class OpenAIService {
     }
 
 
-    async generateStructuredResponse<T extends z.ZodTypeAny>(
-        schema: T,
+    async generateStructuredResponse<T>(
+        schema: Record<string, any>,
         schemaName: string,
         userMessage: string,
         systemPrompt: string,
         files?: Array<{ filename: string; mimeType?: string; dataUrl?: string; text?: string; url?: string }>
-    ): Promise<z.infer<T>> {
+    ): Promise<T> {
         console.log(`[generateStructuredResponse] Generando respuesta estructurada: ${schemaName}`);
 
         // Si hay system prompt, añadirlo
@@ -220,20 +219,31 @@ class OpenAIService {
             }
         }
 
+        // Crear el formato de respuesta usando JSON Schema
+        const responseFormat: ResponseFormatJSONSchema = {
+            type: "json_schema",
+            json_schema: {
+                name: schemaName,
+                schema: schema,
+                strict: true
+            }
+        };
+
         // Usar la API nativa de OpenAI para respuestas estructuradas
-        const completion = await OpenAIService.openai.chat.completions.parse({
+        const completion = await OpenAIService.openai.chat.completions.create({
             model: ConfigManager.getSelectedModel(),
             messages: this.conversationHistory as any,
-            // Cast to any to avoid deep/infinite type instantiation from zodResponseFormat
-            response_format: zodResponseFormat(schema, schemaName) as any,
+            response_format: responseFormat,
             max_tokens: 32768
         });
 
-        const parsed = completion.choices[0]?.message?.parsed;
+        const content = completion.choices[0]?.message?.content;
 
-        if (!parsed) {
+        if (!content) {
             throw new Error('No se recibió respuesta estructurada del modelo');
         }
+
+        const parsed = JSON.parse(content) as T;
 
         console.log(`[generateStructuredResponse] Respuesta estructurada recibida exitosamente`);
 
