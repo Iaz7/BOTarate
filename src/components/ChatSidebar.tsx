@@ -30,9 +30,6 @@ interface ChatMessage {
 }
 
 interface ChatSidebarProps {
-    courseName: string;
-    providerName: string;
-    modelName: string;
     onClose: () => void;
     isLoadingExercises?: boolean;
     pageId?: string;
@@ -47,9 +44,6 @@ interface ChatSidebarProps {
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
-    courseName,
-    providerName,
-    modelName,
     onClose,
     isLoadingExercises = false,
     pageId,
@@ -80,6 +74,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const [needsConfiguration, setNeedsConfiguration] = useState<boolean>(false);
     const [isCheckingConfig, setIsCheckingConfig] = useState<boolean>(true);
     const [reloadKey, setReloadKey] = useState<number>(0);
+    const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
     // Calcular si el chat debe estar deshabilitado
     const isChatDisabled =
@@ -162,8 +157,13 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
             setIsCheckingBlocked(true);
             try {
-                const blocked = await ProgressManager.isLabBlocked(pageId, courseId);
-                setIsLabBlocked(blocked);
+                // En modo profesor, nunca bloquear laboratorios
+                if (isTeacherMode) {
+                    setIsLabBlocked(false);
+                } else {
+                    const blocked = await ProgressManager.isLabBlocked(pageId, courseId);
+                    setIsLabBlocked(blocked);
+                }
             } catch (error) {
                 console.error("[ChatSidebar] Error checking if lab is blocked:", error);
                 setIsLabBlocked(false);
@@ -173,7 +173,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         };
 
         checkLabBlocked();
-    }, [pageId, courseId]);
+    }, [pageId, courseId, isTeacherMode]);
 
     React.useEffect(() => {
         if (pageId && !needsConfiguration) {
@@ -213,6 +213,13 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
         loadChatHistory();
     }, []);
+
+    // Scroll automático al final cuando cambian los mensajes o el estado de generación
+    React.useEffect(() => {
+        if (activeTab === "chat") {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages, isGenerating, activeTab]);
 
     const loadExercisesWithExplanations = async () => {
         if (!pageId) return;
@@ -429,14 +436,13 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             {/* Header */}
             <div className="card-header bg-light border-bottom">
                 <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <h3 className="h5 mb-2">{APP_CONFIG.NAME}</h3>
-                        <p className="small text-muted mb-1">
-                            <strong>Curso:</strong> {courseName}
-                        </p>
-                        <p className="small text-muted mb-0">
-                            <strong>Proveedor:</strong> {providerName} | <strong>Modelo:</strong> {modelName}
-                        </p>
+                    <div className="d-flex align-items-center">
+                        <img
+                            src={chrome.runtime.getURL("icons/icon128.png")}
+                            alt="DBot Icon"
+                            style={{ width: "48px", height: "48px", marginRight: "16px" }}
+                        />
+                        <h2 className="h2 mb-0">{APP_CONFIG.NAME}</h2>
                     </div>
                     {/* Botón para identificar/generar ejercicios - solo visible si hay pageId */}
                     {pageId && !needsConfiguration && (
@@ -459,7 +465,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             ) : (
                                 <>
                                     <i className="bi bi-arrow-clockwise me-1"></i>
-                                    {exercises.length > 0 ? "Re-identificar" : "Identificar"}
+                                    {exercises.length > 0 ? "Re-identificar ejercicios" : "Identificar ejercicios"}
                                 </>
                             )}
                         </button>
@@ -512,7 +518,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                             isLabBlocked ? "No disponible mientras el laboratorio esté bloqueado" : ""
                                         }
                                     >
-                                        Evaluaciones guardadas
+                                        Ejercicios solucionados
                                         {exercisesWithEvaluations.length > 0 && (
                                             <span className="badge bg-success ms-2">
                                                 {exercisesWithEvaluations.length}
@@ -742,6 +748,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 </div>
                             </div>
                         )}
+                        {/* Elemento de referencia para scroll automático */}
+                        <div ref={messagesEndRef} />
                     </>
                 ) : activeTab === "explanations" ? (
                     <>
