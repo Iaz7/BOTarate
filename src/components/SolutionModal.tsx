@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 interface Exercise {
     name: string;
     statement: string;
+    isTiquismiqui?: boolean;
 }
 
 interface Evaluation {

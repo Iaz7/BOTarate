@@ -70,14 +70,16 @@ class CourseAssistant extends BaseAssistant {
             const exerciseList = exercises.map((ex, index) => ({
                 index: index + 1,
                 name: ex.name,
-                isChallenge: ex.allowed === false
+                isChallenge: ex.allowed === false,
+                isTiquismiqui: ex.isTiquismiqui === true
             }));
 
             const challengeCount = exercises.filter(ex => ex.allowed === false).length;
+            const tiquismiquiCount = exercises.filter(ex => ex.isTiquismiqui === true).length;
             const allowedCount = exercises.length - challengeCount;
 
             exerciseContext = `\n\nEJERCICIOS DISPONIBLES EN ESTA PÁGINA:
-El usuario está actualmente en una página con ${exercises.length} ejercicios (${allowedCount} permitidos, ${challengeCount} de reto).
+El usuario está actualmente en una página con ${exercises.length} ejercicios (${allowedCount} permitidos, ${challengeCount} de reto, ${tiquismiquiCount} tiquismiquis).
 
 Lista de ejercicios en formato JSON:
 ${JSON.stringify(exerciseList, null, 2)}
@@ -91,6 +93,11 @@ IMPORTANTE SOBRE EJERCICIOS DE RETO:
 - Si el usuario solicita la explicación de un ejercicio de reto, infórmale que está bloqueado por el profesor para que lo resuelva por su cuenta como desafío.
 - NO uses la herramienta explainExercise para ejercicios de reto.
 - Los ejercicios de reto SÍ pueden ser resueltos por el estudiante usando la herramienta solveExercise.
+
+IMPORTANTE SOBRE EJERCICIOS TIQUISMIQUIS:
+- Los ejercicios con "isTiquismiqui": true sí pueden ser explicados, pero ANTES debes advertir explícitamente que el profesor los marcó como tiquismiquis y que la explicación podría no ser correcta del todo.
+- Pregunta al alumno si quiere continuar. Solo llama a explainExercise para un ejercicio tiquismiquis cuando el alumno confirme que entiende el riesgo y desea la explicación igualmente.
+- Cuando expliques o entregues información relacionada con un ejercicio tiquismiquis, recuerda en tu respuesta que debe analizarla de forma crítica.
 
 INTERPRETAR LA INTENCIÓN DEL USUARIO:
 Hay dos acciones posibles con los ejercicios:

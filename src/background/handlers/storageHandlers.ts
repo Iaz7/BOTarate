@@ -39,6 +39,23 @@ export function handleUpdateExerciseAllowed(request: any, sendResponse: (respons
     return true;
 }
 
+export function handleUpdateExerciseTiquismiqui(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId, exerciseName, isTiquismiqui } = request;
+
+    (async () => {
+        try {
+            await ExerciseStorageManager.updateExerciseTiquismiqui(pageId, exerciseName, isTiquismiqui);
+            console.log(`Estado 'tiquismiqui' actualizado para ${exerciseName}: ${isTiquismiqui}`);
+            sendResponse({ success: true });
+        } catch (error: any) {
+            console.error('Error al actualizar tiquismiqui del ejercicio:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
 export function handleRemoveChallengeExercisesExplanations(request: any, sendResponse: (response?: any) => void): boolean {
     const { pageId, exerciseNames } = request;
 

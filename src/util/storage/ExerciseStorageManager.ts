@@ -5,7 +5,7 @@ import { BaseStorageManager } from "./BaseStorageManager";
  */
 export interface ExerciseData {
     pageId: string;
-    exercises: Array<{ name: string; statement: string; allowed?: boolean }>;
+    exercises: Array<{ name: string; statement: string; allowed?: boolean; isTiquismiqui?: boolean }>;
     exerciseContext?: string;
     concepts?: string[];
     learningObjectives?: string;
@@ -28,7 +28,7 @@ export class ExerciseStorageManager extends BaseStorageManager {
      */
     static async saveExerciseData(
         pageId: string,
-        exercises: Array<{ name: string; statement: string; allowed?: boolean }>,
+        exercises: Array<{ name: string; statement: string; allowed?: boolean; isTiquismiqui?: boolean }>,
         exerciseContext?: string,
         concepts?: string[],
         learningObjectives?: string
@@ -104,6 +104,31 @@ export class ExerciseStorageManager extends BaseStorageManager {
         }
 
         exercise.allowed = allowed;
+
+        await this.saveExerciseData(
+            pageId,
+            data.exercises,
+            data.exerciseContext,
+            data.concepts,
+            data.learningObjectives
+        );
+    }
+
+    /**
+     * Actualiza el estado "tiquismiqui" de un ejercicio específico
+     */
+    static async updateExerciseTiquismiqui(pageId: string, exerciseName: string, isTiquismiqui: boolean): Promise<void> {
+        const data = await this.getExerciseData(pageId);
+        if (!data) {
+            throw new Error(`No se encontraron datos de ejercicios para la página ${pageId}`);
+        }
+
+        const exercise = data.exercises.find(ex => ex.name === exerciseName);
+        if (!exercise) {
+            throw new Error(`No se encontró el ejercicio ${exerciseName}`);
+        }
+
+        exercise.isTiquismiqui = isTiquismiqui;
 
         await this.saveExerciseData(
             pageId,

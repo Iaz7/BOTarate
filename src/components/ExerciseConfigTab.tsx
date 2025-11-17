@@ -4,6 +4,12 @@ interface Exercise {
     name: string;
     statement: string;
     allowed?: boolean;
+    isTiquismiqui?: boolean;
+}
+
+interface ExerciseFlags {
+    allowed: boolean;
+    isTiquismiqui: boolean;
 }
 
 interface ExerciseConfigTabProps {
@@ -14,10 +20,41 @@ interface ExerciseConfigTabProps {
 }
 
 const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId, onConfigUpdate, isActive }) => {
-    const [exerciseConfig, setExerciseConfig] = useState<Map<string, boolean>>(new Map());
-    const [pendingChanges, setPendingChanges] = useState<Map<string, boolean>>(new Map());
+    const [exerciseConfig, setExerciseConfig] = useState<Map<string, ExerciseFlags>>(new Map());
+    const [originalConfig, setOriginalConfig] = useState<Map<string, ExerciseFlags>>(new Map());
     const [isSaving, setIsSaving] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+    const getDefaultFlags = (): ExerciseFlags => ({ allowed: true, isTiquismiqui: false });
+
+    const createFlagsFromExercise = (exercise: Exercise): ExerciseFlags => ({
+        allowed: exercise.allowed ?? true,
+        isTiquismiqui: exercise.isTiquismiqui ?? false,
+    });
+
+    const buildConfigMap = (list: Exercise[]): Map<string, ExerciseFlags> => {
+        const config = new Map<string, ExerciseFlags>();
+        for (const exercise of list) {
+            config.set(exercise.name, createFlagsFromExercise(exercise));
+        }
+        return config;
+    };
+
+    const configsAreEqual = (a: Map<string, ExerciseFlags>, b: Map<string, ExerciseFlags>): boolean => {
+        if (a.size !== b.size) return false;
+        for (const [name, flags] of a) {
+            const reference = b.get(name);
+            if (!reference) return false;
+            if (flags.allowed !== reference.allowed || flags.isTiquismiqui !== reference.isTiquismiqui) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    React.useEffect(() => {
+        setHasUnsavedChanges(!configsAreEqual(exerciseConfig, originalConfig));
+    }, [exerciseConfig, originalConfig]);
 
     // Cargar configuración inicial desde el storage cuando se activa la pestaña
     useEffect(() => {
@@ -35,12 +72,9 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
             });
 
             if (response.success && response.data) {
-                const config = new Map<string, boolean>();
-                for (const exercise of response.data.exercises) {
-                    config.set(exercise.name, exercise.allowed ?? true);
-                }
+                const config = buildConfigMap(response.data.exercises);
                 setExerciseConfig(config);
-                setPendingChanges(new Map());
+                setOriginalConfig(new Map(config));
                 setHasUnsavedChanges(false);
             }
         } catch (error) {
@@ -51,55 +85,78 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
     };
 
     const loadConfigFromProps = () => {
-        const config = new Map<string, boolean>();
-        for (const exercise of exercises) {
-            config.set(exercise.name, exercise.allowed ?? true);
-        }
+        const config = buildConfigMap(exercises);
         setExerciseConfig(config);
-        setPendingChanges(new Map());
+        setOriginalConfig(new Map(config));
         setHasUnsavedChanges(false);
     };
 
-    const handleToggle = (exerciseName: string) => {
-        const currentValue = exerciseConfig.get(exerciseName) ?? true;
-        const newValue = !currentValue;
-
-        // Actualizar estado local
+    const updateExerciseFlags = (exerciseName: string, updater: (flags: ExerciseFlags) => ExerciseFlags) => {
         setExerciseConfig(prev => {
+            const current = prev.get(exerciseName) ?? getDefaultFlags();
+            const updated = updater(current);
             const newConfig = new Map(prev);
-            newConfig.set(exerciseName, newValue);
+            newConfig.set(exerciseName, updated);
             return newConfig;
         });
+    };
 
-        // Marcar como cambio pendiente
-        setPendingChanges(prev => {
-            const newChanges = new Map(prev);
-            newChanges.set(exerciseName, newValue);
-            return newChanges;
-        });
+    const handleToggleChallenge = (exerciseName: string) => {
+        updateExerciseFlags(exerciseName, flags => ({ ...flags, allowed: !flags.allowed }));
+    };
 
-        setHasUnsavedChanges(true);
+    const handleToggleTiquismiqui = (exerciseName: string) => {
+        updateExerciseFlags(exerciseName, flags => ({ ...flags, isTiquismiqui: !flags.isTiquismiqui }));
+    };
+
+    const computePendingChanges = () => {
+        const changes: Array<{ name: string; allowed?: boolean; isTiquismiqui?: boolean }> = [];
+        for (const [name, flags] of exerciseConfig.entries()) {
+            const originalFlags = originalConfig.get(name) ?? getDefaultFlags();
+            const change: { name: string; allowed?: boolean; isTiquismiqui?: boolean } = { name };
+
+            if (flags.allowed !== originalFlags.allowed) {
+                change.allowed = flags.allowed;
+            }
+            if (flags.isTiquismiqui !== originalFlags.isTiquismiqui) {
+                change.isTiquismiqui = flags.isTiquismiqui;
+            }
+
+            if (change.allowed !== undefined || change.isTiquismiqui !== undefined) {
+                changes.push(change);
+            }
+        }
+        return changes;
     };
 
     const handleSaveChanges = async () => {
-        if (pendingChanges.size === 0) return;
+        const changes = computePendingChanges();
+        if (changes.length === 0) return;
 
         setIsSaving(true);
         try {
             // Guardar todos los cambios
-            for (const [exerciseName, allowed] of pendingChanges) {
-                await chrome.runtime.sendMessage({
-                    action: "updateExerciseAllowed",
-                    pageId: pageId,
-                    exerciseName: exerciseName,
-                    allowed: allowed,
-                });
+            for (const change of changes) {
+                if (change.allowed !== undefined) {
+                    await chrome.runtime.sendMessage({
+                        action: "updateExerciseAllowed",
+                        pageId: pageId,
+                        exerciseName: change.name,
+                        allowed: change.allowed,
+                    });
+                }
+
+                if (change.isTiquismiqui !== undefined) {
+                    await chrome.runtime.sendMessage({
+                        action: "updateExerciseTiquismiqui",
+                        pageId: pageId,
+                        exerciseName: change.name,
+                        isTiquismiqui: change.isTiquismiqui,
+                    });
+                }
             }
 
-            // Eliminar explicaciones de ejercicios de reto
-            const challengeExercises = Array.from(pendingChanges.entries())
-                .filter(([_, allowed]) => !allowed)
-                .map(([name]) => name);
+            const challengeExercises = changes.filter(change => change.allowed === false).map(change => change.name);
 
             if (challengeExercises.length > 0) {
                 await chrome.runtime.sendMessage({
@@ -109,8 +166,7 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                 });
             }
 
-            // Limpiar cambios pendientes
-            setPendingChanges(new Map());
+            setOriginalConfig(new Map(exerciseConfig));
             setHasUnsavedChanges(false);
 
             // Notificar al padre para regenerar el chat
@@ -143,8 +199,8 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
             <div className="alert alert-info small mb-3" role="alert">
                 <strong>Configuración de ejercicios</strong>
                 <p className="mb-0 mt-1">
-                    Marca los ejercicios que son de reto. Los ejercicios de reto no podrán ser explicados ni resueltos
-                    mediante la IA, pero sí evaluados cuando el estudiante envíe su solución.
+                    Marca los ejercicios que son de reto o tiquismiquis. Los retos bloquean las explicaciones, mientras
+                    que las tiquismiquis muestran una advertencia porque pueden contener respuestas parciales.
                 </p>
             </div>
 
@@ -152,18 +208,22 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                 <table className="table table-sm table-hover">
                     <thead>
                         <tr>
-                            <th scope="col" style={{ width: "70%" }}>
+                            <th scope="col" style={{ width: "60%" }}>
                                 Nombre del ejercicio
                             </th>
-                            <th scope="col" className="text-center" style={{ width: "30%" }}>
+                            <th scope="col" className="text-center" style={{ width: "20%" }}>
                                 Es reto
+                            </th>
+                            <th scope="col" className="text-center" style={{ width: "20%" }}>
+                                Es tiquismiquis
                             </th>
                         </tr>
                     </thead>
                     <tbody>
                         {exercises.map(exercise => {
-                            const isAllowed = exerciseConfig.get(exercise.name) ?? true;
-                            const isChallenge = !isAllowed; // Invertir la lógica para mostrar
+                            const flags = exerciseConfig.get(exercise.name) ?? getDefaultFlags();
+                            const isChallenge = !flags.allowed;
+                            const isTiquismiqui = flags.isTiquismiqui;
                             return (
                                 <tr key={exercise.name}>
                                     <td>
@@ -171,6 +231,9 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                                             <span>{exercise.name}</span>
                                             {isChallenge && (
                                                 <span className="badge bg-warning text-dark ms-2">Reto</span>
+                                            )}
+                                            {isTiquismiqui && (
+                                                <span className="badge bg-info text-dark ms-2">Tiquismiquis</span>
                                             )}
                                         </div>
                                     </td>
@@ -180,17 +243,37 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                                                 className="form-check-input"
                                                 type="checkbox"
                                                 role="switch"
-                                                id={`switch-${exercise.name}`}
+                                                id={`challenge-switch-${exercise.name}`}
                                                 checked={isChallenge}
-                                                onChange={() => handleToggle(exercise.name)}
+                                                onChange={() => handleToggleChallenge(exercise.name)}
                                                 disabled={isSaving}
                                                 style={{ cursor: "pointer" }}
                                             />
                                             <label
                                                 className="form-check-label visually-hidden"
-                                                htmlFor={`switch-${exercise.name}`}
+                                                htmlFor={`challenge-switch-${exercise.name}`}
                                             >
                                                 {isChallenge ? "Es reto" : "No es reto"}
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td className="text-center">
+                                        <div className="form-check form-switch d-inline-block">
+                                            <input
+                                                className="form-check-input"
+                                                type="checkbox"
+                                                role="switch"
+                                                id={`tiquismiqui-switch-${exercise.name}`}
+                                                checked={isTiquismiqui}
+                                                onChange={() => handleToggleTiquismiqui(exercise.name)}
+                                                disabled={isSaving}
+                                                style={{ cursor: "pointer" }}
+                                            />
+                                            <label
+                                                className="form-check-label visually-hidden"
+                                                htmlFor={`tiquismiqui-switch-${exercise.name}`}
+                                            >
+                                                {isTiquismiqui ? "Es tiquismiquis" : "No es tiquismiquis"}
                                             </label>
                                         </div>
                                     </td>
@@ -234,7 +317,7 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                     <output className="spinner-border spinner-border-sm me-2">
                         <span className="visually-hidden">Guardando...</span>
                     </output>
-                    Aplicando configuración y eliminando explicaciones de ejercicios de reto...
+                    Aplicando configuración y actualizando las restricciones...
                 </div>
             )}
         </div>

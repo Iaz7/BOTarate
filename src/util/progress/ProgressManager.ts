@@ -11,6 +11,7 @@ export interface SavedEvaluation {
 export interface ExerciseData {
     name: string;
     allowed: boolean;
+    isTiquismiqui?: boolean;
 }
 
 export interface LabProgress {

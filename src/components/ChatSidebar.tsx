@@ -10,6 +10,7 @@ interface Exercise {
     name: string;
     statement: string;
     allowed?: boolean;
+    isTiquismiqui?: boolean;
 }
 
 interface ChatMessage {
@@ -264,6 +265,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     name: ex.name,
                     statement: ex.statement,
                     allowed: ex.allowed ?? true,
+                    isTiquismiqui: ex.isTiquismiqui ?? false,
                 }));
                 setExercises(loaded);
             } else {
@@ -303,6 +305,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             name: ex.name,
                             statement: ex.statement,
                             allowed: ex.allowed ?? true,
+                            isTiquismiqui: ex.isTiquismiqui ?? false,
                         }))
                     );
                 }

@@ -15,6 +15,8 @@ const PAGE_VIEW_HREF = "https://egela.ehu.eus/mod/page/view.php";
 interface Exercise {
     name: string;
     statement: string;
+    allowed?: boolean;
+    isTiquismiqui?: boolean;
 }
 
 type ViewState = "loading" | "chat" | "hidden";
@@ -50,28 +52,37 @@ const ExtensionContent: React.FC = () => {
     const [reloadExplanationsKey, setReloadExplanationsKey] = useState<number>(0);
     const [reloadEvaluationsKey, setReloadEvaluationsKey] = useState<number>(0);
     const [reloadSidebarKey, setReloadSidebarKey] = useState<number>(0);
-    const [pendingModalOpen, setPendingModalOpen] = useState<{ index: number, fromCache: boolean } | null>(null);
+    const [pendingModalOpen, setPendingModalOpen] = useState<{ index: number; fromCache: boolean } | null>(null);
     const [pendingSolutionModalOpen, setPendingSolutionModalOpen] = useState<number | null>(null);
     const identifyingExercisesRef = React.useRef<boolean>(false);
 
+    const openExerciseModalForIndex = (exerciseIndex: number, fromCache: boolean): boolean => {
+        const exercise = exercises[exerciseIndex];
+        if (!exercise) {
+            return false;
+        }
+
+        setSelectedExerciseIndex(exerciseIndex);
+        setModalLoadFromCache(fromCache);
+        setIsModalOpen(true);
+        return true;
+    };
+
     // Efecto para abrir modales pendientes cuando los ejercicios se cargan
     useEffect(() => {
-        if (exercises.length > 0) {
-            if (pendingModalOpen !== null) {
-                console.log("[content] Abriendo modal pendiente, ejercicio:", pendingModalOpen.index);
-                setSelectedExerciseIndex(pendingModalOpen.index);
-                setModalLoadFromCache(pendingModalOpen.fromCache);
-                setIsModalOpen(true);
-                setPendingModalOpen(null);
-            }
-            if (pendingSolutionModalOpen !== null) {
-                console.log("[content] Abriendo modal de solución pendiente, ejercicio:", pendingSolutionModalOpen);
-                setSelectedExerciseIndex(pendingSolutionModalOpen);
-                setIsSolutionModalOpen(true);
-                setPendingSolutionModalOpen(null);
-            }
+        if (exercises.length > 0 && pendingModalOpen !== null) {
+            console.log("[content] Abriendo modal pendiente, ejercicio:", pendingModalOpen.index);
+            openExerciseModalForIndex(pendingModalOpen.index, pendingModalOpen.fromCache);
+            setPendingModalOpen(null);
         }
-    }, [exercises, pendingModalOpen, pendingSolutionModalOpen]);
+
+        if (exercises.length > 0 && pendingSolutionModalOpen !== null) {
+            console.log("[content] Abriendo modal de solución pendiente, ejercicio:", pendingSolutionModalOpen);
+            setSelectedExerciseIndex(pendingSolutionModalOpen);
+            setIsSolutionModalOpen(true);
+            setPendingSolutionModalOpen(null);
+        }
+    }, [exercises, pendingModalOpen, pendingSolutionModalOpen, openExerciseModalForIndex]);
 
     useEffect(() => {
         const waitForSessionStorage = (timeoutMs: number = 5000, intervalMs: number = 200) => {
@@ -225,17 +236,17 @@ const ExtensionContent: React.FC = () => {
         // Monitorear cambios de URL usando popstate y pushstate
         const handleUrlChange = () => checkUrlChange();
 
-        window.addEventListener('popstate', handleUrlChange);
-        window.addEventListener('pushstate', handleUrlChange);
-        window.addEventListener('replacestate', handleUrlChange);
+        window.addEventListener("popstate", handleUrlChange);
+        window.addEventListener("pushstate", handleUrlChange);
+        window.addEventListener("replacestate", handleUrlChange);
 
         // Fallback con interval por si los eventos no se disparan
         const intervalId = setInterval(checkUrlChange, 1000);
 
         return () => {
-            window.removeEventListener('popstate', handleUrlChange);
-            window.removeEventListener('pushstate', handleUrlChange);
-            window.removeEventListener('replacestate', handleUrlChange);
+            window.removeEventListener("popstate", handleUrlChange);
+            window.removeEventListener("pushstate", handleUrlChange);
+            window.removeEventListener("replacestate", handleUrlChange);
             clearInterval(intervalId);
         };
     }, [currentPageId]);
@@ -276,7 +287,7 @@ const ExtensionContent: React.FC = () => {
                     exercises: response.exercises.length > 0 ? response.exercises : [],
                     exercise_context: response.exercise_context,
                     concepts: response.concepts,
-                    learning_objectives: response.learning_objectives
+                    learning_objectives: response.learning_objectives,
                 });
 
                 if (response.concepts) {
@@ -317,7 +328,13 @@ const ExtensionContent: React.FC = () => {
     // Helper para actualizar el contexto de ejercicios (usado por ambas funciones de carga)
     const updateExerciseContext = (data: any) => {
         if (data.exercises) {
-            setExercises(data.exercises);
+            setExercises(
+                data.exercises.map((exercise: Exercise) => ({
+                    ...exercise,
+                    allowed: exercise.allowed ?? true,
+                    isTiquismiqui: exercise.isTiquismiqui ?? false,
+                }))
+            );
         }
         setExerciseContext(data.exercise_context);
         setConcepts(data.concepts);
@@ -361,10 +378,7 @@ const ExtensionContent: React.FC = () => {
             }
         }
 
-        // Abrir modal directamente
-        setSelectedExerciseIndex(exerciseIndex);
-        setModalLoadFromCache(fromCache);
-        setIsModalOpen(true);
+        openExerciseModalForIndex(exerciseIndex, fromCache);
     };
 
     const handleOpenSolutionModal = async (exerciseIndex: number) => {

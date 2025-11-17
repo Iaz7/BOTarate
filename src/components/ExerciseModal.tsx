@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 interface Exercise {
     name: string;
     statement: string;
+    isTiquismiqui?: boolean;
 }
 
 interface Step {
@@ -277,6 +278,15 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
             <div className="d-flex" style={{ flex: 1, overflow: "hidden", height: "calc(80vh - 60px)" }}>
                 {/* Columna izquierda - Explicación */}
                 <div className="p-4" style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #dee2e6" }}>
+                    {exercise.isTiquismiqui && (
+                        <div className="alert alert-warning" role="alert">
+                            <strong>⚠️ Ejercicio marcado como tiquismiquis.</strong>
+                            <p className="mb-0 mt-1 small">
+                                Esta explicación podría no ser completamente correcta. Revisa los pasos detenidamente y
+                                consulta con tu profesor si encuentras algo raro.
+                            </p>
+                        </div>
+                    )}
                     {isLoadingExplanation && (
                         <div
                             className="d-flex flex-column align-items-center justify-content-center"
@@ -364,7 +374,10 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                 </div>
 
                 {/* Columna derecha - Chat */}
-                <div className="d-flex flex-column" style={{ width: "35%", minWidth: "450px", backgroundColor: "#f8f9fa" }}>
+                <div
+                    className="d-flex flex-column"
+                    style={{ width: "35%", minWidth: "450px", backgroundColor: "#f8f9fa" }}
+                >
                     <div className="p-3 border-bottom bg-white">
                         <h6 className="mb-0">💬 Preguntas sobre la explicación</h6>
                         <small className="text-muted">Haz preguntas sobre cualquier paso de la explicación</small>

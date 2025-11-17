@@ -30,6 +30,7 @@ import {
     handleSaveChatHistory,
     handleSaveProgressConfig,
     handleUpdateExerciseAllowed,
+    handleUpdateExerciseTiquismiqui,
     handleUpdateLabRequired
 } from "./handlers/storageHandlers";
 
@@ -93,6 +94,8 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleRemoveExerciseData(request, sendResponse);
         case "updateExerciseAllowed":
             return handleUpdateExerciseAllowed(request, sendResponse);
+        case "updateExerciseTiquismiqui":
+            return handleUpdateExerciseTiquismiqui(request, sendResponse);
         case "getExerciseData":
             return handleGetExerciseData(request, sendResponse);
         case "removeChallengeExercisesExplanations":

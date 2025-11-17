@@ -190,7 +190,16 @@ Basándote en toda la información que has recopilado en la fase anterior, gener
             console.log(`[identifyExercises] Objetivos de aprendizaje: ${response.learning_objectives || 'N/A'}`);
 
             // 6. Guardar los datos en el storage para uso futuro
-            const exerciseDataToStore = exercises.map(ex => ({ name: ex.name, statement: ex.statement }));
+            const existingExerciseData = await ExerciseStorageManager.getExerciseData(pageId);
+            const exerciseDataToStore = exercises.map(ex => {
+                const previous = existingExerciseData?.exercises.find(prev => prev.name === ex.name);
+                return {
+                    name: ex.name,
+                    statement: ex.statement,
+                    allowed: previous?.allowed ?? ex.allowed,
+                    isTiquismiqui: previous?.isTiquismiqui ?? ex.isTiquismiqui,
+                };
+            });
             await ExerciseStorageManager.saveExerciseData(
                 pageId,
                 exerciseDataToStore,
