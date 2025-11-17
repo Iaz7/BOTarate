@@ -1,43 +1,38 @@
 {
-  "manifest_version": 3,
-  "name": "DBot",
-  "version": "1.0.0",
-  "description": "Una extensión de Chrome para eGela",
-  "icons": {
-    "16": "icons/icon64.png",
-    "64": "icons/icon64.png",
-    "128": "icons/icon128.png"
-  },
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "storage"
-  ],
-  "host_permissions": [
-    "http://*/*",
-    "https://*/*"
-  ],
-  "background": {
-    "service_worker": "src/background/background.ts"
-  },
-  "action": {
-    "default_popup": "src/popup/popup.html",
-    "default_icon": {
-      "16": "icons/icon64.png",
-      "64": "icons/icon64.png",
-      "128": "icons/icon128.png"
-    }
-  },
-  "options_page": "src/options/options.html",
-  "content_scripts": [
-    {
-      "matches": [
-        "https://egela.ehu.eus/*"
-      ],
-      "js": [
-        "src/content/content.tsx"
-      ],
-      "run_at": "document_end"
-    }
-  ]
+    "manifest_version": 3,
+    "name": "DBot",
+    "version": "1.0.0",
+    "description": "Una extensión de Chrome para eGela",
+    "icons": {
+        "16": "icons/icon64.png",
+        "64": "icons/icon64.png",
+        "128": "icons/icon128.png"
+    },
+    "permissions": ["activeTab", "scripting", "storage"],
+    "host_permissions": ["http://*/*", "https://*/*"],
+    "background": {
+        "service_worker": "src/background/background.ts"
+    },
+    "action": {
+        "default_popup": "src/popup/popup.html",
+        "default_icon": {
+            "16": "icons/icon64.png",
+            "64": "icons/icon64.png",
+            "128": "icons/icon128.png"
+        }
+    },
+    "options_page": "src/options/options.html",
+    "content_scripts": [
+        {
+            "matches": ["https://egela.ehu.eus/*"],
+            "js": ["src/content/content.tsx"],
+            "run_at": "document_end"
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": ["icons/*"],
+            "matches": ["<all_urls>"]
+        }
+    ]
 }
