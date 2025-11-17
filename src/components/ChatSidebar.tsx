@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { APP_CONFIG } from "../constants";
 import { ModeManager } from "../util/config/ModeManager";
 import { ProgressManager } from "../util/progress/ProgressManager";
 import { ConfigurationRequired } from "./ConfigurationRequired";
@@ -429,7 +430,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             <div className="card-header bg-light border-bottom">
                 <div className="d-flex justify-content-between align-items-start mb-2">
                     <div>
-                        <h3 className="h5 mb-2">Asistente IA</h3>
+                        <h3 className="h5 mb-2">{APP_CONFIG.NAME}</h3>
                         <p className="small text-muted mb-1">
                             <strong>Curso:</strong> {courseName}
                         </p>

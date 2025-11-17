@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../content/bootstrap.css";
 import { AppMode, ModeManager } from "../util/config/ModeManager";
+import { APP_CONFIG } from "../constants";
 
 const Popup: React.FC = () => {
     const [mode, setMode] = useState<AppMode>(AppMode.STUDENT);
@@ -115,7 +116,7 @@ const Popup: React.FC = () => {
             <hr className="my-3" />
 
             <div className="text-center">
-                <small className="text-muted">Extensión del asistente educativo para Egela</small>
+                <small className="text-muted">{APP_CONFIG.DESCRIPTION}</small>
             </div>
         </div>
     );

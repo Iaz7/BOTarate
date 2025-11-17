@@ -1,8 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "eGela Extension",
+  "name": "DBot",
   "version": "1.0.0",
   "description": "Una extensión de Chrome para eGela",
+  "icons": {
+    "16": "icons/icon64.png",
+    "64": "icons/icon64.png",
+    "128": "icons/icon128.png"
+  },
   "permissions": [
     "activeTab",
     "scripting",
@@ -16,7 +21,12 @@
     "service_worker": "src/background/background.ts"
   },
   "action": {
-    "default_popup": "src/popup/popup.html"
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon64.png",
+      "64": "icons/icon64.png",
+      "128": "icons/icon128.png"
+    }
   },
   "options_page": "src/options/options.html",
   "content_scripts": [

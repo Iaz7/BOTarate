@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { APP_CONFIG } from "../constants";
 import { ImportExportTab } from "../components/ImportExportTab";
 import ProgressConfigTab from "../components/ProgressConfigTab";
 import "../content/bootstrap.css";
@@ -154,9 +155,9 @@ const Options: React.FC = () => {
 
             setSaveMessage(
                 "Configuración guardada correctamente. Proveedor: " +
-                    ConfigManager.getSelectedProvider().baseUrl +
-                    ". Modelo: " +
-                    ConfigManager.getSelectedModel()
+                ConfigManager.getSelectedProvider().baseUrl +
+                ". Modelo: " +
+                ConfigManager.getSelectedModel()
             );
         } catch (error) {
             console.error("Error al guardar la configuración:", error);
@@ -421,7 +422,7 @@ const Options: React.FC = () => {
         <div className="container-fluid py-4">
             <div className="row justify-content-center">
                 <div className="col-11 col-xl-10">
-                    <h1 className="h2 mb-4">Configuración</h1>
+                    <h1 className="h2 mb-4">{APP_CONFIG.NAME} - Configuración</h1>
 
                     {/* Tabs de navegación principal */}
                     <ul className="nav nav-pills mb-4">
@@ -473,9 +474,8 @@ const Options: React.FC = () => {
                             <div className="card-body">
                                 {saveMessage && (
                                     <div
-                                        className={`alert ${
-                                            saveMessage.includes("Error") ? "alert-danger" : "alert-success"
-                                        } alert - dismissible fade show`}
+                                        className={`alert ${saveMessage.includes("Error") ? "alert-danger" : "alert-success"
+                                            } alert - dismissible fade show`}
                                         role="alert"
                                     >
                                         {saveMessage}
@@ -554,9 +554,8 @@ const Options: React.FC = () => {
                         <div>
                             {assistantSaveMessage && (
                                 <div
-                                    className={`alert ${
-                                        assistantSaveMessage.includes("Error") ? "alert-danger" : "alert-success"
-                                    } alert-dismissible fade show`}
+                                    className={`alert ${assistantSaveMessage.includes("Error") ? "alert-danger" : "alert-success"
+                                        } alert-dismissible fade show`}
                                     role="alert"
                                 >
                                     {assistantSaveMessage}
@@ -597,9 +596,8 @@ const Options: React.FC = () => {
                                 </li>
                                 <li className="nav-item">
                                     <button
-                                        className={`nav-link ${
-                                            activeAssistantSection === "evaluation" ? "active" : ""
-                                        }`}
+                                        className={`nav-link ${activeAssistantSection === "evaluation" ? "active" : ""
+                                            }`}
                                         onClick={() => setActiveAssistantSection("evaluation")}
                                     >
                                         Evaluación
@@ -607,9 +605,8 @@ const Options: React.FC = () => {
                                 </li>
                                 <li className="nav-item">
                                     <button
-                                        className={`nav-link ${
-                                            activeAssistantSection === "explanation" ? "active" : ""
-                                        }`}
+                                        className={`nav-link ${activeAssistantSection === "explanation" ? "active" : ""
+                                            }`}
                                         onClick={() => setActiveAssistantSection("explanation")}
                                     >
                                         Explicación
