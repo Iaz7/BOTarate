@@ -87,6 +87,21 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             return "No hay ejercicios cargados. Presiona 'Identificar' para analizarlos...";
         return "Escribe tu pregunta...";
     };
+    const getWelcomeMessage = () => {
+        if (!pageId) {
+            return "Puedes preguntarme sobre el contenido del curso. Si quieres trabajar ejercicios, abre un laboratorio primero.";
+        }
+
+        if (exercises.length > 0) {
+            return "Los ejercicios de esta página están listos. Pídeme una explicación o dime si quieres revisar tu solución para cualquiera de ellos. Si quieres también puedo darte la lista de ejercicios disponibles.";
+        }
+
+        if (pageId && !hasExercisesLoaded) {
+            return "En cuanto identifiques los ejercicios podré ayudarte con ellos.";
+        }
+
+        return "Estoy aquí para ayudarte con el curso.";
+    };
 
     React.useEffect(() => {
         const checkModeAndConfiguration = async () => {
@@ -669,7 +684,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         ) : messages.length === 0 ? (
                             <>
                                 <div className="alert alert-info" role="alert">
-                                    ¡Hola! Pregúntame sobre el curso y te ayudaré.
+                                    {getWelcomeMessage()}
                                 </div>
                                 {/* Botón para identificar ejercicios si estamos en una página y no hay ejercicios */}
                                 {pageId && exercises.length === 0 && !isLoadingExercises && (
