@@ -115,53 +115,54 @@ export function handleGenerateResponse(request: any, sendResponse: (response?: a
 }
 
 export function handleGenerateExplanation(request: any, sendResponse: (response?: any) => void): boolean {
-    const { exerciseName, exerciseStatement, exercise_context, concepts, learning_objectives, pageId, courseId } = request;
+    const { exerciseName, pageId, courseId } = request;
     const explanationAssistant = getExplanationAssistant();
 
     console.log(`Generando explicación para ejercicio: ${exerciseName}`);
 
     (async () => {
         try {
-            if (pageId) {
-                const exerciseData = await ExerciseStorageManager.getExerciseData(pageId);
-                if (exerciseData) {
-                    const exercise = exerciseData.exercises.find(ex => ex.name === exerciseName);
-                    if (exercise?.allowed === false) {
-                        console.log(`Intento de explicar ejercicio bloqueado: ${exerciseName}`);
-                        sendResponse({
-                            success: false,
-                            error: `El ejercicio "${exerciseName}" está bloqueado y no puede ser explicado.`
-                        });
-                        return;
-                    }
+            const exerciseData = await ExerciseStorageManager.getExerciseData(pageId);
+            if (exerciseData) {
+                const exercise = exerciseData.exercises.find(ex => ex.name === exerciseName);
+                if (exercise?.allowed === false) {
+                    console.log(`Intento de explicar ejercicio bloqueado: ${exerciseName}`);
+                    sendResponse({
+                        success: false,
+                        error: `El ejercicio "${exerciseName}" está bloqueado y no puede ser explicado.`
+                    });
+                    return;
                 }
-            }
+                const progressSummary = await buildProgressSummary(courseId);
 
-            const progressSummary = await buildProgressSummary(courseId);
+                const explanation = await explanationAssistant.generateExplanation(
+                    exerciseName,
+                    exercise?.statement || '',
+                    exerciseData?.exerciseContext,
+                    exerciseData?.concepts,
+                    exerciseData?.learningObjectives,
+                    progressSummary
+                );
 
-            const explanation = await explanationAssistant.generateExplanation(
-                exerciseName,
-                exerciseStatement,
-                exercise_context,
-                concepts,
-                learning_objectives,
-                progressSummary
-            );
+                console.log(`Explicación generada:`, explanation);
 
-            console.log(`Explicación generada:`, explanation);
-
-            if (pageId) {
                 await ExplanationStorageManager.saveExplanation(
                     pageId,
                     exerciseName,
-                    exerciseStatement,
+                    exercise?.statement || '',
                     explanation,
-                    exercise_context
+                    exerciseData.exerciseContext
                 );
                 console.log(`Explicación guardada en cache para: ${exerciseName}`);
-            }
 
-            sendResponse({ success: true, explanation: explanation });
+                sendResponse({ success: true, explanation: explanation });
+            }
+            else {
+                sendResponse({
+                    success: false,
+                    error: `No se ha podido cargar el ejercicio "${exerciseName}".`
+                });
+            }
         } catch (error: any) {
             console.error('Error en generateExplanation:', error);
             sendResponse({ success: false, error: error.message });
@@ -271,6 +272,12 @@ export function handleInitializeExplanationChat(request: any, sendResponse: (res
 
                 const progressSummary = await buildProgressSummary(courseId);
 
+                // Convertir el chatHistory al formato correcto para el asistente
+                const chatHistoryForAssistant = explanation.chatHistory?.map(msg => ({
+                    role: msg.role,
+                    content: msg.content
+                }));
+
                 await explanationAssistant.initializeContextForFollowUp(
                     explanation.exerciseName,
                     explanation.exerciseStatement,
@@ -278,7 +285,8 @@ export function handleInitializeExplanationChat(request: any, sendResponse: (res
                     explanation.exerciseContext,
                     concepts,
                     learningObjectives,
-                    progressSummary
+                    progressSummary,
+                    chatHistoryForAssistant
                 );
 
                 console.log(`Contexto de chat inicializado desde storage para: ${exerciseName}`);

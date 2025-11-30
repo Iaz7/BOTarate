@@ -452,10 +452,7 @@ const ExtensionContent: React.FC = () => {
             {/* El chat se muestra si el estado es "chat" */}
             {viewState === "chat" && (
                 <ChatSidebar
-                    courseName={courseName}
                     courseId={courseId || undefined}
-                    providerName={providerName}
-                    modelName={modelName}
                     onClose={handleCloseExtension}
                     isLoadingExercises={isLoadingExercises}
                     pageId={currentPageId || undefined}
@@ -474,9 +471,6 @@ const ExtensionContent: React.FC = () => {
             {isModalOpen && exercises.length > 0 && exercises[selectedExerciseIndex] && (
                 <ExerciseModal
                     exercise={exercises[selectedExerciseIndex]}
-                    exerciseContext={exerciseContext}
-                    concepts={concepts}
-                    learningObjectives={learningObjectives}
                     isOpen={isModalOpen}
                     onClose={handleCloseModal}
                     pageId={currentPageId || undefined}

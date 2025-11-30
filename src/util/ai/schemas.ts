@@ -54,12 +54,16 @@ export const ExerciseListSchema = {
 export const StepSchema = {
     type: "object",
     properties: {
-        explanation: {
+        title: {
             type: "string",
-            description: "Explicación detallada del paso en formato Markdown. Cada paso se corresponde a un subproblema/paso de refinamiento sucesivo. Puede incluir tablas, código SQL, listas, etc."
+            description: "Título breve y descriptivo del paso. Debe contener 'Paso X:' (con el numero del paso, comenzando por 1) para que el alumno pueda hacer referencia a él fácilmente. (ej: 'Paso 1: Identificar las tablas necesarias', 'Paso 4: Aplicar JOIN entre tablas')"
+        },
+        content: {
+            type: "string",
+            description: "Explicación detallada del paso en formato Markdown. Cada paso se corresponde a un subproblema/paso de refinamiento sucesivo. Puede incluir tablas, código SQL, listas, etc. NO incluyas un título en markdown al inicio, ya que se usará el campo 'title'."
         }
     },
-    required: ["explanation"],
+    required: ["title", "content"],
     additionalProperties: false
 } as const;
 
@@ -113,7 +117,8 @@ export type ExerciseListSchemaType = {
 };
 
 export type StepSchemaType = {
-    explanation: string;
+    title: string;
+    content: string;
 };
 
 export type ExplanationSchemaType = {

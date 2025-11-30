@@ -133,7 +133,7 @@ class OpenAIService {
             messages: this.conversationHistory as any,
             tools: TOOLS as any,
             tool_choice: 'auto',
-            max_tokens: 32768
+            max_completion_tokens: 32768
         });
 
         const choice = response.choices[0];
@@ -234,7 +234,7 @@ class OpenAIService {
             model: ConfigManager.getSelectedModel(),
             messages: this.conversationHistory as any,
             response_format: responseFormat,
-            max_tokens: 32768
+            max_completion_tokens: 32768
         });
 
         const content = completion.choices[0]?.message?.content;

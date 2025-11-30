@@ -62,31 +62,32 @@ const Options: React.FC = () => {
     // Mode Configuration
     const [isTeacherMode, setIsTeacherMode] = useState<boolean>(false);
 
-    const loadModelList = (providerIndex: number, modelToPreselect?: string) => {
+    // Validación y carga de modelos/API key
+    const validateAndLoadModels = (providerIndex: number, modelToPreselect?: string, apiKeyValue?: string) => {
         setModelList([]);
         setModelListEnabled(false);
         setApiKeyError("");
+        if (typeof apiKeyValue === "string") {
+            ConfigManager.setProviderKey(providerIndex, apiKeyValue);
+        }
         OpenAIService.getModelList(ConfigManager.getProvider(providerIndex))
             .then(list => {
                 const cleanList = list.map(m => m.replace("models/", ""));
                 setModelList(cleanList);
-
                 const cleanModelToPreselect = modelToPreselect?.replace("models/", "") || "";
                 const compatibleModels = cleanList.filter(m => ConfigManager.COMPATIBLE_MODELS.includes(m));
-
                 const modelToSelect =
                     cleanModelToPreselect && compatibleModels.includes(cleanModelToPreselect)
                         ? cleanModelToPreselect
                         : compatibleModels[0] || "";
-
                 setSelectedModel(modelToSelect);
                 setModelListEnabled(true);
+                setApiKeyError("");
             })
             .catch(e => {
-                console.error("Error al cargar lista de modelos:", e);
                 setModelList([]);
                 setModelListEnabled(false);
-                if (apiKey.trim()) {
+                if ((apiKeyValue ?? apiKey).trim()) {
                     setApiKeyError("API key no válida. Por favor, introduce una API key válida para ver los modelos.");
                 } else {
                     setApiKeyError("");
@@ -113,32 +114,8 @@ const Options: React.FC = () => {
             const savedModel = ConfigManager.getSelectedModel();
             console.log("Modelo guardado en ConfigManager:", savedModel);
 
-            // Validar la API key en la carga inicial
-            OpenAIService.getModelList(ConfigManager.getProvider(providerIndex))
-                .then(list => {
-                    const cleanList = list.map(m => m.replace("models/", ""));
-                    setModelList(cleanList);
-                    const cleanModelToPreselect = savedModel?.replace("models/", "") || "";
-                    const compatibleModels = cleanList.filter(m => ConfigManager.COMPATIBLE_MODELS.includes(m));
-                    const modelToSelect =
-                        cleanModelToPreselect && compatibleModels.includes(cleanModelToPreselect)
-                            ? cleanModelToPreselect
-                            : compatibleModels[0] || "";
-                    setSelectedModel(modelToSelect);
-                    setModelListEnabled(true);
-                    setApiKeyError("");
-                })
-                .catch(e => {
-                    setModelList([]);
-                    setModelListEnabled(false);
-                    if ((currentProvider.key || "").trim()) {
-                        setApiKeyError(
-                            "API key no válida. Por favor, introduce una API key válida para ver los modelos."
-                        );
-                    } else {
-                        setApiKeyError("");
-                    }
-                });
+            // Validar y cargar modelos
+            validateAndLoadModels(providerIndex, savedModel, currentProvider.key);
 
             // Cargar configuración de asistentes
             const config = await AssistantConfigStorageManager.loadConfig();
@@ -153,12 +130,17 @@ const Options: React.FC = () => {
     const handleProviderChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const providerIndex = Number.parseInt(event.target.value);
         setSelectedProvider(providerIndex);
-        setApiKey(ConfigManager.getProvider(providerIndex).key || "");
-        setModelList([]);
-        setModelListEnabled(false);
-        setApiKeyError("");
-        loadModelList(providerIndex);
+        const newApiKey = ConfigManager.getProvider(providerIndex).key || "";
+        setApiKey(newApiKey);
+        validateAndLoadModels(providerIndex, undefined, newApiKey);
     };
+
+    // Validar la API key cada vez que cambia
+    useEffect(() => {
+        if (!isConfigLoaded) return;
+        validateAndLoadModels(selectedProvider, undefined, apiKey);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [apiKey, selectedProvider]);
 
     const handleSaveConfiguration = () => {
         try {

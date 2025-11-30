@@ -9,7 +9,8 @@ interface Exercise {
 }
 
 interface Step {
-    explanation: string;
+    content: string;
+    title: string;
 }
 
 interface Explanation {
@@ -20,9 +21,6 @@ interface ExerciseModalProps {
     exercise: Exercise;
     isOpen: boolean;
     onClose: () => void;
-    exerciseContext?: string | null;
-    concepts?: string[];
-    learningObjectives?: string;
     pageId?: string;
     courseId?: string;
     loadFromCache?: boolean; // Si es true, carga del cache. Si es false/undefined, genera nueva
@@ -39,9 +37,6 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
     exercise,
     isOpen,
     onClose,
-    exerciseContext,
-    concepts,
-    learningObjectives,
     pageId,
     courseId,
     loadFromCache = false,
@@ -147,12 +142,8 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
             const response = await chrome.runtime.sendMessage({
                 action: "generateExplanation",
                 exerciseName: exercise.name,
-                exerciseStatement: exercise.statement,
-                exercise_context: exerciseContext || undefined,
-                concepts: concepts || undefined,
-                learning_objectives: learningObjectives || undefined,
-                pageId: pageId || undefined,
-                courseId: courseId || undefined,
+                pageId: pageId,
+                courseId: courseId,
             });
 
             if (response.success) {
@@ -324,7 +315,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                             {explanation.steps.map((step, index) => (
                                 <div key={`step-${index}`} className="card">
                                     <div className="card-header bg-primary text-white">
-                                        <h4 className="h6 mb-0">Paso {index + 1}</h4>
+                                        <h4 className="h6 mb-0">{step.title}</h4>
                                     </div>
                                     <div className="card-body">
                                         <ReactMarkdown
@@ -353,7 +344,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                                 ),
                                             }}
                                         >
-                                            {step.explanation}
+                                            {step.content}
                                         </ReactMarkdown>
                                     </div>
                                 </div>

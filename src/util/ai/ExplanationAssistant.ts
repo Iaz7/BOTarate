@@ -115,7 +115,7 @@ NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de h
             this.openAIService.resetConversation();
 
             // Usar la nueva función que permite tools con respuestas estructuradas
-            const response = await this.openAIService.generateStructuredResponse(
+            const response = await this.openAIService.generateStructuredResponse<ExplanationSchemaType>(
                 ExplanationSchema,
                 "explanation",
                 userPrompt,
@@ -171,6 +171,7 @@ NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de h
      * @param concepts - Conceptos que se trabajan en la página
      * @param learningObjectives - Objetivos de aprendizaje de la página
      * @param progressSummary - Resumen del progreso del alumno
+     * @param chatHistory - Historial previo de mensajes del chat (opcional)
      */
     async initializeContextForFollowUp(
         exerciseName: string,
@@ -179,7 +180,8 @@ NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de h
         exerciseContext?: string,
         concepts?: string[],
         learningObjectives?: string,
-        progressSummary?: string
+        progressSummary?: string,
+        chatHistory?: Array<{ role: string; content: string }>
     ): Promise<void> {
         console.log(`[initializeContextForFollowUp] Inicializando contexto para: ${exerciseName}`);
 
@@ -228,7 +230,7 @@ NOTA: El alumno puede hacer preguntas sobre cualquier aspecto de la explicación
 
         // Crear un resumen de la explicación para el contexto
         const explanationSummary = explanation.steps.map((step, i) =>
-            `Paso ${i + 1}: ${step.explanation.substring(0, 200)}...`
+            `Paso ${i + 1} - ${step.title}: ${step.content.substring(0, 200)}...`
         ).join('\n\n');
 
         const assistantMessage = `Ya has generado la siguiente explicación para el ejercicio:
@@ -245,6 +247,12 @@ El alumno ahora hará preguntas de seguimiento sobre esta explicación.`;
             { role: 'system', content: systemPrompt },
             { role: 'assistant', content: assistantMessage }
         ];
+
+        // Si hay historial de chat previo, restaurarlo
+        if (chatHistory && chatHistory.length > 0) {
+            console.log(`[initializeContextForFollowUp] Restaurando ${chatHistory.length} mensajes del historial`);
+            history.push(...chatHistory);
+        }
 
         this.openAIService.setConversationHistory(history);
 

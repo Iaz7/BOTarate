@@ -171,7 +171,7 @@ Basándote en toda la información que has recopilado en la fase anterior, gener
             console.log(`[identifyExercises] FASE 2: Generando respuesta estructurada`);
 
             // NO pasar systemPrompt aquí porque ya está en el historial
-            const response = await this.openAIService.generateStructuredResponse(
+            const response: any = await this.openAIService.generateStructuredResponse(
                 ExerciseListSchema,
                 "exercise_list",
                 userPromptPhase2,

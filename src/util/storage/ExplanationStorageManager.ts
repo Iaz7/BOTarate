@@ -4,7 +4,8 @@ import { BaseStorageManager } from "./BaseStorageManager";
  * Estructura de un paso de explicación
  */
 export interface ExplanationStep {
-    explanation: string;
+    title: string;
+    content: string;
 }
 
 /**

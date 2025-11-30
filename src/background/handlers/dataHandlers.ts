@@ -62,9 +62,9 @@ export function handleGetExerciseList(request: any, sendResponse: (response?: an
                     sendResponse({
                         success: true,
                         exercises: exercises,
-                        exercise_context: cachedData.exerciseContext,
+                        exerciseContext: cachedData.exerciseContext,
                         concepts: cachedData.concepts,
-                        learning_objectives: cachedData.learningObjectives,
+                        learningObjectives: cachedData.learningObjectives,
                         fromCache: true
                     });
                     return;
