@@ -72,6 +72,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const [isCheckingBlocked, setIsCheckingBlocked] = useState<boolean>(true);
     const [isTeacherMode, setIsTeacherMode] = useState<boolean>(false);
     const [needsConfiguration, setNeedsConfiguration] = useState<boolean>(false);
+    const [missingLLMConfig, setMissingLLMConfig] = useState<boolean>(false);
     const [isCheckingConfig, setIsCheckingConfig] = useState<boolean>(true);
     const [reloadKey, setReloadKey] = useState<number>(0);
     const messagesEndRef = React.useRef<HTMLDivElement>(null);
@@ -111,8 +112,20 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 const teacherMode = await ModeManager.isTeacherMode();
                 setIsTeacherMode(teacherMode);
 
+                // Verificar configuración del LLM (API key y modelo)
+                const allData = await chrome.storage.local.get(null);
+                const configData = allData["config"];
+                const hasLLMConfig =
+                    configData &&
+                    configData.providerKeys &&
+                    configData.providerKeys.length > 0 &&
+                    configData.providerKeys[configData.selectedProvider || 0] &&
+                    configData.providerKeys[configData.selectedProvider || 0].trim() !== "" &&
+                    configData.selectedModel &&
+                    configData.selectedModel.trim() !== "";
+                setMissingLLMConfig(!hasLLMConfig);
+
                 if (!teacherMode) {
-                    const allData = await chrome.storage.local.get(null);
                     const hasAssistantConfig = Object.keys(allData).some(key => key.startsWith("assistant_config_"));
                     const hasExerciseData = Object.keys(allData).some(key => key.startsWith("exercise_data_"));
                     const hasLabData = Object.keys(allData).some(key => key.startsWith("lab_data_"));
@@ -124,6 +137,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             } catch (error) {
                 console.error("[ChatSidebar] Error verificando configuración:", error);
                 setNeedsConfiguration(false);
+                setMissingLLMConfig(false);
             } finally {
                 setIsCheckingConfig(false);
             }
@@ -607,8 +621,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             <p className="text-muted">Verificando configuración...</p>
                         </div>
                     </div>
-                ) : needsConfiguration ? (
-                    <ConfigurationRequired onConfigLoaded={handleConfigLoaded} />
+                ) : needsConfiguration || missingLLMConfig ? (
+                    <ConfigurationRequired
+                        onConfigLoaded={handleConfigLoaded}
+                        missingExerciseConfig={needsConfiguration}
+                        missingLLMConfig={missingLLMConfig}
+                    />
                 ) : activeTab === "chat" ? (
                     <>
                         {isCheckingBlocked ? (
