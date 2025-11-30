@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { APP_CONFIG } from "../constants";
 import { ImportExportTab } from "../components/ImportExportTab";
 import ProgressConfigTab from "../components/ProgressConfigTab";
+import { APP_CONFIG } from "../constants";
 import "../content/bootstrap.css";
 import { AssistantConfig } from "../util/ai/AssistantConfig";
 import { OpenAIService } from "../util/ai/OpenAIService";
@@ -49,6 +49,7 @@ const Options: React.FC = () => {
     const [apiKey, setApiKey] = useState<string>("");
     const [saveMessage, setSaveMessage] = useState<string>("");
     const [isConfigLoaded, setIsConfigLoaded] = useState<boolean>(false);
+    const [apiKeyError, setApiKeyError] = useState<string>("");
 
     // Tab navigation
     const [activeTab, setActiveTab] = useState<TabType>("llm");
@@ -62,6 +63,9 @@ const Options: React.FC = () => {
     const [isTeacherMode, setIsTeacherMode] = useState<boolean>(false);
 
     const loadModelList = (providerIndex: number, modelToPreselect?: string) => {
+        setModelList([]);
+        setModelListEnabled(false);
+        setApiKeyError("");
         OpenAIService.getModelList(ConfigManager.getProvider(providerIndex))
             .then(list => {
                 const cleanList = list.map(m => m.replace("models/", ""));
@@ -80,8 +84,13 @@ const Options: React.FC = () => {
             })
             .catch(e => {
                 console.error("Error al cargar lista de modelos:", e);
-                setModelList(["Set API key first"]);
+                setModelList([]);
                 setModelListEnabled(false);
+                if (apiKey.trim()) {
+                    setApiKeyError("API key no válida. Por favor, introduce una API key válida para ver los modelos.");
+                } else {
+                    setApiKeyError("");
+                }
             });
     };
 
@@ -104,7 +113,32 @@ const Options: React.FC = () => {
             const savedModel = ConfigManager.getSelectedModel();
             console.log("Modelo guardado en ConfigManager:", savedModel);
 
-            loadModelList(providerIndex, savedModel);
+            // Validar la API key en la carga inicial
+            OpenAIService.getModelList(ConfigManager.getProvider(providerIndex))
+                .then(list => {
+                    const cleanList = list.map(m => m.replace("models/", ""));
+                    setModelList(cleanList);
+                    const cleanModelToPreselect = savedModel?.replace("models/", "") || "";
+                    const compatibleModels = cleanList.filter(m => ConfigManager.COMPATIBLE_MODELS.includes(m));
+                    const modelToSelect =
+                        cleanModelToPreselect && compatibleModels.includes(cleanModelToPreselect)
+                            ? cleanModelToPreselect
+                            : compatibleModels[0] || "";
+                    setSelectedModel(modelToSelect);
+                    setModelListEnabled(true);
+                    setApiKeyError("");
+                })
+                .catch(e => {
+                    setModelList([]);
+                    setModelListEnabled(false);
+                    if ((currentProvider.key || "").trim()) {
+                        setApiKeyError(
+                            "API key no válida. Por favor, introduce una API key válida para ver los modelos."
+                        );
+                    } else {
+                        setApiKeyError("");
+                    }
+                });
 
             // Cargar configuración de asistentes
             const config = await AssistantConfigStorageManager.loadConfig();
@@ -120,6 +154,9 @@ const Options: React.FC = () => {
         const providerIndex = Number.parseInt(event.target.value);
         setSelectedProvider(providerIndex);
         setApiKey(ConfigManager.getProvider(providerIndex).key || "");
+        setModelList([]);
+        setModelListEnabled(false);
+        setApiKeyError("");
         loadModelList(providerIndex);
     };
 
@@ -155,9 +192,9 @@ const Options: React.FC = () => {
 
             setSaveMessage(
                 "Configuración guardada correctamente. Proveedor: " +
-                ConfigManager.getSelectedProvider().baseUrl +
-                ". Modelo: " +
-                ConfigManager.getSelectedModel()
+                    ConfigManager.getSelectedProvider().baseUrl +
+                    ". Modelo: " +
+                    ConfigManager.getSelectedModel()
             );
         } catch (error) {
             console.error("Error al guardar la configuración:", error);
@@ -474,8 +511,9 @@ const Options: React.FC = () => {
                             <div className="card-body">
                                 {saveMessage && (
                                     <div
-                                        className={`alert ${saveMessage.includes("Error") ? "alert-danger" : "alert-success"
-                                            } alert - dismissible fade show`}
+                                        className={`alert ${
+                                            saveMessage.includes("Error") ? "alert-danger" : "alert-success"
+                                        } alert-dismissible fade show`}
                                         role="alert"
                                     >
                                         {saveMessage}
@@ -505,20 +543,23 @@ const Options: React.FC = () => {
                                         </label>
                                         <input
                                             type="password"
-                                            className="form-control"
+                                            className={`form-control${apiKeyError ? " is-invalid" : ""}`}
                                             id="apiKey"
                                             placeholder="Introduce tu API Key"
                                             autoComplete="off"
                                             value={apiKey}
                                             onChange={e => setApiKey(e.target.value)}
                                         />
+                                        {apiKeyError && <div className="invalid-feedback">{apiKeyError}</div>}
                                     </div>
                                     <div className="col-md-3">
                                         <label htmlFor="modelSelect" className="form-label">
                                             Modelo
                                         </label>
                                         <select
-                                            className="form-select"
+                                            className={`form-select${
+                                                !modelListEnabled && apiKeyError ? " is-invalid" : ""
+                                            }`}
                                             id="modelSelect"
                                             disabled={!modelListEnabled}
                                             value={selectedModel}
@@ -532,6 +573,11 @@ const Options: React.FC = () => {
                                                     </option>
                                                 ))}
                                         </select>
+                                        {!modelListEnabled && apiKey.trim() && apiKeyError && (
+                                            <div className="invalid-feedback">
+                                                Introduce una API key válida para ver los modelos.
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="row mt-3">
@@ -540,6 +586,7 @@ const Options: React.FC = () => {
                                             type="button"
                                             className="btn btn-primary me-2"
                                             onClick={handleSaveConfiguration}
+                                            disabled={!!apiKeyError || !modelListEnabled}
                                         >
                                             Guardar configuración
                                         </button>
@@ -554,8 +601,9 @@ const Options: React.FC = () => {
                         <div>
                             {assistantSaveMessage && (
                                 <div
-                                    className={`alert ${assistantSaveMessage.includes("Error") ? "alert-danger" : "alert-success"
-                                        } alert-dismissible fade show`}
+                                    className={`alert ${
+                                        assistantSaveMessage.includes("Error") ? "alert-danger" : "alert-success"
+                                    } alert-dismissible fade show`}
                                     role="alert"
                                 >
                                     {assistantSaveMessage}
@@ -596,8 +644,9 @@ const Options: React.FC = () => {
                                 </li>
                                 <li className="nav-item">
                                     <button
-                                        className={`nav-link ${activeAssistantSection === "evaluation" ? "active" : ""
-                                            }`}
+                                        className={`nav-link ${
+                                            activeAssistantSection === "evaluation" ? "active" : ""
+                                        }`}
                                         onClick={() => setActiveAssistantSection("evaluation")}
                                     >
                                         Evaluación
@@ -605,8 +654,9 @@ const Options: React.FC = () => {
                                 </li>
                                 <li className="nav-item">
                                     <button
-                                        className={`nav-link ${activeAssistantSection === "explanation" ? "active" : ""
-                                            }`}
+                                        className={`nav-link ${
+                                            activeAssistantSection === "explanation" ? "active" : ""
+                                        }`}
                                         onClick={() => setActiveAssistantSection("explanation")}
                                     >
                                         Explicación
