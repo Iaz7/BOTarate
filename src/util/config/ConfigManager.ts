@@ -18,7 +18,7 @@ export class ConfigManager {
         { name: "Google", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/", key: "AIzaSyDSeG899Oq9za0NHnyEBdRstlfoqupEUNE" }
     ];
 
-    static readonly COMPATIBLE_MODELS: string[] = ["gpt-5.1", "gpt-4.1", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash-exp", "gemini-2.5-flash-live"]
+    static readonly COMPATIBLE_MODELS: string[] = ["gpt-5.1", "gpt-5-mini", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash-exp", "gemini-2.5-flash-live"]
 
     private static selectedProvider: number = 0;
     private static selectedModel: string;
