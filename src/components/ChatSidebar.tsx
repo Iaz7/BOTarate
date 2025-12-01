@@ -514,7 +514,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 Chat
                             </button>
                         </li>
-                        {/* Pestañas solo disponibles cuando hay ejercicios */}
+                        {/* Pestañas de ejercicios y configuración */}
                         {exercises.length > 0 && (
                             <>
                                 <li className="nav-item" role="presentation">
@@ -555,20 +555,20 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                         )}
                                     </button>
                                 </li>
-                                {/* Solo mostrar pestaña de configuración de ejercicios en modo profesor */}
-                                {isTeacherMode && (
-                                    <li className="nav-item" role="presentation">
-                                        <button
-                                            className={`nav-link ${activeTab === "config" ? "active" : ""}`}
-                                            onClick={() => setActiveTab("config")}
-                                            type="button"
-                                            role="tab"
-                                        >
-                                            Configurar ejercicios
-                                        </button>
-                                    </li>
-                                )}
                             </>
+                        )}
+                        {/* Mostrar SIEMPRE la pestaña de configuración de ejercicios en modo profesor */}
+                        {isTeacherMode && (
+                            <li className="nav-item" role="presentation">
+                                <button
+                                    className={`nav-link ${activeTab === "config" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("config")}
+                                    type="button"
+                                    role="tab"
+                                >
+                                    Configurar ejercicios
+                                </button>
+                            </li>
                         )}
                         {/* Pestaña de laboratorios solo visible en modo profesor */}
                         {courseId && isTeacherMode && (
