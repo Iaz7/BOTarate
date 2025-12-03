@@ -19,14 +19,11 @@ export interface AssistantConfig {
     exerciseAssistant: {
         role: string;
         contextDescription: string;
-        contextFieldName: string;
-        contextFieldDescription: string;
-        conceptsFieldName: string;
         conceptsFieldDescription: string;
         conceptsExamples: string;
         exerciseCriteria: string;
         learningObjectivesGuidance: string;
-        additionalPhase1Instructions?: string;
+
     };
 
     /**

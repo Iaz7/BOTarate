@@ -320,12 +320,6 @@ const Options: React.FC = () => {
                             description="Describe qué tipo de contexto se espera para los ejercicios"
                             rows={2}
                         />
-                        <ConfigTextField
-                            label="Nombre del Campo de Contexto"
-                            value={assistantConfig.exerciseAssistant.contextFieldName}
-                            onChange={value => updateAssistantField("exerciseAssistant", "contextFieldName", value)}
-                            description="Nombre técnico del campo que almacena el contexto"
-                        />
                         <ConfigTextArea
                             label="Ejemplos de Conceptos"
                             value={assistantConfig.exerciseAssistant.conceptsExamples}

@@ -1,4 +1,5 @@
 import { Course } from "../egela/Course";
+import { FileManager } from "../egela/FileManager";
 
 export class ToolFunctions {
     /**
@@ -161,5 +162,14 @@ export class ToolFunctions {
         }
 
         return `No se pudo abrir el formulario. Asegúrate de estar en la página correcta.`;
+    }
+
+    /**
+     * Obtiene el contenido de un archivo de texto filtrado por una expresión regular
+     * @param args Argumentos con pageId, fileId y regexPattern
+     * @returns Contenido filtrado del archivo
+     */
+    static getFilteredFileContent(args: { pageId: string; fileId: string; regexPattern: string }): string {
+        return FileManager.getFilteredTextContent(args.pageId, args.fileId, args.regexPattern);
     }
 }

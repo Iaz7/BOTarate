@@ -21,9 +21,6 @@ export class SqlAssistantsConfig implements AssistantConfig {
     public readonly exerciseAssistant = {
         role: "identificar ejercicios académicos en páginas educativas y analizar su contexto pedagógico",
         contextDescription: "Script SQL que define el esquema de la base de datos (CREATE TABLE, CREATE INDEX, etc.) con el que trabajarán los ejercicios",
-        contextFieldName: "exercise_context",
-        contextFieldDescription: "Script SQL para crear el esquema de la base de datos relacionado con la página, si se detecta. Incluye CREATE TABLE, índices, datos de ejemplo (INSERT), etc.",
-        conceptsFieldName: "concepts",
         conceptsFieldDescription: "Lista de instrucciones o cláusulas SQL que se trabajan en los ejercicios de esta página",
         conceptsExamples: "'SELECT', 'JOIN', 'INNER JOIN', 'LEFT JOIN', 'GROUP BY', 'HAVING', 'ORDER BY', 'Subconsultas', 'Funciones de agregación', 'DISTINCT', 'COUNT', 'SUM', 'AVG', etc.",
         exerciseCriteria: `- La página puede no contener ejercicios. Es posible que la página solo tenga material de lectura para los alumnos. En este caso devuelve un array vacío.
@@ -33,8 +30,6 @@ export class SqlAssistantsConfig implements AssistantConfig {
 - Si hay tablas asociadas a un ejercicio, inclúyelas en el enunciado en formato Markdown. 
 - IMPORTANTE: Las tablas pueden venir en formato texto plano. Debes identificar cuando hay una tabla (buscando patrones como líneas de -, valores separados por espacios, saltos de línea...) y convertirla a tabla en formato Markdown para incluirla en el enunciado.`,
         learningObjectivesGuidance: "Basándote en los ejercicios, su contenido y las diapositivas previas que consultaste, infiere cuál es el objetivo pedagógico de la página. Escribe una descripción breve (1-3 frases). Ejemplo: 'Practicar consultas con múltiples tablas usando diferentes tipos de JOIN y entender cuándo usar cada uno.'",
-        additionalPhase1Instructions: `
-Usa getPageContent para consultar páginas de laboratorios previos si están marcados como requeridos y entender sus objetivos pedagógicos. Los objetivos que establezcas deberían incluir también los de estos laboratorios anteriores`
     };
 
     public readonly evaluationAssistant = {

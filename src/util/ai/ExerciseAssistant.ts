@@ -3,7 +3,7 @@ import { ExerciseStorageManager } from "../storage/ExerciseStorageManager";
 import { LabStorageManager } from "../storage/LabStorageManager";
 import { AssistantConfig } from "./AssistantConfig";
 import { BaseAssistant } from "./BaseAssistant";
-import { ExerciseListSchema } from "./schemas";
+import { ExerciseListSchemaType } from "./schemas";
 
 export { ExerciseAssistant };
 
@@ -15,6 +15,48 @@ class ExerciseAssistant extends BaseAssistant {
 
     constructor(config: AssistantConfig) {
         super(config);
+    }
+
+    /**
+     * Obtiene los learningObjectives y concepts de los laboratorios requeridos anteriores al pageId especificado
+     * @param pageId ID de la página actual
+     * @param allLabs Lista de todos los laboratorios del curso
+     * @returns String formateado con los objetivos y conceptos de laboratorios previos
+     */
+    private async getPreviousLabObjectives(pageId: string, allLabs: any[]): Promise<string> {
+        // Filtrar solo laboratorios requeridos
+        const requiredLabs = allLabs.filter(lab => lab.required);
+
+        // Encontrar el índice del laboratorio actual
+        const currentLabIndex = requiredLabs.findIndex(lab => lab.id === pageId);
+
+        // Si no se encuentra el lab actual o es el primero, no hay laboratorios previos
+        if (currentLabIndex <= 0) {
+            return 'No hay laboratorios previos requeridos para este laboratorio.';
+        }
+
+        // Obtener solo los laboratorios anteriores al actual
+        const previousLabs = requiredLabs.slice(0, currentLabIndex);
+
+        // Recopilar información de cada laboratorio previo
+        const labsInfo = await Promise.all(
+            previousLabs.map(async (lab) => {
+                const exerciseData = await ExerciseStorageManager.getExerciseData(lab.id);
+
+                if (!exerciseData) {
+                    return `\n### ${lab.name} (ID: ${lab.id})\n- Sin datos almacenados`;
+                }
+
+                const objectives = exerciseData.learningObjectives || 'No especificados';
+                const concepts = exerciseData.concepts && exerciseData.concepts.length > 0
+                    ? exerciseData.concepts.join(', ')
+                    : 'No especificados';
+
+                return `\n### ${lab.name} (ID: ${lab.id})\n**Objetivos de aprendizaje:** ${objectives}\n**Conceptos trabajados:** ${concepts}`;
+            })
+        );
+
+        return labsInfo.join('\n');
     }
 
     /**
@@ -38,150 +80,121 @@ class ExerciseAssistant extends BaseAssistant {
             const attachedFiles = pageResult.files;
             console.log(`[identifyExercises] Contenido de la página obtenido (${pageContent.length} caracteres), archivos: ${attachedFiles.length}`);
 
-            // 2. Obtener contexto del curso
-            const courseContext = JSON.stringify(this.course);
-
-            // 3. Construir el system prompt usando la configuración
+            // 2. Construir el system prompt usando la configuración
             const assistantConfig = this.config.exerciseAssistant;
             const courseId = this.course?.id;
             const labData = courseId ? await LabStorageManager.getLabData(courseId) : null;
             const allLabs = labData?.labs ?? [];
-            const requiredLabs = allLabs.filter(lab => lab.required);
 
-            const labConfigurationDescription = allLabs.length > 0
-                ? allLabs
-                    .map(lab => `- ${lab.name} (ID: ${lab.id}) | requerido: ${lab.required ? 'sí' : 'no'}`)
-                    .join('\n')
-                : 'No hay laboratorios configurados para este curso.';
-
-            const requiredLabsGuidance = requiredLabs.length > 0
-                ? `Solo consulta los laboratorios marcados como REQUERIDOS cuando necesites teoría previa. Lista:
-${requiredLabs.map(lab => `  * ${lab.name} (ID: ${lab.id})`).join('\n')}
-Limita cualquier búsqueda de recursos adicionales a estos laboratorios y a los recursos inmediatamente anteriores dentro de cada uno.`
-                : 'Actualmente no hay laboratorios marcados como requeridos. No revises laboratorios previos automáticamente; utiliza únicamente el recurso actual u otros recursos explícitamente solicitados.';
-
-            const resourceInstructions = resourceId ? `
-UBICACIÓN DE LOS EJERCICIOS:
-- Los ejercicios que estás analizando están en el recurso con ID: ${resourceId}
-- Los recursos (diapositivas, ejercicios, etc.) aparecen en ORDEN dentro de las secciones del curso
-- Las diapositivas de teoría relacionadas con estos ejercicios CASI SIEMPRE están inmediatamente ANTES de este recurso en la lista
-- Busca en la estructura del curso el recurso ${resourceId} para ver qué recursos vienen antes
-- Los recursos anteriores (especialmente PDFs de diapositivas) contienen la teoría que debes revisar
-
-${assistantConfig.additionalPhase1Instructions || ''}
-` : '';
+            // 2.1. Obtener objetivos y conceptos de laboratorios previos
+            const previousObjectives = await this.getPreviousLabObjectives(pageId, allLabs);
+            console.log(`[identifyExercises] Objetivos previos obtenidos`);
 
             const systemPromptTemplate = `Eres un asistente experto en {role}.
 
-FLUJO DE TRABAJO EN 2 FASES:
-Este proceso se realizará en dos fases dentro de la misma conversación:
-- FASE 1: Recopilación de información usando herramientas (getSectionContent, getResourceContent)
-- FASE 2: Generación de respuesta estructurada con toda la información recopilada
+Tu tarea es analizar el contenido de una página educativa, identificar los ejercicios y extraer información relevante.
 
-La información obtenida en la FASE 1 se mantiene en el historial y estará disponible para la FASE 2.
+El id de la página actual es ${pageId}.
 
-ACCESO A RECURSOS DEL CURSO:
-Tienes acceso a las herramientas getSectionContent, getPageContent y getResourceContent para consultar material del curso.
-{resourceInstructions}
+HERRAMIENTAS DISPONIBLES:
+1. getFilteredFileContent: Para extraer contenido específico de archivos de texto usando expresiones regulares.
+   - Usa esta herramienta cuando veas marcadores como [FILE1:TEXT:nombre.sql]
+   - Ejemplo para obtener CREATE TABLEs: usa el patrón "CREATE\\s+TABLE[\\s\\S]+?;"
+   
+2. postExercises: OBLIGATORIA - Debes usar esta herramienta exactamente una vez al final para enviar los ejercicios identificados.
+   - Esta herramienta es tu forma de "responder" con los resultados del análisis
+   - Debes llamarla siempre, incluso si no hay ejercicios (envía un array vacío)
+   - Si recibes como respuesta "Ejercicios recibidos correctamente", significa que tu llamada fue exitosa y no debes que volver a llamarla. Simplemente termina la conversación diciendo "OK", ya que lo que digas después del post se va a ignorar.
 
-CONFIGURACIÓN DE LABORATORIOS:
-{labConfigurationDescription}
+FLUJO DE TRABAJO:
+1. Analiza el contenido de la página
+2. Si hay archivos de texto (marcadores [FILEn:TEXT:nombre]), usa getFilteredFileContent para extraer información relevante
+3. Identifica todos los ejercicios en la página
+4. OBLIGATORIO: Llama a postExercises con toda la información recopilada
 
-REGLAS PARA CONSULTAR LABORATORIOS:
-{requiredLabsGuidance}
+CONTEXTO DE LABORATORIOS PREVIOS:
+A continuación se muestran los objetivos de aprendizaje y conceptos trabajados en laboratorios anteriores REQUERIDOS.
+Esta información te ayudará a entender qué conocimientos previos tienen los estudiantes para este laboratorio.
+Considera estos conceptos como conocimiento adquirido, y enfócate en identificar qué NUEVOS conceptos se trabajan en los ejercicios actuales.
 
-INFORMACIÓN DEL CURSO:
-A continuación tienes la estructura completa del curso con todas las secciones y recursos. Cada sección y recurso tiene un ID único.
+{previousObjectives}
 
-{courseContext}
-
-ADVERTENCIA SOBRE ARCHIVOS:
-- En el markdown que recibirás pueden aparecer marcas como [FILE1], [FILE2], etc. Esos marcadores representan archivos adjuntos que corresponden a la posición en la página donde estaba el archivo (imagen, SQL, PDF, etc.).
-- Cuando encuentres un marcador [FILEn], consulta el archivo adjunto con ese índice. Si es una imagen que contiene una tabla, conviértela a formato Markdown si es posible. Si es un fichero de texto (SQL, MD, TXT), utiliza su contenido para completar el enunciado.
-
-CRITERIOS PARA IDENTIFICAR EJERCICIOS (FASE 2):
+CRITERIOS PARA IDENTIFICAR EJERCICIOS:
 {exerciseCriteria}
 
-CONTEXTO DE EJERCICIOS (FASE 2):
+CONTEXTO DE EJERCICIOS:
 - {contextDescription}
-- Si detectas tal información, devuélvela en el campo "{contextFieldName}"
-- Si no la detectas, devuelve ese campo vacío
+- Si detectas tal información, inclúyela en el campo "exercise_context"
+- Si no la detectas, envía ese campo vacío
 
-CONCEPTOS (FASE 2):
+CONCEPTOS:
 - Analiza los ejercicios e identifica qué {conceptsFieldDescription}
-- Usa la información de las diapositivas previas que consultaste en la FASE 1
-- Devuelve estos conceptos en el campo "{conceptsFieldName}" como un array de strings
 - Sé específico cuando sea posible
 - Ejemplos: {conceptsExamples}
 - Si no hay ejercicios, este campo debe estar vacío
 
-OBJETIVOS DE APRENDIZAJE (FASE 2):
+OBJETIVOS DE APRENDIZAJE:
 - {learningObjectivesGuidance}
+
+IMPORTANTE: Debes llamar a postExercises exactamente una vez al final del análisis.
 `;
 
             const systemPromptVariables = {
                 role: assistantConfig.role,
-                resourceInstructions: resourceInstructions,
-                courseContext: courseContext,
                 exerciseCriteria: assistantConfig.exerciseCriteria,
                 contextDescription: assistantConfig.contextDescription,
-                contextFieldName: assistantConfig.contextFieldName,
                 conceptsFieldDescription: assistantConfig.conceptsFieldDescription,
-                conceptsFieldName: assistantConfig.conceptsFieldName,
                 conceptsExamples: assistantConfig.conceptsExamples,
                 learningObjectivesGuidance: assistantConfig.learningObjectivesGuidance,
-                labConfigurationDescription: labConfigurationDescription,
-                requiredLabsGuidance: requiredLabsGuidance
+                previousObjectives: previousObjectives
             };
 
             const systemPrompt = this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);
 
-            const userPromptPhase1 = `FASE 1: RECOPILACIÓN DE INFORMACIÓN
+            const userPrompt = `Analiza el siguiente contenido de una página educativa e identifica los ejercicios.
 
-Analiza el siguiente contenido de una página educativa. Por favor, recopila toda la información necesaria consultando los recursos del curso que consideres relevantes.
 Contenido de la página:
 
 ${pageContent}`;
 
-            // 4. FASE 1: Generar respuesta con tools (permitir al LLM consultar recursos)
-            // NO resetear la conversación para mantener el historial entre fases
+            // Usar processResponseWithTools para permitir que el LLM use getFilteredFileContent
+            // y al final llame a postExercises con los resultados
             this.openAIService.resetConversation();
-            console.log(`[identifyExercises] FASE 1: Iniciando recopilación de información con tools`);
+            console.log(`[identifyExercises] Iniciando análisis con tools`);
 
-            // Permitir que el LLM use tools para consultar recursos adicionales
-            // Los archivos adjuntos se pasan aquí para que el LLM pueda ver el contenido de la página
-            await this.openAIService.processResponseWithTools(
-                (name, args) => this.executeToolCall(name, args),
-                userPromptPhase1,
-                systemPrompt,
+            let exerciseResult: ExerciseListSchemaType | null = null;
+
+            // El toolExecutor captura cuando se llama a postExercises
+            const result = await this.openAIService.processResponseWithTools(
+                async (name: string, args: any) => {
+                    if (name === 'postExercises') {
+                        // Capturar los ejercicios identificados
+                        exerciseResult = args as ExerciseListSchemaType;
+                        return 'Ejercicios recibidos correctamente';
+                    }
+                    // Ejecutar otras tools normalmente (getFilteredFileContent)
+                    return this.executeToolCall(name, args);
+                },
+                userPrompt,
+                systemPrompt
             );
 
-            console.log(`[identifyExercises] FASE 1 completada. El LLM ha recopilado la información necesaria.`);
+            // Verificar que se recibió una respuesta válida
+            if (!exerciseResult) {
+                console.warn(`[identifyExercises] El LLM no llamó a postExercises. Retornando resultado vacío.`);
+                return {
+                    exercises: [],
+                    exerciseContext: undefined,
+                    concepts: [],
+                    learningObjectives: undefined,
+                };
+            }
 
-            // 5. FASE 2: Generar respuesta estructurada 
-            // El LLM ya tiene toda la información en el historial de conversación
-            const userPromptPhase2 = `FASE 2: GENERACIÓN DE RESPUESTA ESTRUCTURADA
+            const response: ExerciseListSchemaType = exerciseResult;
+            console.log(`[identifyExercises] Respuesta recibida:`, response);
 
-Basándote en toda la información que has recopilado en la fase anterior, genera ahora la respuesta estructurada con:
-1. Todos los ejercicios identificados en la página
-2. El esquema de base de datos si existe. Esquema se refiere al script de creación de tablas y relaciones entre ellas, de modo que sirva para entender cómo se estructura la base de datos.
-3. Las instrucciones SQL que se trabajan en los ejercicios
-4. Los objetivos de aprendizaje de la página`;
-
-            console.log(`[identifyExercises] FASE 2: Generando respuesta estructurada`);
-
-            // NO pasar systemPrompt aquí porque ya está en el historial
-            const response: any = await this.openAIService.generateStructuredResponse(
-                ExerciseListSchema,
-                "exercise_list",
-                userPromptPhase2,
-                "" // System prompt vacío porque ya está en el historial
-            );
-
-            console.log(`[identifyExercises] Respuesta estructurada recibida:`, response);
-
-            // 5. Convertir a objetos Exercise
-            const exercises: Exercise[] = (response.exercises || []).map(
+            // 3. Convertir a objetos Exercise
+            const exercises: Exercise[] = response.exercises.map(
                 (ex: { name: string; statement: string }) => new Exercise(ex.name, ex.statement)
             );
 
@@ -189,7 +202,7 @@ Basándote en toda la información que has recopilado en la fase anterior, gener
             console.log(`[identifyExercises] Conceptos: ${response.concepts?.join(', ') || 'N/A'}`);
             console.log(`[identifyExercises] Objetivos de aprendizaje: ${response.learning_objectives || 'N/A'}`);
 
-            // 6. Guardar los datos en el storage para uso futuro
+            // 4. Guardar los datos en el storage para uso futuro
             const existingExerciseData = await ExerciseStorageManager.getExerciseData(pageId);
             const exerciseDataToStore = exercises.map(ex => {
                 const previous = existingExerciseData?.exercises.find(prev => prev.name === ex.name);

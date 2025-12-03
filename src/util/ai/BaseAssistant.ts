@@ -43,7 +43,7 @@ abstract class BaseAssistant {
 
     /**
      * Ejecutor de herramientas compartido por todos los asistentes
-     * Proporciona acceso a getSectionContent, getPageContent, getResourceContent, explainExercise y solveExercise
+     * Proporciona acceso a getSectionContent, getPageContent, getResourceContent, explainExercise, solveExercise y getFilteredFileContent
      */
     protected async executeToolCall(
         name: string,
@@ -67,6 +67,10 @@ abstract class BaseAssistant {
 
         if (name === 'solveExercise') {
             return await ToolFunctions.solveExercise(args);
+        }
+
+        if (name === 'getFilteredFileContent') {
+            return ToolFunctions.getFilteredFileContent(args);
         }
 
         throw new Error(`Herramienta desconocida: ${name}`);

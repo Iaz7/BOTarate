@@ -10,6 +10,7 @@ export { PageParser };
 class PageParser extends HtmlParserBase {
     private lines: string[] = [];
     private files: FileData[] = [];
+    private textFileCounter: number = 0;
     private readonly pageId: string;
     private readonly baseUrl: string;
 
@@ -27,6 +28,7 @@ class PageParser extends HtmlParserBase {
     async parseToMarkdown(element: any): Promise<{ markdown: string; files: FileData[] }> {
         this.lines = [];
         this.files = [];
+        this.textFileCounter = 0;
 
         await this.processNode(element);
 
@@ -176,17 +178,21 @@ class PageParser extends HtmlParserBase {
     }
 
     /**
-     * Inserta el contenido de un archivo de texto directamente en el markdown
+     * Inserta un marcador para un archivo de texto, sin incrustar el contenido completo.
+     * El contenido se almacena en cache para consulta posterior con getFilteredFileContent.
      */
-    private embedTextFileContent(fileData: FileData): void {
-        const headerLabel = fileData.filename ? `Archivo: ${fileData.filename}` : 'Archivo de texto';
-        this.lines.push(`\n**${headerLabel}**`);
+    private embedTextFileMarker(fileData: FileData): void {
+        // Generar identificador único para archivo de texto
+        this.textFileCounter++;
+        const fileId = `FILE${this.textFileCounter}`;
+        fileData.id = fileId;
 
-        const extension = fileData.filename?.split('.').pop()?.toLowerCase();
-        const language = this.getCodeFenceLanguage(extension);
-        const fence = language ? `\`\`\`${language}` : '```';
+        // Guardar el archivo en cache para consulta posterior
+        FileManager.cacheTextFile(this.pageId, fileData);
 
-        this.lines.push(fence, (fileData.text || '').trimEnd(), '```');
+        // Insertar marcador descriptivo en lugar del contenido completo
+        const extension = fileData.filename?.split('.').pop()?.toLowerCase() || 'txt';
+        this.lines.push(`[${fileId}:TEXT:${fileData.filename}] (Archivo de texto ${extension.toUpperCase()}, usar getFilteredFileContent para obtener contenido filtrado)`);
     }
 
     /**
@@ -226,15 +232,17 @@ class PageParser extends HtmlParserBase {
             return;
         }
 
+        // El identificador para archivos de texto se genera en embedTextFileMarker
         const fileId = `FILE${this.files.length + 1}`;
 
         try {
             const fileData = await FileManager.fetchAndConvertFile(url, fileId);
             if (fileData.text) {
+                // Para archivos de texto, insertar marcador en lugar de contenido completo
                 if (text) {
                     this.lines.push(text);
                 }
-                this.embedTextFileContent(fileData);
+                this.embedTextFileMarker(fileData);
                 return;
             }
 
