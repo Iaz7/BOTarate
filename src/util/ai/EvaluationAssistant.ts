@@ -9,8 +9,10 @@ export { EvaluationAssistant };
  */
 class EvaluationAssistant extends BaseAssistant {
 
+    private static readonly TOOLS = [];
+
     constructor(config: AssistantConfig) {
-        super(config);
+        super(config, EvaluationAssistant.TOOLS);
     }
 
     /**
@@ -105,7 +107,7 @@ Proporciona una evaluación completa con puntuación y feedback detallado.`;
             this.openAIService.resetConversation();
 
             // Usar la función que permite respuestas estructuradas
-            const response = await this.openAIService.generateStructuredResponse(
+            const response: any = await this.openAIService.generateStructuredResponse(
                 EvaluationSchema,
                 "evaluation",
                 userPrompt,

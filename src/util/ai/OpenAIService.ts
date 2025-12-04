@@ -2,8 +2,17 @@ import OpenAI from "openai";
 import type { ResponseFormatJSONSchema } from "openai/resources/shared";
 
 import { AIProvider, ConfigManager } from "../config/ConfigManager";
+import { getReasoningInstruction, getVerbosityInstruction, supportsReasoning, supportsVerbosity } from "./ModelList";
 import type { ToolCall } from "./Tools";
 import { TOOLS } from "./Tools";
+
+export type VerbosityLevel = "low" | "medium" | "high";
+export type ReasoningEffort = "minimal" | "low" | "medium" | "high";
+
+export interface ResponseOptions {
+    verbosity?: VerbosityLevel;
+    reasoningEffort?: ReasoningEffort;
+}
 
 export interface Message {
     role: 'system' | 'user' | 'assistant' | 'tool';
@@ -73,9 +82,10 @@ class OpenAIService {
     async processResponseWithTools(
         toolExecutor: (name: string, args: any) => Promise<string | { type: 'file'; data: any }>,
         userMessage?: string,
-        systemPrompt?: string
+        systemPrompt?: string,
+        tools?: any[]
     ): Promise<string> {
-        const result = await this.generateResponseWithTools(userMessage, systemPrompt);
+        const result = await this.generateResponseWithTools(userMessage, systemPrompt, tools);
 
         if (result.type === 'message') {
             // Respuesta final del LLM
@@ -96,7 +106,8 @@ class OpenAIService {
 
     private async generateResponseWithTools(
         userMessage?: string,
-        systemPrompt?: string
+        systemPrompt?: string,
+        tools?: any[]
     ): Promise<{ type: 'message'; content: string } | { type: 'tool_calls'; calls: ToolCall[] }> {
         // Actualizar o agregar el system prompt si se proporciona
         if (systemPrompt) {
@@ -131,7 +142,7 @@ class OpenAIService {
         const response = await OpenAIService.openai.chat.completions.create({
             model: ConfigManager.getSelectedModel(),
             messages: this.conversationHistory as any,
-            tools: TOOLS as any,
+            tools: tools ?? TOOLS,
             tool_choice: 'auto',
             max_completion_tokens: 32768
         });
@@ -200,14 +211,36 @@ class OpenAIService {
         schemaName: string,
         userMessage: string,
         systemPrompt: string,
-        files?: Array<{ filename: string; mimeType?: string; dataUrl?: string; text?: string; url?: string }>
+        files?: Array<{ filename: string; mimeType?: string; dataUrl?: string; text?: string; url?: string }>,
+        options?: ResponseOptions
     ): Promise<T> {
         console.log(`[generateStructuredResponse] Generando respuesta estructurada: ${schemaName}`);
 
+        const modelName = ConfigManager.getSelectedModel();
+        let finalSystemPrompt = systemPrompt;
+
+        // Si se especifican opciones, verificar compatibilidad del modelo
+        let overrideMaxTokens: number | undefined = undefined;
+        if (options) {
+            // Verbosity siempre va en el prompt
+            if (options.verbosity) {
+                const verbosityInstruction = getVerbosityInstruction(options.verbosity);
+                finalSystemPrompt = `${verbosityInstruction}\n\n${finalSystemPrompt}`;
+                console.log(`[generateStructuredResponse] Instrucción de verbosity añadida al prompt: ${options.verbosity}`);
+            }
+            // Reasoning solo si el modelo no lo soporta nativamente
+            const modelSupportsReasoning = supportsReasoning(modelName);
+            if (options.reasoningEffort && !modelSupportsReasoning) {
+                const reasoningInstruction = getReasoningInstruction(options.reasoningEffort);
+                finalSystemPrompt = `${reasoningInstruction}\n\n${finalSystemPrompt}`;
+                console.log(`[generateStructuredResponse] Modelo ${modelName} no soporta reasoning, añadida instrucción al prompt`);
+            }
+        }
+
         // Si hay system prompt, añadirlo
         // Si está vacío, asumimos que ya hay uno en el historial
-        if (systemPrompt.length > 0) {
-            this.conversationHistory.push({ role: 'system', content: systemPrompt });
+        if (finalSystemPrompt.length > 0) {
+            this.conversationHistory.push({ role: 'system', content: finalSystemPrompt });
         }
 
         this.conversationHistory.push({ role: 'user', content: userMessage });
@@ -229,13 +262,34 @@ class OpenAIService {
             }
         };
 
-        // Usar la API nativa de OpenAI para respuestas estructuradas
-        const completion = await OpenAIService.openai.chat.completions.create({
-            model: ConfigManager.getSelectedModel(),
+        // Construir parámetros de la API
+        const apiParams: any = {
+            model: modelName,
             messages: this.conversationHistory as any,
             response_format: responseFormat,
             max_completion_tokens: 32768
-        });
+        };
+
+        // Añadir parámetros nativos si el modelo los soporta
+        if (options) {
+            const modelSupportsVerbosity = supportsVerbosity(modelName);
+            const modelSupportsReasoning = supportsReasoning(modelName);
+
+            if (options.verbosity && modelSupportsVerbosity) {
+                // Nota: El parámetro text.verbosity es para la API de responses, no chat.completions
+                // Para chat.completions, usamos la instrucción en el prompt (ya añadida arriba si no soporta)
+                // Si el modelo soporta verbosity, la API debería manejarlo
+                console.log(`[generateStructuredResponse] Modelo ${modelName} soporta verbosity: ${options.verbosity}`);
+            }
+
+            if (options.reasoningEffort && modelSupportsReasoning) {
+                apiParams.reasoning = { effort: options.reasoningEffort };
+                console.log(`[generateStructuredResponse] Añadido reasoning effort: ${options.reasoningEffort}`);
+            }
+        }
+
+        // Usar la API nativa de OpenAI para respuestas estructuradas
+        const completion = await OpenAIService.openai.chat.completions.create(apiParams);
 
         const content = completion.choices[0]?.message?.content;
 

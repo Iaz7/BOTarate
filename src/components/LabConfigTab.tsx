@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
 
+type VerbosityLevel = "low" | "medium" | "high";
+type ReasoningEffort = "minimal" | "low" | "medium" | "high";
+
 interface Lab {
     id: string;
     name: string;
     required: boolean;
+    verbosity?: VerbosityLevel;
+    reasoningEffort?: ReasoningEffort;
 }
 
 interface LabConfigTabProps {
@@ -12,13 +17,22 @@ interface LabConfigTabProps {
     isActive: boolean;
 }
 
+interface PendingChanges {
+    required?: boolean;
+    verbosity?: VerbosityLevel;
+    reasoningEffort?: ReasoningEffort;
+}
+
 const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, isActive }) => {
     const [labs, setLabs] = useState<Lab[]>([]);
-    const [labConfig, setLabConfig] = useState<Map<string, boolean>>(new Map());
-    const [pendingChanges, setPendingChanges] = useState<Map<string, boolean>>(new Map());
+    const [labConfig, setLabConfig] = useState<
+        Map<string, { required: boolean; verbosity: VerbosityLevel; reasoningEffort: ReasoningEffort }>
+    >(new Map());
+    const [pendingChanges, setPendingChanges] = useState<Map<string, PendingChanges>>(new Map());
     const [isSaving, setIsSaving] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [expandedLab, setExpandedLab] = useState<string | null>(null);
 
     // Cargar configuración inicial desde el storage cuando se activa la pestaña
     useEffect(() => {
@@ -39,9 +53,16 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
             if (response.success && response.data?.labs) {
                 setLabs(response.data.labs);
 
-                const config = new Map<string, boolean>();
+                const config = new Map<
+                    string,
+                    { required: boolean; verbosity: VerbosityLevel; reasoningEffort: ReasoningEffort }
+                >();
                 for (const lab of response.data.labs) {
-                    config.set(lab.id, lab.required ?? false);
+                    config.set(lab.id, {
+                        required: lab.required ?? false,
+                        verbosity: lab.verbosity ?? "medium",
+                        reasoningEffort: lab.reasoningEffort ?? "medium",
+                    });
                 }
                 setLabConfig(config);
                 setPendingChanges(new Map());
@@ -54,25 +75,77 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
         }
     };
 
-    const handleToggle = (labId: string) => {
-        const currentValue = labConfig.get(labId) ?? false;
-        const newValue = !currentValue;
+    const handleToggleRequired = (labId: string) => {
+        const currentConfig = labConfig.get(labId);
+        const newValue = !(currentConfig?.required ?? false);
 
         // Actualizar estado local
         setLabConfig(prev => {
             const newConfig = new Map(prev);
-            newConfig.set(labId, newValue);
+            const current = newConfig.get(labId);
+            if (current) {
+                newConfig.set(labId, { ...current, required: newValue });
+            }
             return newConfig;
         });
 
         // Marcar como cambio pendiente
         setPendingChanges(prev => {
             const newChanges = new Map(prev);
-            newChanges.set(labId, newValue);
+            const current = newChanges.get(labId) || {};
+            newChanges.set(labId, { ...current, required: newValue });
             return newChanges;
         });
 
         setHasUnsavedChanges(true);
+    };
+
+    const handleVerbosityChange = (labId: string, verbosity: VerbosityLevel) => {
+        // Actualizar estado local
+        setLabConfig(prev => {
+            const newConfig = new Map(prev);
+            const current = newConfig.get(labId);
+            if (current) {
+                newConfig.set(labId, { ...current, verbosity });
+            }
+            return newConfig;
+        });
+
+        // Marcar como cambio pendiente
+        setPendingChanges(prev => {
+            const newChanges = new Map(prev);
+            const current = newChanges.get(labId) || {};
+            newChanges.set(labId, { ...current, verbosity });
+            return newChanges;
+        });
+
+        setHasUnsavedChanges(true);
+    };
+
+    const handleReasoningChange = (labId: string, reasoningEffort: ReasoningEffort) => {
+        // Actualizar estado local
+        setLabConfig(prev => {
+            const newConfig = new Map(prev);
+            const current = newConfig.get(labId);
+            if (current) {
+                newConfig.set(labId, { ...current, reasoningEffort });
+            }
+            return newConfig;
+        });
+
+        // Marcar como cambio pendiente
+        setPendingChanges(prev => {
+            const newChanges = new Map(prev);
+            const current = newChanges.get(labId) || {};
+            newChanges.set(labId, { ...current, reasoningEffort });
+            return newChanges;
+        });
+
+        setHasUnsavedChanges(true);
+    };
+
+    const toggleExpand = (labId: string) => {
+        setExpandedLab(prev => (prev === labId ? null : labId));
     };
 
     const handleSaveChanges = async () => {
@@ -81,13 +154,31 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
         setIsSaving(true);
         try {
             // Guardar todos los cambios
-            for (const [labId, required] of pendingChanges) {
-                await chrome.runtime.sendMessage({
-                    action: "updateLabRequired",
-                    courseId: courseId,
-                    labId: labId,
-                    required: required,
-                });
+            for (const [labId, changes] of pendingChanges) {
+                if (changes.required !== undefined) {
+                    await chrome.runtime.sendMessage({
+                        action: "updateLabRequired",
+                        courseId: courseId,
+                        labId: labId,
+                        required: changes.required,
+                    });
+                }
+                if (changes.verbosity !== undefined) {
+                    await chrome.runtime.sendMessage({
+                        action: "updateLabVerbosity",
+                        courseId: courseId,
+                        labId: labId,
+                        verbosity: changes.verbosity,
+                    });
+                }
+                if (changes.reasoningEffort !== undefined) {
+                    await chrome.runtime.sendMessage({
+                        action: "updateLabReasoningEffort",
+                        courseId: courseId,
+                        labId: labId,
+                        reasoningEffort: changes.reasoningEffort,
+                    });
+                }
             }
 
             // Limpiar cambios pendientes
@@ -107,6 +198,141 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
             setIsSaving(false);
         }
     };
+
+    const renderVerbositySelector = (labId: string, currentVerbosity: VerbosityLevel) => (
+        <div className="mb-2">
+            <label className="form-label small text-muted mb-1">Verbosidad</label>
+            <div className="btn-group" role="group" aria-label="Nivel de verbosidad">
+                <input
+                    type="radio"
+                    className="btn-check"
+                    name={`verbosity-${labId}`}
+                    id={`verbosity-low-${labId}`}
+                    autoComplete="off"
+                    checked={currentVerbosity === "low"}
+                    onChange={() => handleVerbosityChange(labId, "low")}
+                    disabled={isSaving}
+                />
+                <label
+                    className="btn btn-outline-primary"
+                    htmlFor={`verbosity-low-${labId}`}
+                    title="Respuestas concisas y directas"
+                >
+                    Bajo
+                </label>
+                <input
+                    type="radio"
+                    className="btn-check"
+                    name={`verbosity-${labId}`}
+                    id={`verbosity-medium-${labId}`}
+                    autoComplete="off"
+                    checked={currentVerbosity === "medium"}
+                    onChange={() => handleVerbosityChange(labId, "medium")}
+                    disabled={isSaving}
+                />
+                <label
+                    className="btn btn-outline-primary"
+                    htmlFor={`verbosity-medium-${labId}`}
+                    title="Nivel de detalle equilibrado"
+                >
+                    Medio
+                </label>
+                <input
+                    type="radio"
+                    className="btn-check"
+                    name={`verbosity-${labId}`}
+                    id={`verbosity-high-${labId}`}
+                    autoComplete="off"
+                    checked={currentVerbosity === "high"}
+                    onChange={() => handleVerbosityChange(labId, "high")}
+                    disabled={isSaving}
+                />
+                <label
+                    className="btn btn-outline-primary"
+                    htmlFor={`verbosity-high-${labId}`}
+                    title="Explicaciones detalladas y extensas"
+                >
+                    Alto
+                </label>
+            </div>
+        </div>
+    );
+
+    const renderReasoningSelector = (labId: string, currentReasoning: ReasoningEffort) => (
+        <div className="mb-2">
+            <label className="form-label small text-muted mb-1">Esfuerzo de razonamiento</label>
+            <div className="btn-group" role="group" aria-label="Esfuerzo de razonamiento">
+                <input
+                    type="radio"
+                    className="btn-check"
+                    name={`reasoning-${labId}`}
+                    id={`reasoning-minimal-${labId}`}
+                    autoComplete="off"
+                    checked={currentReasoning === "minimal"}
+                    onChange={() => handleReasoningChange(labId, "minimal")}
+                    disabled={isSaving}
+                />
+                <label
+                    className="btn btn-outline-primary"
+                    htmlFor={`reasoning-minimal-${labId}`}
+                    title="Respuesta directa sin razonamiento"
+                >
+                    Mínimo
+                </label>
+                <input
+                    type="radio"
+                    className="btn-check"
+                    name={`reasoning-${labId}`}
+                    id={`reasoning-low-${labId}`}
+                    autoComplete="off"
+                    checked={currentReasoning === "low"}
+                    onChange={() => handleReasoningChange(labId, "low")}
+                    disabled={isSaving}
+                />
+                <label
+                    className="btn btn-outline-primary"
+                    htmlFor={`reasoning-low-${labId}`}
+                    title="Razonamiento básico"
+                >
+                    Bajo
+                </label>
+                <input
+                    type="radio"
+                    className="btn-check"
+                    name={`reasoning-${labId}`}
+                    id={`reasoning-medium-${labId}`}
+                    autoComplete="off"
+                    checked={currentReasoning === "medium"}
+                    onChange={() => handleReasoningChange(labId, "medium")}
+                    disabled={isSaving}
+                />
+                <label
+                    className="btn btn-outline-primary"
+                    htmlFor={`reasoning-medium-${labId}`}
+                    title="Razonamiento moderado"
+                >
+                    Medio
+                </label>
+                <input
+                    type="radio"
+                    className="btn-check"
+                    name={`reasoning-${labId}`}
+                    id={`reasoning-high-${labId}`}
+                    autoComplete="off"
+                    checked={currentReasoning === "high"}
+                    onChange={() => handleReasoningChange(labId, "high")}
+                    disabled={isSaving}
+                />
+                <label
+                    className="btn btn-outline-primary"
+                    htmlFor={`reasoning-high-${labId}`}
+                    title="Razonamiento detallado paso a paso"
+                >
+                    Alto
+                </label>
+            </div>
+        </div>
+    );
 
     if (isLoading) {
         return (
@@ -134,75 +360,87 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
     return (
         <div>
             <div className="alert alert-info small mb-3" role="alert">
-                <strong>Configuración de laboratorios (Sistema de Niveles)</strong>
+                <strong>Configuración de laboratorios</strong>
                 <p className="mb-0 mt-1">
-                    Configura qué laboratorios son obligatorios en la secuencia de aprendizaje. Los laboratorios
-                    marcados como "requeridos" formarán parte del sistema de niveles: los estudiantes deberán completar
-                    los laboratorios requeridos en orden antes de acceder al siguiente.
+                    Configura cada laboratorio con sus opciones de nivel requerido, verbosidad y razonamiento. Haz clic
+                    en un laboratorio para expandir sus opciones de configuración del asistente de explicaciones.
                 </p>
             </div>
 
-            <div className="table-responsive">
-                <table className="table table-sm table-hover">
-                    <thead>
-                        <tr>
-                            <th scope="col" style={{ width: "70%" }}>
-                                Nombre del laboratorio
-                            </th>
-                            <th scope="col" className="text-center" style={{ width: "30%" }}>
-                                Requerido
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {labs.map((lab, index) => {
-                            const isRequired = labConfig.get(lab.id) ?? false;
-                            return (
-                                <tr key={lab.id}>
-                                    <td>
-                                        <div className="d-flex align-items-center">
-                                            <span className="badge bg-secondary me-2">#{index + 1}</span>
-                                            <span>{lab.name}</span>
-                                            {isRequired && <span className="badge bg-primary ms-2">Requerido</span>}
-                                        </div>
-                                    </td>
-                                    <td className="text-center">
-                                        <div className="form-check form-switch d-inline-block">
+            <div className="accordion" id="labAccordion">
+                {labs.map((lab, index) => {
+                    const config = labConfig.get(lab.id);
+                    const isRequired = config?.required ?? false;
+                    const verbosity = config?.verbosity ?? "medium";
+                    const reasoningEffort = config?.reasoningEffort ?? "medium";
+                    const isExpanded = expandedLab === lab.id;
+
+                    return (
+                        <div className="accordion-item" key={lab.id}>
+                            <h2 className="accordion-header">
+                                <button
+                                    className={`accordion-button ${isExpanded ? "" : "collapsed"} py-2`}
+                                    type="button"
+                                    onClick={() => toggleExpand(lab.id)}
+                                    aria-expanded={isExpanded}
+                                >
+                                    <div className="d-flex align-items-center flex-grow-1 me-2">
+                                        <span className="badge bg-secondary me-2">#{index + 1}</span>
+                                        <span className="text-truncate">{lab.name}</span>
+                                        {isRequired && <span className="badge bg-primary ms-2">Requerido</span>}
+                                    </div>
+                                </button>
+                            </h2>
+                            <div className={`accordion-collapse collapse ${isExpanded ? "show" : ""}`}>
+                                <div className="accordion-body py-2">
+                                    {/* Toggle Requerido */}
+                                    <div className="mb-3 d-flex align-items-center justify-content-between">
+                                        <label
+                                            className="form-label small text-muted mb-0"
+                                            htmlFor={`switch-lab-${lab.id}`}
+                                        >
+                                            Laboratorio requerido
+                                        </label>
+                                        <div className="form-check form-switch">
                                             <input
                                                 className="form-check-input"
                                                 type="checkbox"
                                                 role="switch"
                                                 id={`switch-lab-${lab.id}`}
                                                 checked={isRequired}
-                                                onChange={() => handleToggle(lab.id)}
+                                                onChange={() => handleToggleRequired(lab.id)}
                                                 disabled={isSaving}
                                                 style={{ cursor: "pointer" }}
                                             />
-                                            <label
-                                                className="form-check-label visually-hidden"
-                                                htmlFor={`switch-lab-${lab.id}`}
-                                            >
-                                                {isRequired ? "Requerido" : "Opcional"}
-                                            </label>
                                         </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                                    </div>
+
+                                    <hr className="my-2" />
+
+                                    <p className="small text-muted mb-2">
+                                        <strong>Configuración del asistente de explicaciones:</strong>
+                                    </p>
+
+                                    {/* Selector de Verbosidad */}
+                                    {renderVerbositySelector(lab.id, verbosity)}
+
+                                    {/* Selector de Razonamiento */}
+                                    {renderReasoningSelector(lab.id, reasoningEffort)}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
             {hasUnsavedChanges && (
-                <div className="alert alert-warning small mb-3" role="alert">
+                <div className="alert alert-warning small mb-3 mt-3" role="alert">
                     <strong>⚠️ Tienes cambios sin guardar</strong>
-                    <p className="mb-0 mt-1">
-                        Haz clic en "Guardar cambios" para aplicar la configuración del sistema de niveles.
-                    </p>
+                    <p className="mb-0 mt-1">Haz clic en "Guardar cambios" para aplicar la configuración.</p>
                 </div>
             )}
 
-            <div className="d-grid gap-2">
+            <div className="d-grid gap-2 mt-3">
                 <button
                     className="btn btn-primary"
                     onClick={handleSaveChanges}
@@ -226,7 +464,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                     <output className="spinner-border spinner-border-sm me-2">
                         <span className="visually-hidden">Guardando...</span>
                     </output>
-                    Aplicando configuración del sistema de niveles...
+                    Aplicando configuración...
                 </div>
             )}
         </div>

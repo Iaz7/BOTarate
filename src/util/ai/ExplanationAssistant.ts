@@ -1,6 +1,8 @@
 import { AssistantConfig } from "./AssistantConfig";
 import { BaseAssistant } from "./BaseAssistant";
+import { ResponseOptions } from "./OpenAIService";
 import { ExplanationSchema, ExplanationSchemaType } from "./schemas";
+import { TOOLS } from "./Tools";
 
 export { ExplanationAssistant };
 
@@ -9,8 +11,10 @@ export { ExplanationAssistant };
  */
 class ExplanationAssistant extends BaseAssistant {
 
+    private static readonly TOOLS = [];
+
     constructor(config: AssistantConfig) {
-        super(config);
+        super(config, ExplanationAssistant.TOOLS);
     }
 
     /**
@@ -48,6 +52,7 @@ class ExplanationAssistant extends BaseAssistant {
      * @param concepts - Conceptos que se trabajan en la página (opcional)
      * @param learningObjectives - Objetivos de aprendizaje de la página (opcional)
      * @param progressSummary - Resumen del progreso del alumno (opcional)
+     * @param responseOptions - Opciones de verbosidad y razonamiento (opcional)
      * @returns Explicación estructurada con pasos
      */
     async generateExplanation(
@@ -56,9 +61,13 @@ class ExplanationAssistant extends BaseAssistant {
         exerciseContext?: string,
         concepts?: string[],
         learningObjectives?: string,
-        progressSummary?: string
+        progressSummary?: string,
+        responseOptions?: ResponseOptions
     ): Promise<ExplanationSchemaType> {
         console.log(`[generateExplanation] Generando explicación para: ${exerciseName}`);
+        if (responseOptions) {
+            console.log(`[generateExplanation] Opciones: verbosity=${responseOptions.verbosity}, reasoning=${responseOptions.reasoningEffort}`);
+        }
 
         const assistantConfig = this.config.explanationAssistant;
         const pedagogicalContext = this.buildPedagogicalContext(concepts, learningObjectives, progressSummary);
@@ -119,7 +128,9 @@ NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de h
                 ExplanationSchema,
                 "explanation",
                 userPrompt,
-                systemPrompt
+                systemPrompt,
+                undefined,
+                responseOptions
             );
 
             console.log(`[generateExplanation] Explicación generada con ${response.steps.length} pasos`);
@@ -147,7 +158,9 @@ NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de h
             // Usar processResponseWithTools sin resetear el historial
             const response = await this.openAIService.processResponseWithTools(
                 this.executeToolCall.bind(this),
-                userMessage
+                userMessage,
+                undefined,
+                this.allowedTools.map(tool => TOOLS.find((t: any) => t.function.name === tool)).filter(Boolean)
             );
 
             console.log(`[continueConversation] Respuesta generada`);

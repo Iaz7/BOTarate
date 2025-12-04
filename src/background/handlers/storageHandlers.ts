@@ -1,6 +1,6 @@
 import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManager";
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
-import { LabStorageManager } from "../../util/storage/LabStorageManager";
+import { LabStorageManager, ReasoningEffort, VerbosityLevel } from "../../util/storage/LabStorageManager";
 import { ProgressConfigStorageManager } from "../../util/storage/ProgressConfigStorageManager";
 
 export function handleRemoveExerciseData(request: any, sendResponse: (response?: any) => void): boolean {
@@ -90,6 +90,61 @@ export function handleUpdateLabRequired(request: any, sendResponse: (response?: 
             sendResponse({ success: true });
         } catch (error: any) {
             console.error('Error al actualizar estado de laboratorio:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+export function handleUpdateLabVerbosity(request: any, sendResponse: (response?: any) => void): boolean {
+    const { courseId, labId, verbosity } = request;
+
+    (async () => {
+        try {
+            await LabStorageManager.updateLabVerbosity(courseId, labId, verbosity as VerbosityLevel);
+            console.log(`Verbosidad actualizada para laboratorio ${labId}: ${verbosity}`);
+            sendResponse({ success: true });
+        } catch (error: any) {
+            console.error('Error al actualizar verbosidad del laboratorio:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+export function handleUpdateLabReasoningEffort(request: any, sendResponse: (response?: any) => void): boolean {
+    const { courseId, labId, reasoningEffort } = request;
+
+    (async () => {
+        try {
+            await LabStorageManager.updateLabReasoningEffort(courseId, labId, reasoningEffort as ReasoningEffort);
+            console.log(`Esfuerzo de razonamiento actualizado para laboratorio ${labId}: ${reasoningEffort}`);
+            sendResponse({ success: true });
+        } catch (error: any) {
+            console.error('Error al actualizar esfuerzo de razonamiento del laboratorio:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+export function handleGetLabConfig(request: any, sendResponse: (response?: any) => void): boolean {
+    const { courseId, labId } = request;
+
+    (async () => {
+        try {
+            const labConfig = await LabStorageManager.getLabConfig(courseId, labId);
+            if (labConfig) {
+                console.log(`Configuración del laboratorio ${labId} recuperada`);
+                sendResponse({ success: true, config: labConfig });
+            } else {
+                sendResponse({ success: false, error: 'No se encontró configuración para este laboratorio' });
+            }
+        } catch (error: any) {
+            console.error('Error al obtener configuración del laboratorio:', error);
             sendResponse({ success: false, error: error.message });
         }
     })();

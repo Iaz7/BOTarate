@@ -4,6 +4,7 @@ import { LabStorageManager } from "../storage/LabStorageManager";
 import { AssistantConfig } from "./AssistantConfig";
 import { BaseAssistant } from "./BaseAssistant";
 import { ExerciseListSchemaType } from "./schemas";
+import { EXERCISE_ASSISTANT_TOOLS } from "./Tools";
 
 export { ExerciseAssistant };
 
@@ -13,8 +14,13 @@ export { ExerciseAssistant };
  */
 class ExerciseAssistant extends BaseAssistant {
 
+    private static readonly TOOLS = [
+        'getFilteredFileContent',
+        'postExercises'
+    ];
+
     constructor(config: AssistantConfig) {
-        super(config);
+        super(config, ExerciseAssistant.TOOLS);
     }
 
     /**
@@ -108,9 +114,9 @@ HERRAMIENTAS DISPONIBLES:
 
 FLUJO DE TRABAJO:
 1. Analiza el contenido de la página
-2. Si hay archivos de texto (marcadores [FILEn:TEXT:nombre]), usa getFilteredFileContent para extraer información relevante
+2. Si hay archivos de texto (marcadores [FILEn:TEXT:nombre]), usa getFilteredFileContent para extraer información relevante (solo de archivos de texto)
 3. Identifica todos los ejercicios en la página
-4. OBLIGATORIO: Llama a postExercises con toda la información recopilada
+4. OBLIGATORIO: Llama a postExercises con toda la información recopilada.
 
 CONTEXTO DE LABORATORIOS PREVIOS:
 A continuación se muestran los objetivos de aprendizaje y conceptos trabajados en laboratorios anteriores REQUERIDOS.
@@ -176,7 +182,8 @@ ${pageContent}`;
                     return this.executeToolCall(name, args);
                 },
                 userPrompt,
-                systemPrompt
+                systemPrompt,
+                this.allowedTools.map(tool => EXERCISE_ASSISTANT_TOOLS.find((t: any) => t.function.name === tool)).filter(Boolean)
             );
 
             // Verificar que se recibió una respuesta válida

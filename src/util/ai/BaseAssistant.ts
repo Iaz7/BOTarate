@@ -13,10 +13,12 @@ abstract class BaseAssistant {
     protected course: Course | null = null;
     protected openAIService: OpenAIService;
     protected config: AssistantConfig;
+    protected allowedTools: string[] = [];
 
-    constructor(config: AssistantConfig) {
+    constructor(config: AssistantConfig, allowedTools: string[]) {
         this.openAIService = new OpenAIService();
         this.config = config;
+        this.allowedTools = allowedTools;
     }
 
     public setCourse(course: Course): void {
@@ -49,30 +51,27 @@ abstract class BaseAssistant {
         name: string,
         args: any
     ): Promise<string | { type: 'file'; data: any }> {
-        if (name === 'getSectionContent') {
-            return await ToolFunctions.getSectionContent(this.course!, args);
+        if (!this.allowedTools.includes(name)) {
+            throw new Error(`El asistente no tiene acceso a la herramienta: ${name}`);
         }
-
-        if (name === 'getPageContent') {
-            return await ToolFunctions.getPageContent(this.course!, args);
+        switch (name) {
+            case 'getSectionContent':
+                return await ToolFunctions.getSectionContent(this.course!, args);
+            case 'getPageContent':
+                return await ToolFunctions.getPageContent(this.course!, args);
+            case 'getResourceContent':
+                return await ToolFunctions.getResourceContent(this.course!, args);
+            case 'explainExercise':
+                return await ToolFunctions.explainExercise(args);
+            case 'solveExercise':
+                return await ToolFunctions.solveExercise(args);
+            case 'getFilteredFileContent':
+                return ToolFunctions.getFilteredFileContent(args);
+            case 'postExercises':
+                // return ToolFunctions.postExercises(args);
+                throw new Error('postExercises debe ser manejado directamente por el asistente');
+            default:
+                throw new Error(`Herramienta desconocida: ${name}`);
         }
-
-        if (name === 'getResourceContent') {
-            return await ToolFunctions.getResourceContent(this.course!, args);
-        }
-
-        if (name === 'explainExercise') {
-            return await ToolFunctions.explainExercise(args);
-        }
-
-        if (name === 'solveExercise') {
-            return await ToolFunctions.solveExercise(args);
-        }
-
-        if (name === 'getFilteredFileContent') {
-            return ToolFunctions.getFilteredFileContent(args);
-        }
-
-        throw new Error(`Herramienta desconocida: ${name}`);
     }
 }

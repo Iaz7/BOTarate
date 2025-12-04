@@ -1,12 +1,24 @@
 import { BaseStorageManager } from "./BaseStorageManager";
 
 /**
+ * Niveles de verbosidad para las respuestas del asistente
+ */
+export type VerbosityLevel = "low" | "medium" | "high";
+
+/**
+ * Niveles de esfuerzo de razonamiento para el modelo
+ */
+export type ReasoningEffort = "minimal" | "low" | "medium" | "high";
+
+/**
  * Estructura de datos de laboratorios
  */
 export interface Lab {
     id: string;
     name: string;
     required: boolean;
+    verbosity?: VerbosityLevel;
+    reasoningEffort?: ReasoningEffort;
 }
 
 /**
@@ -91,5 +103,64 @@ export class LabStorageManager extends BaseStorageManager {
         lab.required = required;
 
         await this.saveLabData(courseId, data.labs);
+    }
+
+    /**
+     * Actualiza el nivel de verbosidad de un laboratorio específico
+     * @param courseId ID del curso
+     * @param labId ID del laboratorio
+     * @param verbosity Nivel de verbosidad
+     */
+    static async updateLabVerbosity(courseId: string, labId: string, verbosity: VerbosityLevel): Promise<void> {
+        const data = await this.getLabData(courseId);
+        if (!data) {
+            throw new Error(`No se encontraron datos de laboratorios para el curso ${courseId}`);
+        }
+
+        const lab = data.labs.find(l => l.id === labId);
+        if (!lab) {
+            throw new Error(`No se encontró el laboratorio ${labId}`);
+        }
+
+        lab.verbosity = verbosity;
+
+        await this.saveLabData(courseId, data.labs);
+    }
+
+    /**
+     * Actualiza el esfuerzo de razonamiento de un laboratorio específico
+     * @param courseId ID del curso
+     * @param labId ID del laboratorio
+     * @param reasoningEffort Nivel de esfuerzo de razonamiento
+     */
+    static async updateLabReasoningEffort(courseId: string, labId: string, reasoningEffort: ReasoningEffort): Promise<void> {
+        const data = await this.getLabData(courseId);
+        if (!data) {
+            throw new Error(`No se encontraron datos de laboratorios para el curso ${courseId}`);
+        }
+
+        const lab = data.labs.find(l => l.id === labId);
+        if (!lab) {
+            throw new Error(`No se encontró el laboratorio ${labId}`);
+        }
+
+        lab.reasoningEffort = reasoningEffort;
+
+        await this.saveLabData(courseId, data.labs);
+    }
+
+    /**
+     * Obtiene la configuración de un laboratorio específico
+     * @param courseId ID del curso
+     * @param labId ID del laboratorio
+     * @returns Configuración del laboratorio o null si no existe
+     */
+    static async getLabConfig(courseId: string, labId: string): Promise<Lab | null> {
+        const data = await this.getLabData(courseId);
+        if (!data) {
+            return null;
+        }
+
+        return data.labs.find(l => l.id === labId) || null;
     }
 }

@@ -25,13 +25,16 @@ import {
     handleGetProgressConfig
 } from "./handlers/dataHandlers";
 import {
+    handleGetLabConfig,
     handleRemoveChallengeExercisesExplanations,
     handleRemoveExerciseData,
     handleSaveChatHistory,
     handleSaveProgressConfig,
     handleUpdateExerciseAllowed,
     handleUpdateExerciseTiquismiqui,
-    handleUpdateLabRequired
+    handleUpdateLabReasoningEffort,
+    handleUpdateLabRequired,
+    handleUpdateLabVerbosity
 } from "./handlers/storageHandlers";
 
 async function loadConfiguration(): Promise<void> {
@@ -106,6 +109,12 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleGetProgressConfig(request, sendResponse);
         case "updateLabRequired":
             return handleUpdateLabRequired(request, sendResponse);
+        case "updateLabVerbosity":
+            return handleUpdateLabVerbosity(request, sendResponse);
+        case "updateLabReasoningEffort":
+            return handleUpdateLabReasoningEffort(request, sendResponse);
+        case "getLabConfig":
+            return handleGetLabConfig(request, sendResponse);
         case "saveProgressConfig":
             return handleSaveProgressConfig(request, sendResponse);
         case "evaluateSolution":

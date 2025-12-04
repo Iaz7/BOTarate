@@ -2,6 +2,7 @@ import { ChatStorageManager } from "../storage/ChatStorageManager";
 import { AssistantConfig } from "./AssistantConfig";
 import { BaseAssistant } from "./BaseAssistant";
 import type { Message } from "./OpenAIService";
+import { TOOLS } from "./Tools";
 
 export { CourseAssistant };
 
@@ -11,8 +12,16 @@ export { CourseAssistant };
  */
 class CourseAssistant extends BaseAssistant {
 
+    private static readonly TOOLS = [
+        'getSectionContent',
+        'getPageContent',
+        'getResourceContent',
+        'explainExercise',
+        'solveExercise'
+    ];
+
     constructor(config: AssistantConfig) {
-        super(config);
+        super(config, CourseAssistant.TOOLS);
     }
 
     /**
@@ -176,9 +185,10 @@ A continuación tienes la estructura completa del curso con todas las secciones 
         const systemPrompt = this.buildSystemPrompt(exercises);
 
         const response = await this.openAIService.processResponseWithTools(
-            (name, args) => this.executeToolCall(name, args),
+            (name: string, args: any) => this.executeToolCall(name, args),
             userMessage,
-            systemPrompt
+            systemPrompt,
+            this.allowedTools.map(tool => TOOLS.find((t: any) => t.function.name === tool)).filter(Boolean)
         );
 
         // Guardar el historial después de cada interacción

@@ -135,13 +135,27 @@ export function handleGenerateExplanation(request: any, sendResponse: (response?
                 }
                 const progressSummary = await buildProgressSummary(courseId);
 
+                // Cargar configuración del laboratorio actual (pageId es el labId)
+                let responseOptions = undefined;
+                if (courseId) {
+                    const labConfig = await LabStorageManager.getLabConfig(courseId, pageId);
+                    if (labConfig) {
+                        responseOptions = {
+                            verbosity: labConfig.verbosity,
+                            reasoningEffort: labConfig.reasoningEffort
+                        };
+                        console.log(`Configuración del laboratorio cargada: verbosity=${labConfig.verbosity}, reasoning=${labConfig.reasoningEffort}`);
+                    }
+                }
+
                 const explanation = await explanationAssistant.generateExplanation(
                     exerciseName,
                     exercise?.statement || '',
                     exerciseData?.exerciseContext,
                     exerciseData?.concepts,
                     exerciseData?.learningObjectives,
-                    progressSummary
+                    progressSummary,
+                    responseOptions
                 );
 
                 console.log(`Explicación generada:`, explanation);
