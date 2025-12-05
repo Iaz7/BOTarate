@@ -155,6 +155,7 @@ export function handleGenerateExplanation(request: any, sendResponse: (response?
                     exerciseData?.concepts,
                     exerciseData?.learningObjectives,
                     progressSummary,
+                    pageId,
                     responseOptions
                 );
 
@@ -300,7 +301,8 @@ export function handleInitializeExplanationChat(request: any, sendResponse: (res
                     concepts,
                     learningObjectives,
                     progressSummary,
-                    chatHistoryForAssistant
+                    chatHistoryForAssistant,
+                    pageId
                 );
 
                 console.log(`Contexto de chat inicializado desde storage para: ${exerciseName}`);

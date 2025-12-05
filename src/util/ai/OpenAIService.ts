@@ -101,7 +101,9 @@ class OpenAIService {
         }
 
         // Llamar recursivamente para obtener la respuesta final
-        return this.processResponseWithTools(toolExecutor);
+        // Importante: pasar el mismo listado de tools para evitar que la siguiente iteración
+        // utilice el conjunto completo `TOOLS` por defecto.
+        return this.processResponseWithTools(toolExecutor, undefined, undefined, tools);
     }
 
     private async generateResponseWithTools(

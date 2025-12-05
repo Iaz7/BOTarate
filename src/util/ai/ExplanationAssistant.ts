@@ -11,7 +11,10 @@ export { ExplanationAssistant };
  */
 class ExplanationAssistant extends BaseAssistant {
 
-    private static readonly TOOLS = [];
+    private static readonly TOOLS = [
+        'getPageContent',
+        'getFilteredFileContent'
+    ];
 
     constructor(config: AssistantConfig) {
         super(config, ExplanationAssistant.TOOLS);
@@ -45,6 +48,17 @@ class ExplanationAssistant extends BaseAssistant {
     }
 
     /**
+     * Guía para usar herramientas que acceden al contenido del laboratorio solo cuando el alumno lo solicita
+     */
+    private buildLabContentToolsNote(): string {
+        return `- Usa estas herramientas solo si el alumno pide ejemplos o datos concretos que estén en el contenido del laboratorio (p. ej., filas INSERT).
+- Intenta filtrar lo máximo posible para devolver solo lo estrictamente relevante.
+- getPageContent(pageId): recupera el contenido de la página del laboratorio para localizar marcadores de archivos [FILEx:TEXT:nombre.sql].
+- getFilteredFileContent(pageId, fileId, regexPattern): extrae únicamente las secciones necesarias de los archivos de texto. Por ejemplo, para obtener solo los INSERT de las tablas "alumnos" y "matriculas" utiliza un patrón como "INSERT\\s+INTO\\s+(alumnos|matriculas)[\\s\\S]+?;".
+- Debes llamar siempre primero a getPageContent para identificar los archivos disponibles y sus IDs antes de usar getFilteredFileContent.`;
+    }
+
+    /**
      * Genera una explicación estructurada paso a paso para un ejercicio
      * @param exerciseName - Nombre del ejercicio
      * @param exerciseStatement - Enunciado completo del ejercicio
@@ -62,6 +76,7 @@ class ExplanationAssistant extends BaseAssistant {
         concepts?: string[],
         learningObjectives?: string,
         progressSummary?: string,
+        pageId?: string,
         responseOptions?: ResponseOptions
     ): Promise<ExplanationSchemaType> {
         console.log(`[generateExplanation] Generando explicación para: ${exerciseName}`);
@@ -85,6 +100,11 @@ FORMATO DE SALIDA:
 {contextNote}
 {additionalRules}
 
+HERRAMIENTAS PARA CONTENIDO DEL LABORATORIO (usar solo si el alumno lo solicita):
+{labContentToolsNote}
+
+{pageIdNote}
+
 CONTEXTO PEDAGÓGICO:
 {conceptsContext}
 {objectivesContext}
@@ -101,6 +121,8 @@ CONTEXTO PEDAGÓGICO:
             outputFormat: assistantConfig.outputFormat,
             contextNote: exerciseContext ? '- Incluye ejemplos concretos usando el contexto del ejercicio proporcionado.' : '',
             additionalRules: assistantConfig.additionalRules || '',
+            labContentToolsNote: this.buildLabContentToolsNote(),
+            pageIdNote: pageId ? `ID de la página: ${pageId}\n- Usa este ID como valor para el parámetro 'pageId' cuando llames a getPageContent o getFilteredFileContent.` : '',
             ...pedagogicalContext,
             importantNotes: assistantConfig.importantNotes || ''
         };
@@ -194,7 +216,8 @@ NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de h
         concepts?: string[],
         learningObjectives?: string,
         progressSummary?: string,
-        chatHistory?: Array<{ role: string; content: string }>
+        chatHistory?: Array<{ role: string; content: string }>,
+        pageId?: string
     ): Promise<void> {
         console.log(`[initializeContextForFollowUp] Inicializando contexto para: ${exerciseName}`);
 
@@ -202,31 +225,36 @@ NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de h
         const pedagogicalContext = this.buildPedagogicalContext(concepts, learningObjectives, progressSummary);
 
         const systemPromptTemplate = `Eres un {role}.
-Has generado una explicación paso a paso para el siguiente ejercicio, y ahora el alumno está haciendo preguntas de seguimiento sobre la explicación.
+    Has generado una explicación paso a paso para el siguiente ejercicio, y ahora el alumno está haciendo preguntas de seguimiento sobre la explicación.
 
-EJERCICIO: {exerciseName}
+    EJERCICIO: {exerciseName}
 
-ENUNCIADO:
-{exerciseStatement}
+    ENUNCIADO:
+    {exerciseStatement}
 
-{contextNote}
+    {contextNote}
 
-METODOLOGÍA:
+    METODOLOGÍA:
 
-{methodology}
+    {methodology}
 
-{additionalRules}
+    {additionalRules}
 
-CONTEXTO PEDAGÓGICO:
-{conceptsContext}
-{objectivesContext}
-{alignmentNote}
+    HERRAMIENTAS PARA CONTENIDO DEL LABORATORIO (usar solo si el alumno lo solicita):
+    {labContentToolsNote}
 
-{progressContext}
+    {pageIdNote}
 
-{importantNotes}
+    CONTEXTO PEDAGÓGICO:
+    {conceptsContext}
+    {objectivesContext}
+    {alignmentNote}
 
-NOTA: El alumno puede hacer preguntas sobre cualquier aspecto de la explicación. Sé claro, conciso y pedagógico en tus respuestas.`;
+    {progressContext}
+
+    {importantNotes}
+
+    NOTA: El alumno puede hacer preguntas sobre cualquier aspecto de la explicación. Sé claro, conciso y pedagógico en tus respuestas.`;
 
         const systemPromptVariables = {
             role: assistantConfig.role,
@@ -235,6 +263,8 @@ NOTA: El alumno puede hacer preguntas sobre cualquier aspecto de la explicación
             methodology: assistantConfig.methodology,
             contextNote: exerciseContext ? `CONTEXTO DEL EJERCICIO:\n\`\`\`\n${exerciseContext}\n\`\`\`` : '',
             additionalRules: assistantConfig.additionalRules || '',
+            labContentToolsNote: this.buildLabContentToolsNote(),
+            pageIdNote: pageId ? `ID de la página: ${pageId}\n- Usa este ID como valor para el parámetro 'pageId' cuando llames a getPageContent o getFilteredFileContent.` : '',
             ...pedagogicalContext,
             importantNotes: assistantConfig.importantNotes || ''
         };
