@@ -190,7 +190,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                 onConfigUpdate();
             }
 
-            alert("Configuración de laboratorios guardada correctamente.");
+            alert("Configuración del curso guardada correctamente.");
         } catch (error) {
             console.error("Error saving lab config:", error);
             alert("Error al guardar la configuración. Por favor, inténtalo de nuevo.");
@@ -200,8 +200,10 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
     };
 
     const renderVerbositySelector = (labId: string, currentVerbosity: VerbosityLevel) => (
-        <div className="mb-2">
-            <label className="form-label small text-muted mb-1">Verbosidad</label>
+        <div className="mb-2 d-flex align-items-center">
+            <div style={{ minWidth: 150 }} className="me-3">
+                <label className="form-label small text-muted mb-0">Nivel de verbosidad</label>
+            </div>
             <div className="btn-group" role="group" aria-label="Nivel de verbosidad">
                 <input
                     type="radio"
@@ -259,8 +261,10 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
     );
 
     const renderReasoningSelector = (labId: string, currentReasoning: ReasoningEffort) => (
-        <div className="mb-2">
-            <label className="form-label small text-muted mb-1">Esfuerzo de razonamiento</label>
+        <div className="mb-2 d-flex align-items-center">
+            <div style={{ minWidth: 150 }} className="me-3">
+                <label className="form-label small text-muted mb-0">Esfuerzo de razonamiento</label>
+            </div>
             <div className="btn-group" role="group" aria-label="Esfuerzo de razonamiento">
                 <input
                     type="radio"
@@ -359,12 +363,30 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
 
     return (
         <div>
-            <div className="alert alert-info small mb-3" role="alert">
-                <strong>Configuración de laboratorios</strong>
-                <p className="mb-0 mt-1">
-                    Configura cada laboratorio con sus opciones de nivel requerido, verbosidad y razonamiento. Haz clic
-                    en un laboratorio para expandir sus opciones de configuración del asistente de explicaciones.
+            {/* Explicación del sistema */}
+            <div className="alert alert-primary small mb-3" role="alert">
+                <h6 className="alert-heading">
+                    <i className="bi bi-info-circle"></i> Configuración del curso
+                </h6>
+                <p className="mb-2">
+                    Configura cada laboratorio con sus opciones de <strong>nivel requerido</strong>,{" "}
+                    <strong>verbosidad</strong> y <strong>razonamiento</strong>.
                 </p>
+                <ul className="mb-2 small">
+                    <li>
+                        <strong>Laboratorio requerido:</strong> Los laboratorios marcados como requeridos se
+                        desbloquearán secuencialmente cuando el alumno complete los retos del laboratorio anterior.
+                    </li>
+                    <li>
+                        <strong>Nivel de verbosidad:</strong> Controla el nivel de detalle en las explicaciones del
+                        asistente (bajo, medio o alto).
+                    </li>
+                    <li>
+                        <strong>Esfuerzo de razonamiento:</strong> Configura cuánto detalle debe poner el asistente en
+                        explicar su razonamiento (mínimo, bajo, medio o alto).
+                    </li>
+                </ul>
+                <p className="mb-0 small">Haz clic en un laboratorio para expandir sus opciones de configuración.</p>
             </div>
 
             <div className="accordion" id="labAccordion">

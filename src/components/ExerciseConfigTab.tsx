@@ -17,9 +17,18 @@ interface ExerciseConfigTabProps {
     pageId: string;
     onConfigUpdate?: () => void;
     isActive: boolean;
+    isLoadingExercises?: boolean;
+    onIdentifyExercises?: () => void;
 }
 
-const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId, onConfigUpdate, isActive }) => {
+const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
+    exercises,
+    pageId,
+    onConfigUpdate,
+    isActive,
+    isLoadingExercises = false,
+    onIdentifyExercises,
+}) => {
     const [exerciseConfig, setExerciseConfig] = useState<Map<string, ExerciseFlags>>(new Map());
     const [originalConfig, setOriginalConfig] = useState<Map<string, ExerciseFlags>>(new Map());
     const [isSaving, setIsSaving] = useState(false);
@@ -185,24 +194,130 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
 
     if (exercises.length === 0) {
         return (
-            <div className="alert alert-info" role="alert">
-                <strong>No hay ejercicios disponibles</strong>
-                <p className="mb-0 mt-2 small">
-                    Cuando se detecten ejercicios en la página, podrás configurar cuáles son ejercicios de reto.
-                </p>
+            <div>
+                {/* Explicación del sistema */}
+                <div className="alert alert-primary small mb-3" role="alert">
+                    <h6 className="alert-heading">
+                        <i className="bi bi-info-circle"></i> Configuración de laboratorio
+                    </h6>
+                    <p className="mb-2">
+                        En esta pestaña puedes configurar qué ejercicios son <strong>de reto</strong> o{" "}
+                        <strong>tiquismiquis</strong>.
+                    </p>
+                    <ul className="mb-2 small">
+                        <li>
+                            <strong>Ejercicios de reto:</strong> No se pueden pedir explicaciones, pero sí evaluaciones
+                            de soluciones.
+                        </li>
+                        <li>
+                            <strong>Ejercicios tiquismiquis:</strong> Se muestra una advertencia al pedir explicación
+                            porque pueden contener respuestas parciales en el enunciado.
+                        </li>
+                    </ul>
+                    <p className="mb-0 small">
+                        Después de guardar cambios, el sistema actualizará automáticamente las restricciones.
+                    </p>
+                </div>
+                {/* Botón para identificar ejercicios */}
+                {onIdentifyExercises && pageId && (
+                    <div className="mb-3">
+                        <button
+                            type="button"
+                            className="btn btn-outline-primary w-100"
+                            onClick={onIdentifyExercises}
+                            disabled={isLoadingExercises}
+                        >
+                            {isLoadingExercises ? (
+                                <>
+                                    <span
+                                        className="spinner-border spinner-border-sm me-2"
+                                        role="status"
+                                        aria-hidden="true"
+                                    ></span>
+                                    Analizando la página...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="bi bi-arrow-clockwise me-2"></i>
+                                    Identificar ejercicios de la página
+                                </>
+                            )}
+                        </button>
+                        <small className="text-muted d-block mt-1">
+                            Presiona el botón para analizar la página y detectar ejercicios disponibles.
+                        </small>
+                    </div>
+                )}
+                <div className="alert alert-info" role="alert">
+                    <strong>No hay ejercicios disponibles</strong>
+                    <p className="mb-0 mt-2 small">
+                        Cuando se detecten ejercicios en la página, podrás configurar cuáles son ejercicios de reto.
+                    </p>
+                </div>
             </div>
         );
     }
 
     return (
         <div>
-            <div className="alert alert-info small mb-3" role="alert">
-                <strong>Configuración de ejercicios</strong>
-                <p className="mb-0 mt-1">
-                    Marca los ejercicios que son de reto o tiquismiquis. Los retos bloquean las explicaciones, mientras
-                    que las tiquismiquis muestran una advertencia porque pueden contener respuestas parciales.
+            {/* Explicación del sistema */}
+            <div className="alert alert-primary small mb-3" role="alert">
+                <h6 className="alert-heading">
+                    <i className="bi bi-info-circle"></i> Configuración de ejercicios
+                </h6>
+                <p className="mb-2">
+                    En esta pestaña puedes configurar qué ejercicios son <strong>de reto</strong> o{" "}
+                    <strong>tiquismiquis</strong>.
+                </p>
+                <ul className="mb-2 small">
+                    <li>
+                        <strong>Ejercicios de reto:</strong> No se pueden pedir explicaciones, pero sí evaluaciones de
+                        soluciones.
+                    </li>
+                    <li>
+                        <strong>Ejercicios tiquismiquis:</strong> Se muestra una advertencia al pedir explicación porque
+                        pueden contener respuestas parciales en el enunciado.
+                    </li>
+                </ul>
+                <p className="mb-0 small">
+                    Después de guardar cambios, el sistema actualizará automáticamente las restricciones.
                 </p>
             </div>
+
+            {/* Botón para re-identificar ejercicios */}
+            {onIdentifyExercises && pageId && (
+                <div className="mb-3">
+                    <button
+                        type="button"
+                        className="btn btn-outline-primary w-100"
+                        onClick={onIdentifyExercises}
+                        disabled={isLoadingExercises}
+                    >
+                        {isLoadingExercises ? (
+                            <>
+                                <span
+                                    className="spinner-border spinner-border-sm me-2"
+                                    role="status"
+                                    aria-hidden="true"
+                                ></span>
+                                Analizando la página...
+                            </>
+                        ) : (
+                            <>
+                                <i className="bi bi-arrow-clockwise me-2"></i>
+                                {exercises.length > 0
+                                    ? "Re-identificar ejercicios de la página"
+                                    : "Identificar ejercicios de la página"}
+                            </>
+                        )}
+                    </button>
+                    {exercises.length > 0 && (
+                        <small className="text-muted d-block mt-1">
+                            Esto volverá a analizar la página para detectar ejercicios nuevos o modificados.
+                        </small>
+                    )}
+                </div>
+            )}
 
             <div className="table-responsive">
                 <table className="table table-sm table-hover">

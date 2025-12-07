@@ -33,7 +33,7 @@ interface ChatSidebarProps {
     onClose: () => void;
     isLoadingExercises?: boolean;
     pageId?: string;
-    courseId?: string; // Añadido para la configuración de laboratorios
+    courseId?: string; // Añadido para la configuración del curso
     onOpenExplanation?: (exerciseName: string) => void;
     onExplanationGenerated?: () => void; // Callback para recargar lista cuando se genera explicación
     onOpenEvaluation?: (exerciseName: string) => void;
@@ -60,9 +60,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState<string>("");
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
-    const [activeTab, setActiveTab] = useState<
-        "chat" | "explanations" | "evaluations" | "config" | "labs" | "progress"
-    >("chat");
+    const [activeTab, setActiveTab] = useState<"chat" | "exercises" | "config" | "labs" | "progress">("chat");
     const [exercisesWithExplanations, setExercisesWithExplanations] = useState<string[]>([]);
     const [exercisesWithEvaluations, setExercisesWithEvaluations] = useState<string[]>([]);
     const [isLoadingExplanations, setIsLoadingExplanations] = useState(false);
@@ -473,37 +471,43 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         />
                         <h2 className="h2 mb-0">{APP_CONFIG.NAME}</h2>
                     </div>
-                    {/* Botón para identificar/generar ejercicios - solo visible si hay pageId */}
-                    {pageId && !needsConfiguration && (
-                        <button
-                            type="button"
-                            className="btn btn-sm btn-outline-primary"
-                            onClick={onIdentifyExercises}
-                            disabled={isLoadingExercises}
-                            title={exercises.length > 0 ? "Re-generar ejercicios" : "Identificar ejercicios"}
-                        >
-                            {isLoadingExercises ? (
-                                <>
-                                    <span
-                                        className="spinner-border spinner-border-sm me-1"
-                                        role="status"
-                                        aria-hidden="true"
-                                    ></span>
-                                    Analizando...
-                                </>
-                            ) : (
-                                <>
-                                    <i className="bi bi-arrow-clockwise me-1"></i>
-                                    {exercises.length > 0 ? "Re-identificar ejercicios" : "Identificar ejercicios"}
-                                </>
-                            )}
-                        </button>
-                    )}
+                    {/* El botón de identificar/re-identificar ejercicios ha sido eliminado del header. */}
                 </div>
 
                 {/* Pestañas */}
                 {!needsConfiguration && (
                     <ul className="nav nav-tabs mt-3 mb-0" role="tablist" key={`tabs-${isTeacherMode}-${reloadKey}`}>
+                        {/* Pestañas solo para modo profesor */}
+                        {isTeacherMode && (
+                            <>
+                                {/* Configurar curso - primero si hay courseId */}
+                                {courseId && (
+                                    <li className="nav-item" role="presentation">
+                                        <button
+                                            className={`nav-link ${activeTab === "labs" ? "active" : ""}`}
+                                            onClick={() => setActiveTab("labs")}
+                                            type="button"
+                                            role="tab"
+                                        >
+                                            Configurar curso
+                                        </button>
+                                    </li>
+                                )}
+                                {/* Configurar laboratorio - segundo */}
+                                <li className="nav-item" role="presentation">
+                                    <button
+                                        className={`nav-link ${activeTab === "config" ? "active" : ""}`}
+                                        onClick={() => setActiveTab("config")}
+                                        type="button"
+                                        role="tab"
+                                    >
+                                        Configurar laboratorio
+                                    </button>
+                                </li>
+                            </>
+                        )}
+
+                        {/* Chat - tercero */}
                         <li className="nav-item" role="presentation">
                             <button
                                 className={`nav-link ${activeTab === "chat" ? "active" : ""}`}
@@ -514,78 +518,33 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 Chat
                             </button>
                         </li>
-                        {/* Pestañas de ejercicios y configuración */}
-                        {exercises.length > 0 && (
-                            <>
-                                <li className="nav-item" role="presentation">
-                                    <button
-                                        className={`nav-link ${activeTab === "explanations" ? "active" : ""}`}
-                                        onClick={() => setActiveTab("explanations")}
-                                        type="button"
-                                        role="tab"
-                                        disabled={isLabBlocked}
-                                        title={
-                                            isLabBlocked ? "No disponible mientras el laboratorio esté bloqueado" : ""
-                                        }
-                                    >
-                                        Explicaciones guardadas
-                                        {exercisesWithExplanations.length > 0 && (
-                                            <span className="badge bg-primary ms-2">
-                                                {exercisesWithExplanations.length}
-                                            </span>
-                                        )}
-                                    </button>
-                                </li>
-                                <li className="nav-item" role="presentation">
-                                    <button
-                                        className={`nav-link ${activeTab === "evaluations" ? "active" : ""}`}
-                                        onClick={() => setActiveTab("evaluations")}
-                                        type="button"
-                                        role="tab"
-                                        disabled={isLabBlocked}
-                                        title={
-                                            isLabBlocked ? "No disponible mientras el laboratorio esté bloqueado" : ""
-                                        }
-                                    >
-                                        Ejercicios solucionados
-                                        {exercisesWithEvaluations.length > 0 && (
-                                            <span className="badge bg-success ms-2">
-                                                {exercisesWithEvaluations.length}
-                                            </span>
-                                        )}
-                                    </button>
-                                </li>
-                            </>
-                        )}
-                        {/* Mostrar SIEMPRE la pestaña de configuración de ejercicios en modo profesor */}
-                        {isTeacherMode && (
+
+                        {/* Pestañas solo para modo alumno */}
+                        {!isTeacherMode && exercises.length > 0 && (
                             <li className="nav-item" role="presentation">
                                 <button
-                                    className={`nav-link ${activeTab === "config" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("config")}
+                                    className={`nav-link ${activeTab === "exercises" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("exercises")}
                                     type="button"
                                     role="tab"
+                                    disabled={isLabBlocked}
+                                    title={isLabBlocked ? "No disponible mientras el laboratorio esté bloqueado" : ""}
                                 >
-                                    Configurar ejercicios
+                                    Ejercicios
+                                    {(exercisesWithExplanations.length > 0 || exercisesWithEvaluations.length > 0) && (
+                                        <span className="badge bg-primary ms-2">
+                                            {Math.max(
+                                                exercisesWithExplanations.length,
+                                                exercisesWithEvaluations.length
+                                            )}
+                                        </span>
+                                    )}
                                 </button>
                             </li>
                         )}
-                        {/* Pestaña de laboratorios solo visible en modo profesor */}
-                        {courseId && isTeacherMode && (
-                            <li className="nav-item" role="presentation">
-                                <button
-                                    className={`nav-link ${activeTab === "labs" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("labs")}
-                                    type="button"
-                                    role="tab"
-                                >
-                                    Configurar laboratorios
-                                </button>
-                            </li>
-                        )}
-                        {/* Pestaña de progreso solo para modo profesor */}
-                        {/* Pestaña de progreso visible para todos si hay courseId */}
-                        {courseId && (
+
+                        {/* Pestaña de progreso - último para alumnos cuando hay courseId */}
+                        {!isTeacherMode && courseId && (
                             <li className="nav-item" role="presentation">
                                 <button
                                     className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
@@ -784,99 +743,85 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         {/* Elemento de referencia para scroll automático */}
                         <div ref={messagesEndRef} />
                     </>
-                ) : activeTab === "explanations" ? (
+                ) : activeTab === "exercises" ? (
                     <>
-                        {/* Pestaña de explicaciones guardadas */}
-                        {isLoadingExplanations ? (
+                        {/* Pestaña de ejercicios - Combina explicaciones y evaluaciones */}
+                        {isLoadingExplanations || isLoadingEvaluations ? (
                             <div className="card border-primary">
                                 <div className="card-body p-3">
                                     <div className="d-flex align-items-center">
                                         <div className="spinner-border spinner-border-sm text-primary me-2">
                                             <span className="visually-hidden">Cargando...</span>
                                         </div>
-                                        <span>Cargando explicaciones...</span>
+                                        <span>Cargando ejercicios...</span>
                                     </div>
                                 </div>
                             </div>
-                        ) : exercisesWithExplanations.length === 0 ? (
+                        ) : exercisesWithExplanations.length === 0 && exercisesWithEvaluations.length === 0 ? (
                             <div className="alert alert-info" role="alert">
-                                <strong>No hay explicaciones guardadas</strong>
+                                <strong>No hay explicaciones ni evaluaciones guardadas</strong>
                                 <p className="mb-0 mt-2 small">
-                                    Las explicaciones generadas a través del chat se guardarán aquí para que puedas
-                                    acceder a ellas más tarde.
+                                    Las explicaciones y evaluaciones generadas a través del chat se guardarán aquí para
+                                    que puedas acceder a ellas más tarde.
                                 </p>
                             </div>
                         ) : (
                             <div className="list-group">
-                                {exercisesWithExplanations.map((exerciseName, index) => (
-                                    <button
-                                        key={index}
-                                        type="button"
-                                        className="list-group-item list-group-item-action"
-                                        onClick={() => handleExplanationClick(exerciseName)}
-                                    >
-                                        <div className="d-flex w-100 justify-content-between align-items-center">
-                                            <h6 className="mb-0">{exerciseName}</h6>
-                                            <span className="badge bg-primary">Ver explicación</span>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </>
-                ) : activeTab === "evaluations" ? (
-                    <>
-                        {/* Pestaña de evaluaciones guardadas */}
-                        {isLoadingEvaluations ? (
-                            <div className="card border-primary">
-                                <div className="card-body p-3">
-                                    <div className="d-flex align-items-center">
-                                        <div className="spinner-border spinner-border-sm text-primary me-2">
-                                            <span className="visually-hidden">Cargando...</span>
-                                        </div>
-                                        <span>Cargando evaluaciones...</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : exercisesWithEvaluations.length === 0 ? (
-                            <div className="alert alert-info" role="alert">
-                                <strong>No hay evaluaciones guardadas</strong>
-                                <p className="mb-0 mt-2 small">
-                                    Las evaluaciones de tus soluciones se guardarán aquí para que puedas consultar tu
-                                    progreso y revisar el feedback recibido.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="list-group">
-                                {exercisesWithEvaluations.map((exerciseName, index) => (
-                                    <button
-                                        key={index}
-                                        type="button"
-                                        className="list-group-item list-group-item-action"
-                                        onClick={() => handleEvaluationClick(exerciseName)}
-                                    >
-                                        <div className="d-flex w-100 justify-content-between align-items-center">
-                                            <h6 className="mb-0">{exerciseName}</h6>
-                                            <span className="badge bg-success">Ver evaluaciones</span>
-                                        </div>
-                                    </button>
-                                ))}
+                                {/* Crear un conjunto único de ejercicios que tienen explicaciones o evaluaciones */}
+                                {Array.from(new Set([...exercisesWithExplanations, ...exercisesWithEvaluations])).map(
+                                    (exerciseName, index) => {
+                                        const hasExplanation = exercisesWithExplanations.includes(exerciseName);
+                                        const hasEvaluation = exercisesWithEvaluations.includes(exerciseName);
+
+                                        return (
+                                            <div key={index} className="list-group-item">
+                                                <div className="d-flex w-100 justify-content-between align-items-center">
+                                                    <h6 className="mb-0">{exerciseName}</h6>
+                                                    <div className="d-flex gap-2">
+                                                        {hasExplanation && (
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-sm btn-primary"
+                                                                onClick={() => handleExplanationClick(exerciseName)}
+                                                            >
+                                                                <i className="bi bi-book me-1"></i>
+                                                                Ver explicación
+                                                            </button>
+                                                        )}
+                                                        {hasEvaluation && (
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-sm btn-success"
+                                                                onClick={() => handleEvaluationClick(exerciseName)}
+                                                            >
+                                                                <i className="bi bi-clipboard-check me-1"></i>
+                                                                Ver evaluaciones
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                )}
                             </div>
                         )}
                     </>
                 ) : activeTab === "config" ? (
                     <>
-                        {/* Pestaña de configuración de ejercicios */}
+                        {/* Pestaña de configuración de laboratorio */}
                         <ExerciseConfigTab
                             exercises={exercises}
                             pageId={pageId || ""}
                             onConfigUpdate={handleConfigUpdate}
                             isActive={activeTab === "config"}
+                            isLoadingExercises={isLoadingExercises}
+                            onIdentifyExercises={onIdentifyExercises}
                         />
                     </>
                 ) : activeTab === "labs" ? (
                     <>
-                        {/* Pestaña de configuración de laboratorios */}
+                        {/* Pestaña de configuración del curso */}
                         <LabConfigTab
                             courseId={courseId || ""}
                             onConfigUpdate={handleConfigUpdate}
