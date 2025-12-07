@@ -48,3 +48,38 @@ export function handleGetModelList(sendResponse: (response?: any) => void): bool
     OpenAIService.getModelList().then((list: any) => sendResponse(list));
     return true;
 }
+
+export function handleCheckConfiguration(request: any, sendResponse: (response?: any) => void): boolean {
+    (async () => {
+        try {
+            const allData = await chrome.storage.local.get(null);
+
+            // Verificar configuración del LLM
+            const configData = allData["config"];
+            const hasLLMConfig =
+                configData &&
+                configData.providerKeys &&
+                configData.providerKeys.length > 0 &&
+                configData.providerKeys[configData.selectedProvider || 0] &&
+                configData.providerKeys[configData.selectedProvider || 0].trim() !== "" &&
+                configData.selectedModel &&
+                configData.selectedModel.trim() !== "";
+
+            // Verificar configuración de asistentes y datos
+            const hasAssistantConfig = Object.keys(allData).some(key => key.startsWith("assistant_config_"));
+            const hasExerciseData = Object.keys(allData).some(key => key.startsWith("exercise_data_"));
+            const hasLabData = Object.keys(allData).some(key => key.startsWith("lab_data_"));
+            const hasStudentConfig = hasAssistantConfig && (hasExerciseData || hasLabData);
+
+            sendResponse({
+                success: true,
+                hasLLMConfig,
+                hasStudentConfig
+            });
+        } catch (error: any) {
+            console.error("Error al verificar configuración:", error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+    return true;
+}

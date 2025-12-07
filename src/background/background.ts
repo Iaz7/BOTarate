@@ -12,7 +12,7 @@ import {
     handleResetChatHistory,
     handleSendExplanationChatMessage
 } from "./handlers/assistantHandlers";
-import { handleGetModelList, handleReloadAssistantConfig, handleUpdateConfig } from "./handlers/configHandlers";
+import { handleCheckConfiguration, handleGetModelList, handleReloadAssistantConfig, handleUpdateConfig } from "./handlers/configHandlers";
 import {
     handleGetCachedExplanation,
     handleGetCourseData,
@@ -25,6 +25,7 @@ import {
     handleGetProgressConfig
 } from "./handlers/dataHandlers";
 import {
+    handleCheckUserRole,
     handleGetLabConfig,
     handleRemoveChallengeExercisesExplanations,
     handleRemoveExerciseData,
@@ -133,6 +134,10 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleSendExplanationChatMessage(request, sendResponse);
         case "saveChatHistory":
             return handleSaveChatHistory(request, sendResponse);
+        case "checkUserRole":
+            return handleCheckUserRole(request, sendResponse);
+        case "checkConfiguration":
+            return handleCheckConfiguration(request, sendResponse);
         default:
             return false;
     }

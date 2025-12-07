@@ -1,54 +1,14 @@
 import React, { useEffect, useState } from "react";
-import "../content/bootstrap.css";
-import { AppMode, ModeManager } from "../util/config/ModeManager";
 import { APP_CONFIG } from "../constants";
+import "../content/bootstrap.css";
 
 const Popup: React.FC = () => {
-    const [mode, setMode] = useState<AppMode>(AppMode.STUDENT);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        loadMode();
+        // Simular una pequeña carga para mantener consistencia
+        setTimeout(() => setIsLoading(false), 100);
     }, []);
-
-    const loadMode = async () => {
-        try {
-            const currentMode = await ModeManager.getMode();
-            setMode(currentMode);
-        } catch (error) {
-            console.error("Error al cargar el modo:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleModeToggle = async () => {
-        try {
-            const newMode = await ModeManager.toggleMode();
-            setMode(newMode);
-
-            const tabs = await chrome.tabs.query({});
-
-            for (const tab of tabs) {
-                if (tab.id && tab.url && !tab.url.startsWith("chrome://")) {
-                    try {
-                        await chrome.tabs.sendMessage(tab.id, { action: "reloadSidebar" });
-                    } catch (error) {
-                        // Ignorar errores si el content script no está cargado
-                    }
-                }
-            }
-
-            const extensionTabs = tabs.filter(tab => tab.url?.includes("chrome-extension://"));
-            for (const tab of extensionTabs) {
-                if (tab.id) {
-                    chrome.tabs.reload(tab.id);
-                }
-            }
-        } catch (error) {
-            console.error("Error al cambiar el modo:", error);
-        }
-    };
 
     const openOptionsPage = () => {
         chrome.runtime.openOptionsPage();
@@ -64,47 +24,15 @@ const Popup: React.FC = () => {
         );
     }
 
-    const isTeacher = mode === AppMode.TEACHER;
-
     return (
         <div className="p-3" style={{ width: "300px" }}>
-            <div className="d-flex align-items-center justify-content-between mb-3">
+            <div className="d-flex align-items-center justify-content-center mb-3">
                 <h5 className="mb-0">Egela Assistant</h5>
-                <span className={`badge ${isTeacher ? "bg-primary" : "bg-secondary"}`}>
-                    {isTeacher ? "Profesor" : "Alumno"}
-                </span>
             </div>
 
-            <div className="card mb-3">
-                <div className="card-body">
-                    <div className="d-flex align-items-center justify-content-between">
-                        <div>
-                            <h6 className="mb-1">Modo de Operación</h6>
-                            <small className="text-muted">
-                                {isTeacher ? "Todas las funciones disponibles" : "Funciones limitadas"}
-                            </small>
-                        </div>
-                        <div className="form-check form-switch">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                role="switch"
-                                id="modeSwitch"
-                                checked={isTeacher}
-                                onChange={handleModeToggle}
-                                style={{ width: "48px", height: "24px", cursor: "pointer" }}
-                            />
-                        </div>
-                    </div>
-                </div>
+            <div className="alert alert-info small mb-3" role="alert">
+                Bienvenido al asistente de Egela. Configura la extensión para empezar a usarla.
             </div>
-
-            {isTeacher && (
-                <div className="alert alert-info small mb-3" role="alert">
-                    <strong>Modo Profesor:</strong> Puedes configurar el asistente, laboratorios y ejercicios. Luego
-                    exporta la configuración para compartirla con los alumnos.
-                </div>
-            )}
 
             <div className="d-grid gap-2">
                 <button className="btn btn-primary" onClick={openOptionsPage}>

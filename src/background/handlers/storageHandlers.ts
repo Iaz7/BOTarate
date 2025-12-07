@@ -1,7 +1,10 @@
+import type { Course } from "../../util/egela/Course";
 import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManager";
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
 import { LabStorageManager, ReasoningEffort, VerbosityLevel } from "../../util/storage/LabStorageManager";
+import { ModeStorageManager } from "../../util/storage/ModeStorageManager";
 import { ProgressConfigStorageManager } from "../../util/storage/ProgressConfigStorageManager";
+import { getCachedCourse } from "./dataHandlers";
 
 export function handleRemoveExerciseData(request: any, sendResponse: (response?: any) => void): boolean {
     const { pageId } = request;
@@ -186,6 +189,46 @@ export function handleSaveChatHistory(request: any, sendResponse: (response?: an
         } catch (error: any) {
             console.error('Error al guardar historial de chat:', error);
             sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
+export function handleCheckUserRole(request: any, sendResponse: (response?: any) => void): boolean {
+    (async () => {
+        try {
+            // Verificar si hay un caché válido del rol del usuario
+            const cachedRole = await ModeStorageManager.getUserRole();
+
+            if (cachedRole && cachedRole.isValid) {
+                console.log(`[handleCheckUserRole] Usando caché del rol: ${cachedRole.isTeacher ? 'Profesor' : 'Alumno'}`);
+                sendResponse({ success: true, isTeacher: cachedRole.isTeacher });
+                return;
+            }
+
+            // Si no hay caché válido, verificar el rol en Egela
+            const course: Course = getCachedCourse();
+
+            if (!course) {
+                console.warn('[handleCheckUserRole] No se pudo determinar el curso, asumiendo rol de alumno');
+                // Guardar en caché el resultado
+                await ModeStorageManager.saveUserRole(false);
+                sendResponse({ success: true, isTeacher: false });
+                return;
+            }
+
+            // Verificar el rol del usuario
+            const isTeacher = await course.isCurrentUserTeacher();
+            console.log(`[handleCheckUserRole] Usuario es profesor: ${isTeacher}`);
+
+            // Guardar en caché el resultado
+            await ModeStorageManager.saveUserRole(isTeacher);
+
+            sendResponse({ success: true, isTeacher });
+        } catch (error: any) {
+            console.error('[handleCheckUserRole] Error al verificar rol del usuario:', error);
+            sendResponse({ success: false, error: error.message, isTeacher: false });
         }
     })();
 

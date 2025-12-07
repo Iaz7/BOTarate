@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { APP_CONFIG } from "../constants";
-import { ModeManager } from "../util/config/ModeManager";
+import { AppMode, ModeManager } from "../util/config/ModeManager";
 import { ProgressManager } from "../util/progress/ProgressManager";
 import { ConfigurationRequired } from "./ConfigurationRequired";
 import ExerciseConfigTab from "./ExerciseConfigTab";
@@ -69,6 +69,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const [isLabBlocked, setIsLabBlocked] = useState<boolean>(false);
     const [isCheckingBlocked, setIsCheckingBlocked] = useState<boolean>(true);
     const [isTeacherMode, setIsTeacherMode] = useState<boolean>(false);
+    const [isUserTeacher, setIsUserTeacher] = useState<boolean>(false);
     const [needsConfiguration, setNeedsConfiguration] = useState<boolean>(false);
     const [missingLLMConfig, setMissingLLMConfig] = useState<boolean>(false);
     const [isCheckingConfig, setIsCheckingConfig] = useState<boolean>(true);
@@ -107,29 +108,36 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             setIsCheckingConfig(true);
             try {
                 ModeManager.clearCache();
-                const teacherMode = await ModeManager.isTeacherMode();
-                setIsTeacherMode(teacherMode);
 
-                // Verificar configuración del LLM (API key y modelo)
-                const allData = await chrome.storage.local.get(null);
-                const configData = allData["config"];
-                const hasLLMConfig =
-                    configData &&
-                    configData.providerKeys &&
-                    configData.providerKeys.length > 0 &&
-                    configData.providerKeys[configData.selectedProvider || 0] &&
-                    configData.providerKeys[configData.selectedProvider || 0].trim() !== "" &&
-                    configData.selectedModel &&
-                    configData.selectedModel.trim() !== "";
-                setMissingLLMConfig(!hasLLMConfig);
+                // Verificar si el usuario es profesor en Egela comunicándose con el background
+                const response = await chrome.runtime.sendMessage({ action: "checkUserRole" });
+                const userIsTeacher = response?.success ? response.isTeacher : false;
+                setIsUserTeacher(userIsTeacher);
 
-                if (!teacherMode) {
-                    const hasAssistantConfig = Object.keys(allData).some(key => key.startsWith("assistant_config_"));
-                    const hasExerciseData = Object.keys(allData).some(key => key.startsWith("exercise_data_"));
-                    const hasLabData = Object.keys(allData).some(key => key.startsWith("lab_data_"));
-                    const hasConfig = hasAssistantConfig && (hasExerciseData || hasLabData);
-                    setNeedsConfiguration(!hasConfig);
+                // Si el usuario no es profesor, forzar modo alumno
+                if (!userIsTeacher) {
+                    await ModeManager.setMode(AppMode.STUDENT);
+                    setIsTeacherMode(false);
                 } else {
+                    // Si es profesor, usar el modo configurado
+                    const teacherMode = await ModeManager.isTeacherMode();
+                    setIsTeacherMode(teacherMode);
+                }
+
+                // Verificar configuración a través del background
+                const configResponse = await chrome.runtime.sendMessage({ action: "checkConfiguration" });
+
+                if (configResponse?.success) {
+                    setMissingLLMConfig(!configResponse.hasLLMConfig);
+
+                    const currentMode = await ModeManager.getMode();
+                    if (currentMode === AppMode.STUDENT) {
+                        setNeedsConfiguration(!configResponse.hasStudentConfig);
+                    } else {
+                        setNeedsConfiguration(false);
+                    }
+                } else {
+                    setMissingLLMConfig(false);
                     setNeedsConfiguration(false);
                 }
             } catch (error) {
@@ -171,6 +179,39 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             await loadExercises();
             await loadExercisesWithExplanations();
             await loadExercisesWithEvaluations();
+        }
+    };
+
+    const handleModeToggle = async () => {
+        if (!isUserTeacher) return; // Solo los profesores pueden cambiar de modo
+
+        try {
+            const newMode = await ModeManager.toggleMode();
+            setIsTeacherMode(newMode === AppMode.TEACHER);
+
+            // Recargar el componente
+            setReloadKey(prev => prev + 1);
+
+            // Notificar a otras tabs
+            const tabs = await chrome.tabs.query({});
+            for (const tab of tabs) {
+                if (tab.id && tab.url && !tab.url.startsWith("chrome://")) {
+                    try {
+                        await chrome.tabs.sendMessage(tab.id, { action: "reloadSidebar" });
+                    } catch (error) {
+                        // Ignorar errores si el content script no está cargado
+                    }
+                }
+            }
+
+            const extensionTabs = tabs.filter(tab => tab.url?.includes("chrome-extension://"));
+            for (const tab of extensionTabs) {
+                if (tab.id) {
+                    chrome.tabs.reload(tab.id);
+                }
+            }
+        } catch (error) {
+            console.error("[ChatSidebar] Error al cambiar el modo:", error);
         }
     };
 
@@ -471,7 +512,40 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         />
                         <h2 className="h2 mb-0">{APP_CONFIG.NAME}</h2>
                     </div>
-                    {/* El botón de identificar/re-identificar ejercicios ha sido eliminado del header. */}
+                    {/* Selector de modo solo visible para profesores */}
+                    {isUserTeacher && (
+                        <div className="d-flex flex-column">
+                            <label className="form-label fw-bold mb-2">Modo</label>
+                            <div className="d-flex flex-column gap-1">
+                                <div className="form-check">
+                                    <input
+                                        className="form-check-input"
+                                        type="radio"
+                                        name="modeSelector"
+                                        id="modeStudent"
+                                        checked={!isTeacherMode}
+                                        onChange={() => handleModeToggle()}
+                                    />
+                                    <label className="form-check-label" htmlFor="modeStudent">
+                                        Alumno
+                                    </label>
+                                </div>
+                                <div className="form-check">
+                                    <input
+                                        className="form-check-input"
+                                        type="radio"
+                                        name="modeSelector"
+                                        id="modeTeacher"
+                                        checked={isTeacherMode}
+                                        onChange={() => handleModeToggle()}
+                                    />
+                                    <label className="form-check-label" htmlFor="modeTeacher">
+                                        Profesor
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Pestañas */}

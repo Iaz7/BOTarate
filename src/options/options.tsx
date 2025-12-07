@@ -6,7 +6,7 @@ import "../content/bootstrap.css";
 import { AssistantConfig } from "../util/ai/AssistantConfig";
 import { OpenAIService } from "../util/ai/OpenAIService";
 import { ConfigManager } from "../util/config/ConfigManager";
-import { ModeManager } from "../util/config/ModeManager";
+import { AppMode, ModeManager } from "../util/config/ModeManager";
 import { AssistantConfigStorageManager } from "../util/storage/AssistantConfigStorageManager";
 
 type TabType = "llm" | "assistants" | "progress" | "import-export";
@@ -61,6 +61,7 @@ const Options: React.FC = () => {
 
     // Mode Configuration
     const [isTeacherMode, setIsTeacherMode] = useState<boolean>(false);
+    const [isUserTeacher, setIsUserTeacher] = useState<boolean>(false);
 
     // Validación y carga de modelos/API key
     const validateAndLoadModels = (providerIndex: number, modelToPreselect?: string, apiKeyValue?: string) => {
@@ -98,9 +99,20 @@ const Options: React.FC = () => {
     // Cargar configuración inicial
     useEffect(() => {
         const loadConfiguration = async () => {
-            // Verificar modo
-            const teacherMode = await ModeManager.isTeacherMode();
-            setIsTeacherMode(teacherMode);
+            // Verificar si el usuario es profesor en Egela comunicándose con el background
+            const response = await chrome.runtime.sendMessage({ action: "checkUserRole" });
+            const userIsTeacher = response?.success ? response.isTeacher : false;
+            setIsUserTeacher(userIsTeacher);
+
+            // Si el usuario no es profesor, forzar modo alumno
+            if (!userIsTeacher) {
+                await ModeManager.setMode(AppMode.STUDENT);
+                setIsTeacherMode(false);
+            } else {
+                // Si es profesor, usar el modo configurado
+                const teacherMode = await ModeManager.isTeacherMode();
+                setIsTeacherMode(teacherMode);
+            }
 
             // Cargar configuración LLM
             await ConfigManager.loadConfig();
@@ -439,34 +451,38 @@ const Options: React.FC = () => {
 
                     {/* Tabs de navegación principal */}
                     <ul className="nav nav-pills mb-4">
-                        <li className="nav-item">
-                            <button
-                                className={`nav-link ${activeTab === "llm" ? "active" : ""}`}
-                                onClick={() => setActiveTab("llm")}
-                            >
-                                Configuración LLM
-                            </button>
-                        </li>
-                        {/* Solo mostrar configuración de asistentes en modo profesor */}
-                        {isTeacherMode && (
-                            <li className="nav-item">
-                                <button
-                                    className={`nav-link ${activeTab === "assistants" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("assistants")}
-                                >
-                                    Configuración Asistentes
-                                </button>
-                            </li>
-                        )}
-                        {isTeacherMode && (
-                            <li className="nav-item">
-                                <button
-                                    className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("progress")}
-                                >
-                                    Configurar Progreso
-                                </button>
-                            </li>
+                        {/* Solo mostrar configuración completa a profesores */}
+                        {isUserTeacher && (
+                            <>
+                                <li className="nav-item">
+                                    <button
+                                        className={`nav-link ${activeTab === "llm" ? "active" : ""}`}
+                                        onClick={() => setActiveTab("llm")}
+                                    >
+                                        Configuración LLM
+                                    </button>
+                                </li>
+                                {isTeacherMode && (
+                                    <li className="nav-item">
+                                        <button
+                                            className={`nav-link ${activeTab === "assistants" ? "active" : ""}`}
+                                            onClick={() => setActiveTab("assistants")}
+                                        >
+                                            Configuración Asistentes
+                                        </button>
+                                    </li>
+                                )}
+                                {isTeacherMode && (
+                                    <li className="nav-item">
+                                        <button
+                                            className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
+                                            onClick={() => setActiveTab("progress")}
+                                        >
+                                            Configurar Progreso
+                                        </button>
+                                    </li>
+                                )}
+                            </>
                         )}
                         <li className="nav-item">
                             <button
@@ -478,8 +494,16 @@ const Options: React.FC = () => {
                         </li>
                     </ul>
 
-                    {/* Contenido de LLM */}
-                    {activeTab === "llm" && (
+                    {/* Mensaje informativo para alumnos */}
+                    {!isUserTeacher && (
+                        <div className="alert alert-info mb-4">
+                            <strong>Modo Alumno:</strong> Para configurar la extensión, importa el archivo de
+                            configuración proporcionado por tu profesor.
+                        </div>
+                    )}
+
+                    {/* Contenido de LLM - solo para profesores */}
+                    {activeTab === "llm" && isUserTeacher && (
                         <div className="card mb-4">
                             <div className="card-header">
                                 <h5 className="card-title mb-0">Proveedores de LLM</h5>

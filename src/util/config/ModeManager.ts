@@ -1,17 +1,13 @@
-/**
- * Modos de operación de la extensión
- */
-export enum AppMode {
-    STUDENT = "student",
-    TEACHER = "teacher"
-}
+import { AppMode, ModeStorageManager } from "../storage/ModeStorageManager";
+
+// Re-exportar AppMode para mantener compatibilidad
+export { AppMode };
 
 /**
  * Gestor del modo de operación de la extensión
  * Controla si la extensión está en modo alumno o profesor
  */
 export class ModeManager {
-    private static readonly STORAGE_KEY = "app_mode";
     private static cachedMode: AppMode | null = null;
 
     /**
@@ -24,10 +20,9 @@ export class ModeManager {
         }
 
         try {
-            const result = await chrome.storage.local.get(this.STORAGE_KEY);
-            const mode = result[this.STORAGE_KEY] as AppMode | undefined;
-            this.cachedMode = mode || AppMode.STUDENT;
-            return this.cachedMode;
+            const mode = await ModeStorageManager.getMode();
+            this.cachedMode = mode;
+            return mode;
         } catch (error) {
             console.error("[ModeManager] Error al obtener el modo:", error);
             return AppMode.STUDENT;
@@ -40,7 +35,7 @@ export class ModeManager {
      */
     static async setMode(mode: AppMode): Promise<void> {
         try {
-            await chrome.storage.local.set({ [this.STORAGE_KEY]: mode });
+            await ModeStorageManager.saveMode(mode);
             this.cachedMode = mode;
             console.log(`[ModeManager] Modo cambiado a: ${mode}`);
         } catch (error) {

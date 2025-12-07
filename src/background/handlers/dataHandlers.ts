@@ -7,6 +7,8 @@ import { Lab, LabStorageManager } from "../../util/storage/LabStorageManager";
 import { ProgressConfigStorageManager } from "../../util/storage/ProgressConfigStorageManager";
 import { getCourseAssistant, getEvaluationAssistant, getExerciseAssistant, getExplanationAssistant } from "../context";
 
+let cachedCourse: Course;
+
 export function handleGetCourseData(request: any, sendResponse: (response?: any) => void): boolean {
     const { href, sessionStorageData } = request;
     const courseAssistant = getCourseAssistant();
@@ -17,6 +19,7 @@ export function handleGetCourseData(request: any, sendResponse: (response?: any)
     Course.fromHrefAndStorage(href, sessionStorageData)
         .then(async course => {
             if (course) {
+                cachedCourse = course;
                 courseAssistant.setCourse(course);
                 exerciseAssistant.setCourse(course);
                 explanationAssistant.setCourse(course);
@@ -38,6 +41,10 @@ export function handleGetCourseData(request: any, sendResponse: (response?: any)
         });
 
     return true;
+}
+
+export function getCachedCourse(): Course {
+    return cachedCourse;
 }
 
 export function handleGetExerciseList(request: any, sendResponse: (response?: any) => void): boolean {
