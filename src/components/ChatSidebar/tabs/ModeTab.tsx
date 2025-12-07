@@ -34,12 +34,12 @@ const ModeTab: React.FC<ModeTabProps> = ({ isUserTeacher, isTeacherMode, onModeT
                                 className="form-check-input"
                                 type="radio"
                                 name="modeSelector"
-                                id="modeStudent"
-                                checked={!isTeacherMode}
-                                onChange={() => !isTeacherMode || onModeToggle()}
+                                id="modeTeacher"
+                                checked={isTeacherMode}
+                                onChange={() => isTeacherMode || onModeToggle()}
                             />
-                            <label className="form-check-label fw-bold" htmlFor="modeStudent">
-                                Student Mode
+                            <label className="form-check-label fw-bold" htmlFor="modeTeacher">
+                                Teacher Mode
                             </label>
                         </div>
                         <div className="form-check">
@@ -47,12 +47,12 @@ const ModeTab: React.FC<ModeTabProps> = ({ isUserTeacher, isTeacherMode, onModeT
                                 className="form-check-input"
                                 type="radio"
                                 name="modeSelector"
-                                id="modeTeacher"
-                                checked={isTeacherMode}
-                                onChange={() => isTeacherMode || onModeToggle()}
+                                id="modeStudent"
+                                checked={!isTeacherMode}
+                                onChange={() => !isTeacherMode || onModeToggle()}
                             />
-                            <label className="form-check-label fw-bold" htmlFor="modeTeacher">
-                                Teacher Mode
+                            <label className="form-check-label fw-bold" htmlFor="modeStudent">
+                                Student Mode
                             </label>
                         </div>
                     </div>

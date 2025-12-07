@@ -12,7 +12,7 @@ export class ModeManager {
 
     /**
      * Gets the current application mode
-     * @returns Current mode (default: student)
+     * @returns Current mode (default: teacher if user is teacher, student otherwise)
      */
     static async getMode(): Promise<AppMode> {
         if (this.cachedMode) {

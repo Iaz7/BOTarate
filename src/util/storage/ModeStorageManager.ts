@@ -32,11 +32,21 @@ export class ModeStorageManager extends BaseStorageManager {
 
     /**
      * Gets the current operation mode
-     * @returns Saved mode or STUDENT by default
+     * @returns Saved mode or default based on user role (TEACHER if teacher, STUDENT otherwise)
      */
     static async getMode(): Promise<AppMode> {
         const data = await this.getData<ModeData>("", this.MODE_STORAGE_KEY);
-        return data?.mode || AppMode.STUDENT;
+        if (data?.mode) {
+            return data.mode;
+        }
+
+        // If no mode saved, check user role
+        const roleData = await this.getUserRole();
+        if (roleData && roleData.isValid && roleData.isTeacher) {
+            return AppMode.TEACHER;
+        }
+
+        return AppMode.STUDENT;
     }
 
     /**
