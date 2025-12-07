@@ -146,7 +146,8 @@ export const ConfigurationRequired: React.FC<ConfigurationRequiredProps> = ({
                 {missingLLMConfig && (
                     <div className="alert alert-warning mt-3" role="alert">
                         <i className="bi bi-gear me-2" />
-                        To configure the LLM, go to the extension options page.
+                        To configure the LLM, go to the extension options page, set your API key and a compatible model,
+                        save the configuration and reload this page.
                     </div>
                 )}
             </div>
