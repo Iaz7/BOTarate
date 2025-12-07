@@ -7,27 +7,17 @@ export interface ModelConfig {
 
 export const MODEL_LIST: ModelConfig[] = [
     {
+        name: "gpt-5-mini",
+        supportsVerbosity: true,
+        supportsReasoning: false
+    },
+    {
         name: "gpt-5",
         supportsVerbosity: true,
         supportsReasoning: true
     },
     {
         name: "gpt-5.1",
-        supportsVerbosity: false,
-        supportsReasoning: false
-    },
-    {
-        name: "gpt-5-mini",
-        supportsVerbosity: true,
-        supportsReasoning: true
-    },
-    {
-        name: "gpt-4",
-        supportsVerbosity: false,
-        supportsReasoning: false
-    },
-    {
-        name: "gpt-3.5-turbo",
         supportsVerbosity: false,
         supportsReasoning: false
     }

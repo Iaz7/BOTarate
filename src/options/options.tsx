@@ -561,13 +561,13 @@ const Options: React.FC = () => {
                                             value={selectedModel}
                                             onChange={e => setSelectedModel(e.target.value)}
                                         >
-                                            {modelList
-                                                .filter(m => ConfigManager.COMPATIBLE_MODELS.includes(m))
-                                                .map((model, index) => (
+                                            {ConfigManager.COMPATIBLE_MODELS.filter(m => modelList.includes(m)).map(
+                                                (model, index) => (
                                                     <option key={model} value={model}>
                                                         {model}
                                                     </option>
-                                                ))}
+                                                )
+                                            )}
                                         </select>
                                         {!modelListEnabled && apiKey.trim() && apiKeyError && (
                                             <div className="invalid-feedback">
