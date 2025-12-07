@@ -53,7 +53,7 @@ const EvaluationListModal: React.FC<EvaluationListModalProps> = ({ exerciseName,
     };
 
     const formatDate = (timestamp: number) => {
-        return new Date(timestamp).toLocaleString("es-ES", {
+        return new Date(timestamp).toLocaleString("en-US", {
             year: "numeric",
             month: "long",
             day: "numeric",
@@ -70,10 +70,10 @@ const EvaluationListModal: React.FC<EvaluationListModalProps> = ({ exerciseName,
     };
 
     const getScoreLabel = (score: number) => {
-        if (score >= 9) return "Excelente";
-        if (score >= 7) return "Bien";
-        if (score >= 5) return "Suficiente";
-        return "Insuficiente";
+        if (score >= 9) return "Excellent";
+        if (score >= 7) return "Good";
+        if (score >= 5) return "Sufficient";
+        return "Insufficient";
     };
 
     const formatScore = (score: number) => {
@@ -81,18 +81,20 @@ const EvaluationListModal: React.FC<EvaluationListModalProps> = ({ exerciseName,
     };
 
     return (
-        <BaseModal isOpen={isOpen} onClose={onClose} title={`Evaluaciones de ${exerciseName}`}>
+        <BaseModal isOpen={isOpen} onClose={onClose} title={`Evaluations for ${exerciseName}`}>
             {isLoading ? (
                 <div className="text-center py-5">
                     <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Cargando evaluaciones...</span>
+                        <span className="visually-hidden">Loading evaluations...</span>
                     </div>
-                    <p className="mt-3">Cargando evaluaciones...</p>
+                    <p className="mt-3">Loading evaluations...</p>
                 </div>
             ) : evaluations.length === 0 ? (
                 <div className="alert alert-info">
-                    <strong>No hay evaluaciones guardadas</strong>
-                    <p className="mb-0 mt-2">Aún no has enviado soluciones para evaluación en este ejercicio.</p>
+                    <strong>No evaluations saved</strong>
+                    <p className="mb-0 mt-2">
+                        You have not submitted any solutions for evaluation for this exercise yet.
+                    </p>
                 </div>
             ) : (
                 <div className="row" style={{ height: "85vh", minHeight: 400 }}>
@@ -101,26 +103,26 @@ const EvaluationListModal: React.FC<EvaluationListModalProps> = ({ exerciseName,
                         {/* Estadísticas */}
                         <div className="card mb-3">
                             <div className="card-body">
-                                <h6 className="card-title">Estadísticas</h6>
+                                <h6 className="card-title">Statistics</h6>
                                 <ul className="list-unstyled mb-0">
                                     <li>
-                                        <strong>Mejor puntuación:</strong>{" "}
+                                        <strong>Best score:</strong>{" "}
                                         {formatScore(Math.max(...evaluations.map(e => e.score)))}
                                     </li>
                                     <li>
-                                        <strong>Puntuación media:</strong>{" "}
+                                        <strong>Average score:</strong>{" "}
                                         {formatScore(
                                             evaluations.reduce((sum, e) => sum + e.score, 0) / evaluations.length
                                         )}
                                     </li>
                                     <li>
-                                        <strong>Total intentos:</strong> {evaluations.length}
+                                        <strong>Total attempts:</strong> {evaluations.length}
                                     </li>
                                 </ul>
                             </div>
                         </div>
 
-                        <h6 className="mb-3">Historial de intentos ({evaluations.length})</h6>
+                        <h6 className="mb-3">Attempt history ({evaluations.length})</h6>
                         <div className="list-group">
                             {evaluations.map((evaluation, index) => (
                                 <button
@@ -133,7 +135,7 @@ const EvaluationListModal: React.FC<EvaluationListModalProps> = ({ exerciseName,
                                 >
                                     <div className="d-flex w-100 justify-content-between align-items-center">
                                         <div>
-                                            <h6 className="mb-1">Intento #{evaluations.length - index}</h6>
+                                            <h6 className="mb-1">Attempt #{evaluations.length - index}</h6>
                                             <small className={selectedEvaluation === evaluation ? "" : "text-muted"}>
                                                 {formatDate(evaluation.timestamp)}
                                             </small>
@@ -158,7 +160,7 @@ const EvaluationListModal: React.FC<EvaluationListModalProps> = ({ exerciseName,
                                     <div className="d-flex justify-content-between align-items-center">
                                         <div>
                                             <h5 className="mb-0">
-                                                Puntuación: {formatScore(selectedEvaluation.score)} / 10
+                                                Score: {formatScore(selectedEvaluation.score)} / 10
                                             </h5>
                                             <small>
                                                 {getScoreLabel(selectedEvaluation.score)} -{" "}
@@ -168,7 +170,7 @@ const EvaluationListModal: React.FC<EvaluationListModalProps> = ({ exerciseName,
                                     </div>
                                 </div>
 
-                                <h6>Tu solución:</h6>
+                                <h6>Your solution:</h6>
                                 <pre
                                     className="bg-light p-3 rounded"
                                     style={{
@@ -180,7 +182,7 @@ const EvaluationListModal: React.FC<EvaluationListModalProps> = ({ exerciseName,
                                     <code>{selectedEvaluation.solution}</code>
                                 </pre>
 
-                                <h6 className="mt-1">Feedback del evaluador:</h6>
+                                <h6 className="mt-1">Evaluator feedback:</h6>
                                 <div
                                     className="border rounded p-3 flex-fill"
                                     style={{ height: "75vh", overflowY: "auto" }}
@@ -192,7 +194,7 @@ const EvaluationListModal: React.FC<EvaluationListModalProps> = ({ exerciseName,
                             </>
                         ) : (
                             <div className="alert alert-info">
-                                Selecciona una evaluación del historial para ver los detalles.
+                                Select an evaluation from the history to view details.
                             </div>
                         )}
                     </div>

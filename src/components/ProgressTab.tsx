@@ -33,14 +33,14 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
 
     const getLabBackgroundColor = (progress: LabProgress): string => {
         if (!progress.isUnlocked) {
-            return "list-group-item-danger"; // Rojo para bloqueados
+            return "list-group-item-danger"; // Red for locked
         }
 
         if (isLabCompleted(progress)) {
-            return "list-group-item-success"; // Verde para completados
+            return "list-group-item-success"; // Green for completed
         }
 
-        return "list-group-item-warning"; // Amarillo para en progreso
+        return "list-group-item-warning"; // Yellow for in progress
     };
 
     const getBestScore = (evaluations: SavedEvaluation[] | undefined): number | null => {
@@ -69,16 +69,16 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
             return null;
         }
 
-        return `Necesitas aprobar ${required} de ${progress.challengeExercises.length} retos.`;
+        return `You need to pass ${required} of ${progress.challengeExercises.length} challenges.`;
     };
 
     if (isLoading) {
         return (
             <div className="text-center py-5">
                 <div className="spinner-border text-primary">
-                    <span className="visually-hidden">Cargando progreso...</span>
+                    <span className="visually-hidden">Loading progress...</span>
                 </div>
-                <p className="mt-3">Cargando progreso...</p>
+                <p className="mt-3">Loading progress...</p>
             </div>
         );
     }
@@ -86,9 +86,9 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
     if (labProgress.length === 0) {
         return (
             <div className="alert alert-info" role="alert">
-                <strong>No hay laboratorios configurados</strong>
+                <strong>No labs configured</strong>
                 <p className="mb-0 mt-2">
-                    El profesor aún no ha configurado el sistema de laboratorios y progresión para este curso.
+                    The teacher has not yet configured the lab and progression system for this course.
                 </p>
             </div>
         );
@@ -99,36 +99,36 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
             {/* Explicación del sistema */}
             <div className="alert alert-primary small mb-3" role="alert">
                 <h6 className="alert-heading">
-                    <i className="bi bi-info-circle"></i> Sistema de Progresión
+                    <i className="bi bi-info-circle"></i> Progression system
                 </h6>
                 <p className="mb-2">
-                    Los laboratorios se desbloquean secuencialmente. Para acceder a un laboratorio, debes completar los{" "}
-                    <strong>ejercicios de reto</strong> del laboratorio anterior siguiendo los criterios definidos por
-                    tu profesor.
+                    Labs unlock sequentially. To access a lab, you must complete the{" "}
+                    <strong>challenge exercises</strong> of the previous lab following the criteria defined by your
+                    teacher.
                 </p>
                 <ul className="mb-0 small">
                     <li>
-                        <strong>Ejercicios de reto:</strong> No pueden ser explicados por la IA, pero sí evaluados
-                        cuando envíes tu solución.
+                        <strong>Challenge exercises:</strong> Cannot be explained by AI, but can be evaluated when you
+                        submit your solution.
                     </li>
                     <li>
-                        <strong>Nota registrada:</strong> Se guarda tu mejor puntuación en cada ejercicio.
+                        <strong>Recorded score:</strong> Your best score for each exercise is saved.
                     </li>
                     <li>
-                        <strong>Solo laboratorios requeridos:</strong> Esta vista muestra únicamente los laboratorios
-                        marcados como requeridos por el profesor, que deben completarse en orden para avanzar.
+                        <strong>Required labs only:</strong> This view shows only the labs marked as required by the
+                        teacher, which must be completed in order to advance.
                     </li>
                 </ul>
             </div>
 
             {requirements && (
                 <div className="alert alert-secondary small mb-3" role="alert">
-                    <strong>Criterios actuales:</strong>
+                    <strong>Current criteria:</strong>
                     <ul className="mb-0 mt-2">
-                        <li>Nota mínima por reto: {requirements.minScoreToPass.toFixed(1)} / 10</li>
+                        <li>Minimum score per challenge: {requirements.minScoreToPass.toFixed(1)} / 10</li>
                         <li>
-                            Porcentaje mínimo de retos aprobados: {requirements.minChallengesPercentage}% del total de
-                            retos del laboratorio
+                            Minimum percentage of passed challenges: {requirements.minChallengesPercentage}% of the
+                            total challenges in the lab
                         </li>
                     </ul>
                 </div>
@@ -153,12 +153,11 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                 {/* Estadísticas generales */}
                                 <div className="mb-2">
                                     <span className="badge bg-info me-2">
-                                        Ejercicios: {progress.stats.completedExercises} /{" "}
-                                        {progress.stats.totalExercises}
+                                        Exercises: {progress.stats.completedExercises} / {progress.stats.totalExercises}
                                     </span>
                                     {progress.stats.completedExercises > 0 && (
                                         <span className="badge bg-primary">
-                                            Nota media: {progress.stats.averageScore.toFixed(1)}
+                                            Average score: {progress.stats.averageScore.toFixed(1)}
                                         </span>
                                     )}
                                 </div>
@@ -167,7 +166,7 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                 {progress.challengeExercises.length > 0 && (
                                     <div className="mt-2">
                                         <small className="text-muted d-block mb-1">
-                                            <strong>Ejercicios de reto:</strong>
+                                            <strong>Challenge exercises:</strong>
                                         </small>
                                         {(() => {
                                             const requiredLabel = getRequiredChallengesLabel(progress);
@@ -189,7 +188,9 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                                     >
                                                         <span className="me-2">{exercise.name}</span>
                                                         <span className={`badge ${badgeClass}`}>
-                                                            {bestScore === null ? "No realizado" : bestScore.toFixed(1)}
+                                                            {bestScore === null
+                                                                ? "Not attempted"
+                                                                : bestScore.toFixed(1)}
                                                         </span>
                                                     </div>
                                                 );
@@ -199,13 +200,13 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                 )}
 
                                 {progress.challengeExercises.length === 0 && (
-                                    <small className="text-muted">No hay ejercicios de reto en este laboratorio.</small>
+                                    <small className="text-muted">There are no challenge exercises in this lab.</small>
                                 )}
                             </>
                         ) : (
                             <p className="small mb-0">
-                                <i className="bi bi-lock"></i> Laboratorio bloqueado. Completa el laboratorio anterior
-                                siguiendo los criterios configurados.
+                                <i className="bi bi-lock"></i> Lab locked. Complete the previous lab following the
+                                configured criteria.
                             </p>
                         )}
                     </div>

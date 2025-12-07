@@ -183,10 +183,10 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
                 onConfigUpdate();
             }
 
-            alert("Configuración guardada correctamente. El asistente se ha actualizado con la nueva configuración.");
+            alert("Configuration saved successfully. The assistant has been updated with the new configuration.");
         } catch (error) {
             console.error("Error saving exercise config:", error);
-            alert("Error al guardar la configuración. Por favor, inténtalo de nuevo.");
+            alert("Error saving configuration. Please try again.");
         } finally {
             setIsSaving(false);
         }
@@ -198,24 +198,24 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
                 {/* Explicación del sistema */}
                 <div className="alert alert-primary small mb-3" role="alert">
                     <h6 className="alert-heading">
-                        <i className="bi bi-info-circle"></i> Configuración de laboratorio
+                        <i className="bi bi-info-circle"></i> Lab configuration
                     </h6>
                     <p className="mb-2">
-                        En esta pestaña puedes configurar qué ejercicios son <strong>de reto</strong> o{" "}
-                        <strong>tiquismiquis</strong>.
+                        In this tab you can configure which exercises are <strong>challenge</strong> or{" "}
+                        <strong>picky</strong>.
                     </p>
                     <ul className="mb-2 small">
                         <li>
-                            <strong>Ejercicios de reto:</strong> No se pueden pedir explicaciones, pero sí evaluaciones
-                            de soluciones.
+                            <strong>Challenge exercises:</strong> Explanations cannot be requested, but solution
+                            evaluations can.
                         </li>
                         <li>
-                            <strong>Ejercicios tiquismiquis:</strong> Se muestra una advertencia al pedir explicación
-                            porque pueden contener respuestas parciales en el enunciado.
+                            <strong>Picky exercises:</strong> A warning is shown when asking for an explanation because
+                            they may contain partial answers in the statement.
                         </li>
                     </ul>
                     <p className="mb-0 small">
-                        Después de guardar cambios, el sistema actualizará automáticamente las restricciones.
+                        After saving changes, the system will automatically update the restrictions.
                     </p>
                 </div>
                 {/* Botón para identificar ejercicios */}
@@ -234,24 +234,24 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
                                         role="status"
                                         aria-hidden="true"
                                     ></span>
-                                    Analizando la página...
+                                    Analyzing page...
                                 </>
                             ) : (
                                 <>
                                     <i className="bi bi-arrow-clockwise me-2"></i>
-                                    Identificar ejercicios de la página
+                                    Identify page exercises
                                 </>
                             )}
                         </button>
                         <small className="text-muted d-block mt-1">
-                            Presiona el botón para analizar la página y detectar ejercicios disponibles.
+                            Press the button to analyze the page and detect available exercises.
                         </small>
                     </div>
                 )}
                 <div className="alert alert-info" role="alert">
-                    <strong>No hay ejercicios disponibles</strong>
+                    <strong>No exercises available</strong>
                     <p className="mb-0 mt-2 small">
-                        Cuando se detecten ejercicios en la página, podrás configurar cuáles son ejercicios de reto.
+                        When exercises are detected on the page, you can configure which ones are challenge exercises.
                     </p>
                 </div>
             </div>
@@ -263,24 +263,24 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
             {/* Explicación del sistema */}
             <div className="alert alert-primary small mb-3" role="alert">
                 <h6 className="alert-heading">
-                    <i className="bi bi-info-circle"></i> Configuración de ejercicios
+                    <i className="bi bi-info-circle"></i> Exercise configuration
                 </h6>
                 <p className="mb-2">
-                    En esta pestaña puedes configurar qué ejercicios son <strong>de reto</strong> o{" "}
-                    <strong>tiquismiquis</strong>.
+                    In this tab you can configure which exercises are <strong>challenge</strong> or{" "}
+                    <strong>picky</strong>.
                 </p>
                 <ul className="mb-2 small">
                     <li>
-                        <strong>Ejercicios de reto:</strong> No se pueden pedir explicaciones, pero sí evaluaciones de
-                        soluciones.
+                        <strong>Challenge exercises:</strong> Explanations cannot be requested, but solution evaluations
+                        can.
                     </li>
                     <li>
-                        <strong>Ejercicios tiquismiquis:</strong> Se muestra una advertencia al pedir explicación porque
-                        pueden contener respuestas parciales en el enunciado.
+                        <strong>Picky exercises:</strong> A warning is shown when asking for an explanation because they
+                        may contain partial answers in the statement.
                     </li>
                 </ul>
                 <p className="mb-0 small">
-                    Después de guardar cambios, el sistema actualizará automáticamente las restricciones.
+                    After saving changes, the system will automatically update the restrictions.
                 </p>
             </div>
 
@@ -300,20 +300,18 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
                                     role="status"
                                     aria-hidden="true"
                                 ></span>
-                                Analizando la página...
+                                Analyzing page...
                             </>
                         ) : (
                             <>
                                 <i className="bi bi-arrow-clockwise me-2"></i>
-                                {exercises.length > 0
-                                    ? "Re-identificar ejercicios de la página"
-                                    : "Identificar ejercicios de la página"}
+                                {exercises.length > 0 ? "Reset lab exercises" : "Identify page exercises"}
                             </>
                         )}
                     </button>
                     {exercises.length > 0 && (
                         <small className="text-muted d-block mt-1">
-                            Esto volverá a analizar la página para detectar ejercicios nuevos o modificados.
+                            This will re-analyze the page to detect new or modified exercises.
                         </small>
                     )}
                 </div>
@@ -324,13 +322,13 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
                     <thead>
                         <tr>
                             <th scope="col" style={{ width: "60%" }}>
-                                Nombre del ejercicio
+                                Exercise name
                             </th>
                             <th scope="col" className="text-center" style={{ width: "20%" }}>
-                                Es reto
+                                Is challenge
                             </th>
                             <th scope="col" className="text-center" style={{ width: "20%" }}>
-                                Es tiquismiquis
+                                Is picky
                             </th>
                         </tr>
                     </thead>
@@ -345,10 +343,10 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
                                         <div className="d-flex align-items-center">
                                             <span>{exercise.name}</span>
                                             {isChallenge && (
-                                                <span className="badge bg-warning text-dark ms-2">Reto</span>
+                                                <span className="badge bg-warning text-dark ms-2">Challenge</span>
                                             )}
                                             {isTiquismiqui && (
-                                                <span className="badge bg-info text-dark ms-2">Tiquismiquis</span>
+                                                <span className="badge bg-info text-dark ms-2">Picky</span>
                                             )}
                                         </div>
                                     </td>
@@ -368,7 +366,7 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
                                                 className="form-check-label visually-hidden"
                                                 htmlFor={`challenge-switch-${exercise.name}`}
                                             >
-                                                {isChallenge ? "Es reto" : "No es reto"}
+                                                {isChallenge ? "Is challenge" : "Not challenge"}
                                             </label>
                                         </div>
                                     </td>
@@ -388,7 +386,7 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
                                                 className="form-check-label visually-hidden"
                                                 htmlFor={`tiquismiqui-switch-${exercise.name}`}
                                             >
-                                                {isTiquismiqui ? "Es tiquismiquis" : "No es tiquismiquis"}
+                                                {isTiquismiqui ? "Is picky" : "Not picky"}
                                             </label>
                                         </div>
                                     </td>
@@ -401,9 +399,9 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
 
             {hasUnsavedChanges && (
                 <div className="alert alert-warning small mb-3" role="alert">
-                    <strong>⚠️ Tienes cambios sin guardar</strong>
+                    <strong>⚠️ You have unsaved changes</strong>
                     <p className="mb-0 mt-1">
-                        Haz clic en "Guardar cambios" para aplicar la configuración y regenerar el asistente.
+                        Click "Save changes" to apply the configuration and regenerate the assistant.
                     </p>
                 </div>
             )}
@@ -417,12 +415,12 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
                     {isSaving ? (
                         <>
                             <output className="spinner-border spinner-border-sm me-2">
-                                <span className="visually-hidden">Guardando...</span>
+                                <span className="visually-hidden">Saving...</span>
                             </output>
-                            Guardando cambios...
+                            Saving changes...
                         </>
                     ) : (
-                        "Guardar cambios"
+                        "Save changes"
                     )}
                 </button>
             </div>
@@ -430,9 +428,9 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
             {isSaving && (
                 <div className="alert alert-secondary small d-flex align-items-center mt-2" role="alert">
                     <output className="spinner-border spinner-border-sm me-2">
-                        <span className="visually-hidden">Guardando...</span>
+                        <span className="visually-hidden">Saving...</span>
                     </output>
-                    Aplicando configuración y actualizando las restricciones...
+                    Applying configuration and updating restrictions...
                 </div>
             )}
         </div>

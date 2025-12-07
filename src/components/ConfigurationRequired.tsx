@@ -21,7 +21,7 @@ export const ConfigurationRequired: React.FC<ConfigurationRequiredProps> = ({
         if (!file) return;
 
         if (!file.name.endsWith(".json")) {
-            setError("Por favor, selecciona un archivo JSON válido.");
+            setError("Please select a valid JSON file.");
             return;
         }
 
@@ -40,8 +40,8 @@ export const ConfigurationRequired: React.FC<ConfigurationRequiredProps> = ({
                 setError(result.message);
             }
         } catch (error) {
-            console.error("Error al cargar configuración:", error);
-            setError(`Error inesperado: ${error instanceof Error ? error.message : "Error desconocido"}`);
+            console.error("Error loading configuration:", error);
+            setError(`Unexpected error: ${error instanceof Error ? error.message : "Unknown error"}`);
         } finally {
             setIsLoading(false);
             if (fileInputRef.current) {
@@ -75,33 +75,33 @@ export const ConfigurationRequired: React.FC<ConfigurationRequiredProps> = ({
                     </svg>
                 </div>
 
-                <h4 className="mb-3">Configuración Requerida</h4>
+                <h4 className="mb-3">Configuration required</h4>
 
                 {missingExerciseConfig && missingLLMConfig ? (
                     <div className="text-muted mb-4">
-                        <p className="mb-2">Se requiere configuración para poder usar la extensión:</p>
+                        <p className="mb-2">Configuration is required to use the extension:</p>
                         <ul className="text-start" style={{ display: "inline-block" }}>
                             <li className="mb-2">
-                                <strong>Configuración del asistente:</strong> Importa un archivo de configuración
-                                proporcionado por tu profesor con los ejercicios y laboratorios del curso.
+                                <strong>Assistant configuration:</strong> Import a configuration file provided by your
+                                teacher with the course exercises and labs.
                             </li>
                             <li>
-                                <strong>Configuración del LLM:</strong> Configura la API key y el modelo del proveedor
-                                de IA desde la página de opciones de la extensión.
+                                <strong>LLM configuration:</strong> Configure the API key and AI provider model from the
+                                extension options page.
                             </li>
                         </ul>
                     </div>
                 ) : missingExerciseConfig ? (
                     <p className="text-muted mb-4">
-                        No se ha encontrado configuración para el asistente. Por favor, importa un archivo de
-                        configuración proporcionado por tu profesor para comenzar a usar la extensión.
+                        No assistant configuration found. Please import a configuration file provided by your teacher to
+                        start using the extension.
                     </p>
                 ) : missingLLMConfig ? (
                     <div className="text-muted mb-4">
-                        <p className="mb-2">No se ha configurado el LLM. Para usar la extensión necesitas:</p>
+                        <p className="mb-2">LLM is not configured. To use the extension you need to:</p>
                         <ul className="text-start" style={{ display: "inline-block" }}>
-                            <li>Configurar la API key del proveedor de IA (OpenAI, Google, etc.)</li>
-                            <li>Seleccionar un modelo compatible</li>
+                            <li>Configure the AI provider API key (OpenAI, Google, etc.)</li>
+                            <li>Select a compatible model</li>
                         </ul>
                     </div>
                 ) : null}
@@ -131,12 +131,12 @@ export const ConfigurationRequired: React.FC<ConfigurationRequiredProps> = ({
                                         role="status"
                                         aria-hidden="true"
                                     />
-                                    {" Cargando..."}
+                                    {" Loading..."}
                                 </>
                             ) : (
                                 <>
                                     <i className="bi bi-upload me-2" />
-                                    {" Importar Configuración"}
+                                    {" Import Configuration"}
                                 </>
                             )}
                         </button>
@@ -146,13 +146,13 @@ export const ConfigurationRequired: React.FC<ConfigurationRequiredProps> = ({
                 {missingLLMConfig && (
                     <div className="alert alert-warning mt-3" role="alert">
                         <i className="bi bi-gear me-2" />
-                        Para configurar el LLM, ve a la página de opciones de la extensión.
+                        To configure the LLM, go to the extension options page.
                     </div>
                 )}
 
                 <p className="text-muted mt-3 small">
-                    <strong>Modo Profesor:</strong> Si eres el profesor, activa el modo profesor desde el popup de la
-                    extensión para crear una nueva configuración.
+                    <strong>Teacher Mode:</strong> If you are the teacher, activate teacher mode from the extension
+                    popup to create a new configuration.
                 </p>
             </div>
         </div>

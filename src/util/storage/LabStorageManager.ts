@@ -1,17 +1,17 @@
 import { BaseStorageManager } from "./BaseStorageManager";
 
 /**
- * Niveles de verbosidad para las respuestas del asistente
+ * Verbosity levels for assistant responses
  */
 export type VerbosityLevel = "low" | "medium" | "high";
 
 /**
- * Niveles de esfuerzo de razonamiento para el modelo
+ * Reasoning effort levels for the model
  */
 export type ReasoningEffort = "minimal" | "low" | "medium" | "high";
 
 /**
- * Estructura de datos de laboratorios
+ * Lab data structure
  */
 export interface Lab {
     id: string;
@@ -22,7 +22,7 @@ export interface Lab {
 }
 
 /**
- * Estructura de datos de laboratorios para el curso
+ * Lab data structure for the course
  */
 export interface LabData {
     courseId: string;
@@ -30,16 +30,16 @@ export interface LabData {
 }
 
 /**
- * Gestor de almacenamiento para laboratorios del curso
- * Guarda y recupera la lista de laboratorios configurados para el sistema de "niveles"
+ * Storage manager for course labs
+ * Saves and retrieves the list of labs configured for the "levels" system
  */
 export class LabStorageManager extends BaseStorageManager {
     private static readonly STORAGE_KEY_PREFIX = 'lab_data_';
 
     /**
-     * Guarda la lista de laboratorios de un curso en el storage
-     * @param courseId ID del curso
-     * @param labs Lista de laboratorios
+     * Saves the list of labs for a course to storage
+     * @param courseId Course ID
+     * @param labs List of labs
      */
     static async saveLabData(courseId: string, labs: Lab[]): Promise<void> {
         const data: LabData = {
@@ -51,53 +51,53 @@ export class LabStorageManager extends BaseStorageManager {
     }
 
     /**
-     * Recupera la lista de laboratorios de un curso del storage
-     * @param courseId ID del curso
-     * @returns Datos de laboratorios o null si no existen
+     * Retrieves the list of labs for a course from storage
+     * @param courseId Course ID
+     * @returns Lab data or null if not exists
      */
     static async getLabData(courseId: string): Promise<(LabData & { timestamp: number }) | null> {
         return await this.getData<LabData>(this.STORAGE_KEY_PREFIX, courseId);
     }
 
     /**
-     * Elimina los datos de laboratorios de un curso del storage
-     * @param courseId ID del curso
+     * Deletes lab data for a course from storage
+     * @param courseId Course ID
      */
     static async removeLabData(courseId: string): Promise<void> {
         await this.removeData(this.STORAGE_KEY_PREFIX, courseId);
     }
 
     /**
-     * Limpia todos los datos de laboratorios almacenados
+     * Clears all stored lab data
      */
     static async clearAllLabData(): Promise<void> {
         await this.clearAllData(this.STORAGE_KEY_PREFIX);
     }
 
     /**
-     * Verifica si existen datos de laboratorios guardados para un curso
-     * @param courseId ID del curso
-     * @returns true si existen datos, false en caso contrario
+     * Checks if saved lab data exists for a course
+     * @param courseId Course ID
+     * @returns true if data exists, false otherwise
      */
     static async hasLabData(courseId: string): Promise<boolean> {
         return await this.hasData(this.STORAGE_KEY_PREFIX, courseId);
     }
 
     /**
-     * Actualiza el estado 'required' de un laboratorio específico
-     * @param courseId ID del curso
-     * @param labId ID del laboratorio
-     * @param required Nuevo estado de requerido/opcional
+     * Updates the 'required' status of a specific lab
+     * @param courseId Course ID
+     * @param labId Lab ID
+     * @param required New required/optional status
      */
     static async updateLabRequired(courseId: string, labId: string, required: boolean): Promise<void> {
         const data = await this.getLabData(courseId);
         if (!data) {
-            throw new Error(`No se encontraron datos de laboratorios para el curso ${courseId}`);
+            throw new Error(`No lab data found for course ${courseId}`);
         }
 
         const lab = data.labs.find(l => l.id === labId);
         if (!lab) {
-            throw new Error(`No se encontró el laboratorio ${labId}`);
+            throw new Error(`Lab ${labId} not found`);
         }
 
         lab.required = required;

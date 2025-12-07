@@ -53,7 +53,7 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
 
     const handleSubmit = async () => {
         if (!solution.trim()) {
-            setEvaluationError("Por favor, introduce una solución antes de enviar");
+            setEvaluationError("Please enter a solution before submitting");
             return;
         }
 
@@ -75,22 +75,22 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
 
             if (response.success) {
                 setEvaluation(response.evaluation);
-                console.log("Solución evaluada exitosamente");
+                console.log("Solution evaluated successfully");
                 // Notificar que se generó una nueva evaluación
                 if (onEvaluationGenerated) {
                     onEvaluationGenerated();
                 }
             } else {
-                const errorMessage = response.error || "Error desconocido al evaluar la solución";
-                console.error("Error al evaluar solución:", errorMessage);
+                const errorMessage = response.error || "Unknown error evaluating solution";
+                console.error("Error evaluating solution:", errorMessage);
                 setEvaluationError(errorMessage);
             }
         } catch (error) {
-            console.error("Error al evaluar solución:", error);
+            console.error("Error evaluating solution:", error);
             const errorMessage =
                 error instanceof Error
-                    ? `Error de comunicación: ${error.message}`
-                    : "Error de comunicación con el asistente de IA";
+                    ? `Communication error: ${error.message}`
+                    : "Communication error with AI assistant";
             setEvaluationError(errorMessage);
         } finally {
             setIsEvaluating(false);
@@ -105,18 +105,18 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
     };
 
     const getScoreLabel = (score: number): string => {
-        if (score >= 9) return "Excelente";
-        if (score >= 7) return "Buena";
-        if (score >= 5) return "Aceptable";
-        if (score >= 3) return "Insuficiente";
-        return "Muy deficiente";
+        if (score >= 9) return "Excellent";
+        if (score >= 7) return "Good";
+        if (score >= 5) return "Acceptable";
+        if (score >= 3) return "Insufficient";
+        return "Very poor";
     };
 
     return (
-        <BaseModal isOpen={isOpen} onClose={onClose} title={`Resolver Ejercicio: ${exercise.name}`}>
+        <BaseModal isOpen={isOpen} onClose={onClose} title={`Solve exercise: ${exercise.name}`}>
             {/* Enunciado del ejercicio */}
             <div className="mb-4">
-                <h6 className="text-primary">Enunciado:</h6>
+                <h6 className="text-primary">Statement:</h6>
                 <div className="border rounded p-3 bg-light">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{exercise.statement}</ReactMarkdown>
                 </div>
@@ -126,7 +126,7 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
             {!evaluation && (
                 <div className="mb-4">
                     <label htmlFor="solution-input" className="form-label">
-                        <strong>Tu solución SQL:</strong>
+                        <strong>Your SQL solution:</strong>
                     </label>
                     <textarea
                         id="solution-input"
@@ -134,7 +134,7 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
                         rows={10}
                         value={solution}
                         onChange={e => setSolution(e.target.value)}
-                        placeholder="Escribe aquí tu consulta SQL..."
+                        placeholder="Write your SQL query here..."
                         disabled={isEvaluating}
                         style={{ fontSize: "0.9rem" }}
                     />
@@ -150,9 +150,9 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
             {isEvaluating && (
                 <div className="text-center py-4">
                     <output className="spinner-border text-primary mb-3">
-                        <span className="visually-hidden">Evaluando...</span>
+                        <span className="visually-hidden">Evaluating...</span>
                     </output>
-                    <p className="text-muted">Evaluando tu solución...</p>
+                    <p className="text-muted">Evaluating your solution...</p>
                 </div>
             )}
 
@@ -167,7 +167,7 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
                     >
                         <div>
                             <h5 className="mb-0">
-                                <strong>Puntuación: {evaluation.score}/10</strong>
+                                <strong>Score: {evaluation.score}/10</strong>
                                 <span className="ms-2">({getScoreLabel(evaluation.score)})</span>
                             </h5>
                         </div>
@@ -188,10 +188,9 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
 
                     {/* Botón para intentar de nuevo */}
                     <div className="alert alert-info" role="alert">
-                        <strong>¿Quieres intentarlo de nuevo?</strong>
+                        <strong>Do you want to try again?</strong>
                         <p className="mb-2 mt-1 small">
-                            Puedes cerrar este modal y volver a solicitar resolver el ejercicio para enviar una nueva
-                            solución.
+                            You can close this modal and request to solve the exercise again to submit a new solution.
                         </p>
                     </div>
                 </div>
@@ -201,7 +200,7 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
             {!evaluation && (
                 <div className="d-flex justify-content-end gap-2 mt-4">
                     <button className="btn btn-secondary" onClick={onClose} disabled={isEvaluating}>
-                        Cancelar
+                        Cancel
                     </button>
                     <button
                         className="btn btn-primary"
@@ -211,12 +210,12 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
                         {isEvaluating ? (
                             <>
                                 <output className="spinner-border spinner-border-sm me-2">
-                                    <span className="visually-hidden">Evaluando...</span>
+                                    <span className="visually-hidden">Evaluating...</span>
                                 </output>
-                                Evaluando...
+                                Evaluating...
                             </>
                         ) : (
-                            "Enviar solución"
+                            "Submit solution"
                         )}
                     </button>
                 </div>

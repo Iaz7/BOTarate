@@ -14,16 +14,16 @@ interface UserRoleData {
 }
 
 /**
- * Gestor de almacenamiento para el modo de operación y rol del usuario
+ * Storage manager for operation mode and user role
  */
 export class ModeStorageManager extends BaseStorageManager {
     private static readonly MODE_STORAGE_KEY = "app_mode";
     private static readonly USER_ROLE_STORAGE_KEY = "user_role";
-    private static readonly USER_ROLE_CACHE_DURATION = 3600000; // 1 hora en milisegundos
+    private static readonly USER_ROLE_CACHE_DURATION = 3600000; // 1 hour in milliseconds
 
     /**
-     * Guarda el modo de operación actual
-     * @param mode Modo a guardar
+     * Saves the current operation mode
+     * @param mode Mode to save
      */
     static async saveMode(mode: AppMode): Promise<void> {
         const data: ModeData = { mode };
@@ -31,8 +31,8 @@ export class ModeStorageManager extends BaseStorageManager {
     }
 
     /**
-     * Obtiene el modo de operación actual
-     * @returns Modo guardado o STUDENT por defecto
+     * Gets the current operation mode
+     * @returns Saved mode or STUDENT by default
      */
     static async getMode(): Promise<AppMode> {
         const data = await this.getData<ModeData>("", this.MODE_STORAGE_KEY);
@@ -40,8 +40,8 @@ export class ModeStorageManager extends BaseStorageManager {
     }
 
     /**
-     * Guarda el rol del usuario con timestamp
-     * @param isTeacher true si el usuario es profesor
+     * Saves user role with timestamp
+     * @param isTeacher true if user is teacher
      */
     static async saveUserRole(isTeacher: boolean): Promise<void> {
         const data: UserRoleData = { isTeacher };
@@ -49,8 +49,8 @@ export class ModeStorageManager extends BaseStorageManager {
     }
 
     /**
-     * Obtiene el rol del usuario si está en caché y es válido
-     * @returns Objeto con isTeacher y isValid, o null si no hay caché válido
+     * Gets user role if cached and valid
+     * @returns Object with isTeacher and isValid, or null if no valid cache
      */
     static async getUserRole(): Promise<{ isTeacher: boolean; isValid: boolean } | null> {
         const data = await this.getData<UserRoleData>("", this.USER_ROLE_STORAGE_KEY);
@@ -59,7 +59,7 @@ export class ModeStorageManager extends BaseStorageManager {
             return null;
         }
 
-        // Verificar si el caché sigue siendo válido
+        // Check if cache is still valid
         const isValid = Date.now() - data.timestamp < this.USER_ROLE_CACHE_DURATION;
 
         return {
@@ -69,14 +69,14 @@ export class ModeStorageManager extends BaseStorageManager {
     }
 
     /**
-     * Limpia el caché del rol del usuario
+     * Clears user role cache
      */
     static async clearUserRoleCache(): Promise<void> {
         await this.removeData("", this.USER_ROLE_STORAGE_KEY);
     }
 
     /**
-     * Limpia todos los datos de modo y rol
+     * Clears all mode and role data
      */
     static async clearAll(): Promise<void> {
         await this.removeData("", this.MODE_STORAGE_KEY);

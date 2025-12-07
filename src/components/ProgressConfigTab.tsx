@@ -57,8 +57,8 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
                     setOriginalConfig(DEFAULT_CONFIG);
                 }
             } catch (error) {
-                console.error("[ProgressConfigTab] Error al cargar configuración de progreso:", error);
-                setStatusMessage({ type: "error", text: "No se pudo cargar la configuración. Inténtalo de nuevo." });
+                console.error("[ProgressConfigTab] Error loading progress configuration:", error);
+                setStatusMessage({ type: "error", text: "Could not load configuration. Please try again." });
             } finally {
                 setIsLoading(false);
             }
@@ -92,13 +92,13 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
             if (response?.success) {
                 setOriginalConfig(payload);
                 setConfig(payload);
-                setStatusMessage({ type: "success", text: "Criterios de progreso guardados correctamente." });
+                setStatusMessage({ type: "success", text: "Progress criteria saved successfully." });
             } else {
-                throw new Error(response?.error || "Error al guardar la configuración");
+                throw new Error(response?.error || "Error saving configuration");
             }
         } catch (error) {
-            console.error("[ProgressConfigTab] Error al guardar configuración:", error);
-            setStatusMessage({ type: "error", text: "No se pudo guardar. Revisa los valores e inténtalo de nuevo." });
+            console.error("[ProgressConfigTab] Error saving configuration:", error);
+            setStatusMessage({ type: "error", text: "Could not save. Check values and try again." });
         } finally {
             setIsSaving(false);
         }
@@ -113,9 +113,9 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
         return (
             <div className="text-center py-4">
                 <output className="spinner-border">
-                    <span className="visually-hidden">Cargando configuración...</span>
+                    <span className="visually-hidden">Loading configuration...</span>
                 </output>
-                <p className="text-muted small mt-2">Cargando configuración de progreso...</p>
+                <p className="text-muted small mt-2">Loading progress configuration...</p>
             </div>
         );
     }
@@ -123,9 +123,9 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
     return (
         <div>
             <div className="alert alert-info small" role="alert">
-                <strong>Configura los criterios para desbloquear laboratorios</strong>
+                <strong>Configure criteria to unlock labs</strong>
                 <p className="mb-0 mt-1">
-                    Ajusta la nota mínima y el porcentaje de retos aprobados que se necesitan para progresar.
+                    Adjust the minimum score and percentage of passed challenges needed to progress.
                 </p>
             </div>
 
@@ -137,7 +137,7 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
 
             <div className="mb-4">
                 <label htmlFor="minScore" className="form-label fw-semibold">
-                    Nota mínima para aprobar un ejercicio de reto
+                    Minimum score to pass a challenge exercise
                 </label>
                 <div className="input-group">
                     <input
@@ -154,13 +154,13 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
                     <span className="input-group-text">/ 10</span>
                 </div>
                 <div className="form-text">
-                    Los retos con una calificación igual o superior a este valor se considerarán aprobados.
+                    Challenges with a score equal to or higher than this value will be considered passed.
                 </div>
             </div>
 
             <div className="mb-4">
                 <label htmlFor="minPercentage" className="form-label fw-semibold">
-                    Porcentaje mínimo de retos aprobados para progresar
+                    Minimum percentage of passed challenges to progress
                 </label>
                 <div className="input-group">
                     <input
@@ -177,8 +177,7 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
                     <span className="input-group-text">%</span>
                 </div>
                 <div className="form-text">
-                    Ejemplo: con un 75%, si un laboratorio tiene 4 retos será necesario aprobar al menos 3 para
-                    desbloquear el siguiente.
+                    Example: with 75%, if a lab has 4 challenges, at least 3 must be passed to unlock the next one.
                 </div>
             </div>
 
@@ -187,12 +186,12 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
                     {isSaving ? (
                         <>
                             <output className="spinner-border spinner-border-sm me-2">
-                                <span className="visually-hidden">Guardando...</span>
+                                <span className="visually-hidden">Saving...</span>
                             </output>
-                            Guardando...
+                            Saving...
                         </>
                     ) : (
-                        "Guardar criterios"
+                        "Save criteria"
                     )}
                 </button>
                 <button
@@ -201,7 +200,7 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
                     onClick={handleRestoreDefaults}
                     disabled={isSaving}
                 >
-                    Restaurar valores por defecto
+                    Restore default values
                 </button>
             </div>
         </div>

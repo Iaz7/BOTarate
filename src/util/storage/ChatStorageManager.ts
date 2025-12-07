@@ -10,13 +10,13 @@ interface ChatHistory {
 }
 
 /**
- * Gestor de almacenamiento para el historial de conversaciones del chat
+ * Storage manager for chat conversation history
  */
 class ChatStorageManager extends BaseStorageManager {
     private static readonly STORAGE_KEY_PREFIX = 'chat_history_';
 
     /**
-     * Guarda el historial de conversación para un curso específico
+     * Saves conversation history for a specific course
      */
     static async saveChatHistory(courseId: string, messages: Message[]): Promise<void> {
         const chatHistory: ChatHistory = {
@@ -29,33 +29,33 @@ class ChatStorageManager extends BaseStorageManager {
     }
 
     /**
-     * Obtiene el historial de conversación para un curso específico
+     * Gets conversation history for a specific course
      */
     static async getChatHistory(courseId: string): Promise<Message[]> {
         const chatHistory = await this.getData<ChatHistory>(this.STORAGE_KEY_PREFIX, courseId);
 
         if (!chatHistory) {
-            console.log(`[ChatStorageManager] No hay historial para curso ${courseId}`);
+            console.log(`[ChatStorageManager] No history for course ${courseId}`);
             return [];
         }
 
-        console.log(`[ChatStorageManager] Historial recuperado para curso ${courseId}: ${chatHistory.messages.length} mensajes`);
+        console.log(`[ChatStorageManager] History retrieved for course ${courseId}: ${chatHistory.messages.length} messages`);
         return chatHistory.messages;
     }
 
     /**
-     * Limpia el historial de conversación para un curso específico
+     * Clears conversation history for a specific course
      */
     static async clearChatHistory(courseId: string): Promise<void> {
         await this.removeData(this.STORAGE_KEY_PREFIX, courseId);
-        console.log(`[ChatStorageManager] Historial eliminado para curso ${courseId}`);
+        console.log(`[ChatStorageManager] History deleted for course ${courseId}`);
     }
 
     /**
-     * Limpia todo el historial de chat almacenado
+     * Clears all stored chat history
      */
     static async clearAllChatHistory(): Promise<void> {
         await this.clearAllData(this.STORAGE_KEY_PREFIX);
-        console.log(`[ChatStorageManager] Todo el historial de chat eliminado`);
+        console.log(`[ChatStorageManager] All chat history deleted`);
     }
 }

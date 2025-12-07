@@ -88,17 +88,17 @@ const ExtensionContent: React.FC = () => {
         const waitForSessionStorage = (timeoutMs: number = 5000, intervalMs: number = 200) => {
             return new Promise<void>(resolve => {
                 const start = Date.now();
-                console.log("[content] Iniciando espera de sessionStorage...");
+                console.log("[content] Starting wait for sessionStorage...");
                 const check = () => {
                     const elapsed = Date.now() - start;
                     const keysCount = sessionStorage.length;
 
                     // Esperar hasta que haya más de 1 clave O se alcance el timeout
                     if (keysCount > 1) {
-                        console.log(`[content] SessionStorage listo con ${keysCount} claves`);
+                        console.log(`[content] SessionStorage ready with ${keysCount} keys`);
                         resolve();
                     } else if (elapsed >= timeoutMs) {
-                        console.warn(`[content] Timeout alcanzado (${timeoutMs}ms) con ${keysCount} claves`);
+                        console.warn(`[content] Timeout reached (${timeoutMs}ms) with ${keysCount} keys`);
                         resolve();
                     } else {
                         setTimeout(check, intervalMs);
@@ -113,7 +113,7 @@ const ExtensionContent: React.FC = () => {
             await waitForSessionStorage(10000, 100);
 
             try {
-                console.log(`[content] Serializando sessionStorage con ${sessionStorage.length} claves`);
+                console.log(`[content] Serializing sessionStorage with ${sessionStorage.length} keys`);
 
                 // Serializar sessionStorage completo a un objeto (después de esperar a que esté disponible)
                 const sessionStorageData: Record<string, string> = {};
@@ -124,7 +124,7 @@ const ExtensionContent: React.FC = () => {
                     }
                 }
 
-                console.log(`[content] Claves de sessionStorage:`, Object.keys(sessionStorageData));
+                console.log(`[content] SessionStorage keys:`, Object.keys(sessionStorageData));
 
                 // Enviar href y sessionStorage al background
                 const response = await chrome.runtime.sendMessage({
@@ -139,27 +139,27 @@ const ExtensionContent: React.FC = () => {
 
                     // Obtener el nombre del curso desde la página
                     const courseTitle =
-                        document.querySelector(".page-header-headings h1")?.textContent || "Curso sin nombre";
+                        document.querySelector(".page-header-headings h1")?.textContent || "Unnamed Course";
                     setCourseName(courseTitle);
 
-                    console.log("[content] Datos del curso cargados:", response.course);
+                    console.log("[content] Course data loaded:", response.course);
 
                     // Detectar si estamos en una página de ejercicios
                     const pageId = getPageIdFromUrl();
                     if (pageId) {
-                        console.log(`[content] Detectada página de Egela, ID: ${pageId}`);
+                        console.log(`[content] Egela page detected, ID: ${pageId}`);
                         setCurrentPageId(pageId);
                         setViewState("chat");
                         // Cargar ejercicios desde cache al detectar la página
                         await loadExercisesFromCache(pageId);
                     }
                 } else {
-                    console.error("[content] No se pudo cargar el curso:", response.error);
-                    setCourseName("Error al cargar curso");
+                    console.error("[content] Could not load course:", response.error);
+                    setCourseName("Error loading course");
                 }
             } catch (error) {
                 console.error("[content] Error loading course data:", error);
-                setCourseName("Error al cargar curso");
+                setCourseName("Error loading course");
             }
         };
 
@@ -169,7 +169,7 @@ const ExtensionContent: React.FC = () => {
                 const provider = ConfigManager.getSelectedProvider();
                 const model = ConfigManager.getSelectedModel();
                 setProviderName(provider.name);
-                setModelName(model || "No seleccionado");
+                setModelName(model || "Not selected");
             } catch (error) {
                 console.error("[content] Error loading config:", error);
             }
@@ -178,15 +178,15 @@ const ExtensionContent: React.FC = () => {
         // Listener para mensajes del background (para abrir el modal)
         const messageListener = (message: any) => {
             if (message.action === "openExerciseModal") {
-                console.log("[content] Recibido mensaje para abrir modal del ejercicio:", message.exerciseIndex);
+                console.log("[content] Received message to open exercise modal:", message.exerciseIndex);
                 handleOpenExerciseModal(message.exerciseIndex).catch(err => {
-                    console.error("[content] Error al abrir modal de ejercicio:", err);
+                    console.error("[content] Error opening exercise modal:", err);
                 });
             }
             if (message.action === "openSolutionModal") {
-                console.log("[content] Recibido mensaje para abrir modal de solución:", message.exerciseIndex);
+                console.log("[content] Received message to open solution modal:", message.exerciseIndex);
                 handleOpenSolutionModal(message.exerciseIndex).catch(err => {
-                    console.error("[content] Error al abrir modal de solución:", err);
+                    console.error("[content] Error opening solution modal:", err);
                 });
             }
         };
@@ -212,7 +212,7 @@ const ExtensionContent: React.FC = () => {
             // Si hay un cambio de página
             if (newPageId !== lastPageId) {
                 if (newPageId) {
-                    console.log(`[content] Cambio de página detectado: ${lastPageId} -> ${newPageId}`);
+                    console.log(`[content] Page change detected: ${lastPageId} -> ${newPageId}`);
                     setCurrentPageId(newPageId);
                     setExercises([]);
                     setIsLoadingExercises(false);
@@ -221,7 +221,7 @@ const ExtensionContent: React.FC = () => {
                     setReloadSidebarKey(prev => prev + 1);
                 } else if (lastPageId !== null) {
                     // Ya no estamos en una página de ejercicios
-                    console.log(`[content] Saliendo de página de ejercicios`);
+                    console.log(`[content] Leaving exercises page`);
                     setCurrentPageId(null);
                     setExercises([]);
                     setReloadSidebarKey(prev => prev + 1);
@@ -255,7 +255,7 @@ const ExtensionContent: React.FC = () => {
     const generateExercises = async (pageId: string) => {
         // Prevenir múltiples identificaciones simultáneas
         if (identifyingExercisesRef.current) {
-            console.log("[content] Ya hay una identificación en curso, ignorando solicitud");
+            console.log("[content] Identification already in progress, ignoring request");
             return;
         }
 
@@ -266,7 +266,7 @@ const ExtensionContent: React.FC = () => {
             const urlParams = new URLSearchParams(globalThis.location.search);
             const resourceId = urlParams.get("id"); // El ID del recurso (página) actual
 
-            console.log("[content] Generando ejercicios con LLM...");
+            console.log("[content] Generating exercises with LLM...");
             console.log("[content] PageId:", pageId, "ResourceId:", resourceId);
 
             const response = await chrome.runtime.sendMessage({
@@ -277,10 +277,7 @@ const ExtensionContent: React.FC = () => {
             });
 
             if (response.success) {
-                console.log(
-                    `[content] Se han identificado ${response.exercises.length} ejercicios:`,
-                    response.exercises
-                );
+                console.log(`[content] Identified ${response.exercises.length} exercises:`, response.exercises);
 
                 // Actualizar el contexto usando el helper
                 updateExerciseContext({
@@ -291,10 +288,10 @@ const ExtensionContent: React.FC = () => {
                 });
 
                 if (response.concepts) {
-                    console.log("[content] Conceptos:", response.concepts);
+                    console.log("[content] Concepts:", response.concepts);
                 }
                 if (response.learning_objectives) {
-                    console.log("[content] Objetivos de aprendizaje:", response.learning_objectives);
+                    console.log("[content] Learning objectives:", response.learning_objectives);
                 }
 
                 if (response.exercises.length > 0) {
@@ -303,10 +300,10 @@ const ExtensionContent: React.FC = () => {
                 }
                 // Si no hay ejercicios, simplemente mantenemos la vista del chat sin ejercicios
             } else {
-                console.error("[content] Error al identificar ejercicios:", response.error);
+                console.error("[content] Error identifying exercises:", response.error);
             }
         } catch (error) {
-            console.error("[content] Error al solicitar identificación de ejercicios:", error);
+            console.error("[content] Error requesting exercise identification:", error);
         } finally {
             setIsLoadingExercises(false);
             identifyingExercisesRef.current = false;
@@ -343,7 +340,7 @@ const ExtensionContent: React.FC = () => {
 
     // Función para cargar ejercicios desde cache (llamada automáticamente al cargar página)
     const loadExercisesFromCache = async (pageId: string): Promise<boolean> => {
-        console.log("[content] Intentando cargar ejercicios desde cache...");
+        console.log("[content] Attempting to load exercises from cache...");
         try {
             const response = await chrome.runtime.sendMessage({
                 action: "getExerciseData",
@@ -351,14 +348,14 @@ const ExtensionContent: React.FC = () => {
             });
 
             if (response.success && response.data && response.data.exercises && response.data.exercises.length > 0) {
-                console.log("[content] Ejercicios cargados desde cache:", response.data.exercises.length);
+                console.log("[content] Exercises loaded from cache:", response.data.exercises.length);
                 updateExerciseContext(response.data);
                 return true;
             } else {
-                console.log("[content] No hay ejercicios en cache para esta página");
+                console.log("[content] No exercises in cache for this page");
             }
         } catch (error) {
-            console.error("[content] Error cargando ejercicios desde cache:", error);
+            console.error("[content] Error loading exercises from cache:", error);
         }
         return false;
     };
@@ -409,7 +406,7 @@ const ExtensionContent: React.FC = () => {
             // Si encontramos el ejercicio, abrir el modal con ese ejercicio y carga del cache
             handleOpenExerciseModal(exerciseIndex, true);
         } else {
-            console.warn(`[content] No se encontró el ejercicio: ${exerciseName}`);
+            console.warn(`[content] Exercise not found: ${exerciseName}`);
         }
     };
 
@@ -435,7 +432,7 @@ const ExtensionContent: React.FC = () => {
     const handleIdentifyExercises = async () => {
         const pageId = currentPageId || getPageIdFromUrl();
         if (!pageId) {
-            console.warn("[content] No hay pageId para identificar ejercicios");
+            console.warn("[content] No pageId to identify exercises");
             return;
         }
 
@@ -510,10 +507,10 @@ const ExtensionContent: React.FC = () => {
 // Componente principal que maneja la inyección
 const ContentApp: React.FC = () => {
     useEffect(() => {
-        console.log("Extensión de Chrome cargada en:", globalThis.location.href);
+        console.log("Chrome extension loaded at:", globalThis.location.href);
 
         return () => {
-            console.log("Extensión de Chrome descargada");
+            console.log("Chrome extension unloaded");
         };
     }, []);
 

@@ -4,7 +4,7 @@ import { LabStorageManager } from "./LabStorageManager";
 import { ProgressConfigStorageManager } from "./ProgressConfigStorageManager";
 
 /**
- * Estructura de datos para la exportación
+ * Data structure for export
  */
 export interface ExportData {
     exportDate: string;
@@ -24,7 +24,7 @@ export interface ExportData {
 }
 
 /**
- * Resultado de una operación de importación/exportación
+ * Result of an import/export operation
  */
 export interface ImportExportResult {
     success: boolean;
@@ -33,8 +33,8 @@ export interface ImportExportResult {
 }
 
 /**
- * Gestor de importación y exportación de configuraciones
- * Permite guardar y restaurar toda la configuración de la extensión en formato JSON
+ * Configuration import and export manager
+ * Allows saving and restoring all extension configuration in JSON format
  */
 export class ImportExportManager {
     private static async restoreCollection(
@@ -55,14 +55,14 @@ export class ImportExportManager {
     }
 
     /**
-     * Obtiene todos los datos del storage para exportarlos
-     * @returns Objeto con toda la configuración
+     * Gets all storage data for export
+     * @returns Object with all configuration
      */
     static async getAllStorageData(): Promise<ExportData> {
-        // Obtener todos los datos del storage
+        // Get all storage data
         const allData = await chrome.storage.local.get(null);
 
-        // Filtrar datos de ejercicios
+        // Filter exercise data
         const exerciseData = Object.keys(allData)
             .filter(key => key.startsWith("exercise_data_"))
             .map(key => ({
@@ -70,7 +70,7 @@ export class ImportExportManager {
                 data: allData[key],
             }));
 
-        // Filtrar datos de laboratorios
+        // Filter lab data
         const labData = Object.keys(allData)
             .filter(key => key.startsWith("lab_data_"))
             .map(key => ({
@@ -85,7 +85,7 @@ export class ImportExportManager {
                 data: allData[key],
             }));
 
-        // Obtener configuración de asistentes
+        // Get assistant configuration
         const assistantConfig = await AssistantConfigStorageManager.loadConfig();
 
         return {

@@ -43,19 +43,19 @@ async function loadConfiguration(): Promise<void> {
     await initializeAssistants();
     OpenAIService.loadProviderConfig();
     markConfigLoaded();
-    console.log("Configuración cargada en background script");
+    console.log("Configuration loaded in background script");
 }
 
 function startInitialLoad(): void {
     loadConfiguration().catch(error => {
-        console.error("No se pudo cargar la configuración en background:", error);
+        console.error("Could not load configuration in background:", error);
     });
 }
 
 startInitialLoad();
 
 chrome.runtime.onInstalled.addListener(() => {
-    console.log("La extensión ha sido instalada.");
+    console.log("The extension has been installed.");
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -65,8 +65,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         loadConfiguration()
             .then(() => processMessage(request, sender, sendResponse))
             .catch(error => {
-                console.error("No se pudo cargar la configuración en background:", error);
-                sendResponse({ success: false, error: "No se pudo cargar la configuración" });
+                console.error("Could not load configuration in background:", error);
+                sendResponse({ success: false, error: "Could not load configuration" });
             });
         return true;
     }

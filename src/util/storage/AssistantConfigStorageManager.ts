@@ -5,8 +5,8 @@ import { BaseStorageManager } from './BaseStorageManager';
 export { AssistantConfigStorageManager };
 
 /**
- * Gestor de almacenamiento para la configuración de asistentes
- * Guarda y carga la configuración personalizada de los asistentes desde chrome.storage
+ * Storage manager for assistant configuration
+ * Saves and loads custom assistant configuration from chrome.storage
  */
 class AssistantConfigStorageManager extends BaseStorageManager {
     private static readonly STORAGE_KEY_PREFIX = 'assistant_config_';
@@ -15,32 +15,32 @@ class AssistantConfigStorageManager extends BaseStorageManager {
     private static cachedConfig: AssistantConfig | null = null;
 
     /**
-     * Carga la configuración de asistentes desde el storage
-     * Si no existe configuración guardada, devuelve la configuración por defecto (SQL)
+     * Loads assistant configuration from storage
+     * If no saved configuration exists, returns default configuration (SQL)
      */
     static async loadConfig(): Promise<AssistantConfig> {
         try {
             const result = await this.getData<AssistantConfig>(this.STORAGE_KEY_PREFIX, this.CONFIG_KEY);
 
             if (result) {
-                console.log("[AssistantConfigStorageManager] Configuración cargada desde storage");
-                // Extraemos solo la configuración, sin el timestamp
+                console.log("[AssistantConfigStorageManager] Configuration loaded from storage");
+                // Extract only the configuration, without the timestamp
                 const { timestamp, ...config } = result;
                 this.cachedConfig = config as AssistantConfig;
                 return this.cachedConfig;
             } else {
-                console.log("[AssistantConfigStorageManager] No hay configuración guardada, usando valores por defecto");
+                console.log("[AssistantConfigStorageManager] No saved configuration, using default values");
                 this.cachedConfig = this.defaultConfig;
                 return this.defaultConfig;
             }
         } catch (error) {
-            console.error("[AssistantConfigStorageManager] Error al cargar configuración:", error);
+            console.error("[AssistantConfigStorageManager] Error loading configuration:", error);
             return this.defaultConfig;
         }
     }
 
     /**
-     * Guarda la configuración de asistentes en el storage
+     * Saves assistant configuration to storage
      */
     static async saveConfig(config: AssistantConfig): Promise<void> {
         await this.saveData(this.STORAGE_KEY_PREFIX, this.CONFIG_KEY, config);
@@ -48,30 +48,30 @@ class AssistantConfigStorageManager extends BaseStorageManager {
     }
 
     /**
-     * Restaura la configuración por defecto (SQL)
+     * Restores default configuration (SQL)
      */
     static async resetToDefault(): Promise<void> {
         await this.saveConfig(this.defaultConfig);
-        console.log("[AssistantConfigStorageManager] Configuración restaurada a valores por defecto");
+        console.log("[AssistantConfigStorageManager] Configuration restored to default values");
     }
 
     /**
-     * Obtiene la configuración en caché (sin acceder al storage)
-     * Si no hay caché, devuelve la configuración por defecto
+     * Gets cached configuration (without accessing storage)
+     * If no cache, returns default configuration
      */
     static getCachedConfig(): AssistantConfig {
         return this.cachedConfig || this.defaultConfig;
     }
 
     /**
-     * Obtiene la configuración por defecto
+     * Gets default configuration
      */
     static getDefaultConfig(): AssistantConfig {
         return this.defaultConfig;
     }
 
     /**
-     * Actualiza una sección específica de la configuración
+     * Updates a specific section of the configuration
      */
     static async updateSection(
         section: keyof AssistantConfig,
@@ -86,7 +86,7 @@ class AssistantConfigStorageManager extends BaseStorageManager {
     }
 
     /**
-     * Elimina la configuración guardada
+     * Deletes saved configuration
      */
     static async clearConfig(): Promise<void> {
         await this.removeData(this.STORAGE_KEY_PREFIX, this.CONFIG_KEY);

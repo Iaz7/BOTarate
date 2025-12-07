@@ -21,7 +21,7 @@ class ExplanationAssistant extends BaseAssistant {
     }
 
     /**
-     * Construye el contexto pedagógico común para prompts
+     * Builds common pedagogical context for prompts
      */
     private buildPedagogicalContext(
         concepts?: string[],
@@ -29,45 +29,45 @@ class ExplanationAssistant extends BaseAssistant {
         progressSummary?: string
     ): { conceptsContext: string; objectivesContext: string; alignmentNote: string; progressContext: string } {
         const progressContext = progressSummary
-            ? `PROGRESO DEL ALUMNO:\n${progressSummary}\nCONSIDERACIONES:\n- Reduce la verbosidad para conceptos que el alumno ya ha trabajado en laboratorios/ejercicios completados.\n- Puedes asumir familiaridad con los conceptos básicos de los laboratorios completados.\n- Enfócate en los aspectos nuevos o más avanzados del ejercicio actual.`
+            ? `STUDENT PROGRESS:\n${progressSummary}\nCONSIDERATIONS:\n- Reduce verbosity for concepts the student has already worked on in completed labs/exercises.\n- You can assume familiarity with basic concepts from completed labs.\n- Focus on new or more advanced aspects of the current exercise.`
             : '';
 
         const conceptsContext = concepts && concepts.length > 0
-            ? `- Este ejercicio trabaja los siguientes conceptos: ${concepts.join(', ')}`
+            ? `- This exercise works on the following concepts: ${concepts.join(', ')}`
             : '';
 
         const objectivesContext = learningObjectives
-            ? `- Objetivos de aprendizaje de la página: ${learningObjectives}`
+            ? `- Learning objectives of the page: ${learningObjectives}`
             : '';
 
         const alignmentNote = concepts || learningObjectives
-            ? '- Asegúrate de que tu explicación se alinee con estos objetivos de aprendizaje y enfoque especialmente en los conceptos mencionados.'
+            ? '- Ensure your explanation aligns with these learning objectives and focuses especially on the mentioned concepts.'
             : '';
 
         return { conceptsContext, objectivesContext, alignmentNote, progressContext };
     }
 
     /**
-     * Guía para usar herramientas que acceden al contenido del laboratorio solo cuando el alumno lo solicita
+     * Guide for using tools that access lab content only when the student requests it
      */
     private buildLabContentToolsNote(): string {
-        return `- Usa estas herramientas solo si el alumno pide ejemplos o datos concretos que estén en el contenido del laboratorio (p. ej., filas INSERT).
-- Intenta filtrar lo máximo posible para devolver solo lo estrictamente relevante.
-- getPageContent(pageId): recupera el contenido de la página del laboratorio para localizar marcadores de archivos [FILEx:TEXT:nombre.sql].
-- getFilteredFileContent(pageId, fileId, regexPattern): extrae únicamente las secciones necesarias de los archivos de texto. Por ejemplo, para obtener solo los INSERT de las tablas "alumnos" y "matriculas" utiliza un patrón como "INSERT\\s+INTO\\s+(alumnos|matriculas)[\\s\\S]+?;".
-- Debes llamar siempre primero a getPageContent para identificar los archivos disponibles y sus IDs antes de usar getFilteredFileContent.`;
+        return `- Use these tools only if the student asks for examples or concrete data present in the lab content (e.g., INSERT rows).
+- Try to filter as much as possible to return only what is strictly relevant.
+- getPageContent(pageId): retrieves lab page content to locate file markers [FILEx:TEXT:name.sql].
+- getFilteredFileContent(pageId, fileId, regexPattern): extracts only necessary sections from text files. For example, to get only INSERTs for tables "students" and "enrollments" use a pattern like "INSERT\\s+INTO\\s+(students|enrollments)[\\s\\S]+?;".
+- You must always call getPageContent first to identify available files and their IDs before using getFilteredFileContent.`;
     }
 
     /**
-     * Genera una explicación estructurada paso a paso para un ejercicio
-     * @param exerciseName - Nombre del ejercicio
-     * @param exerciseStatement - Enunciado completo del ejercicio
-     * @param exerciseContext - Contexto adicional del ejercicio (ej. esquema de BD, especificaciones)
-     * @param concepts - Conceptos que se trabajan en la página (opcional)
-     * @param learningObjectives - Objetivos de aprendizaje de la página (opcional)
-     * @param progressSummary - Resumen del progreso del alumno (opcional)
-     * @param responseOptions - Opciones de verbosidad y razonamiento (opcional)
-     * @returns Explicación estructurada con pasos
+     * Generates a structured step-by-step explanation for an exercise
+     * @param exerciseName - Exercise name
+     * @param exerciseStatement - Complete exercise statement
+     * @param exerciseContext - Additional exercise context (e.g., DB schema, specifications)
+     * @param concepts - Concepts worked on the page (optional)
+     * @param learningObjectives - Learning objectives of the page (optional)
+     * @param progressSummary - Student progress summary (optional)
+     * @param responseOptions - Verbosity and reasoning options (optional)
+     * @returns Structured explanation with steps
      */
     async generateExplanation(
         exerciseName: string,
@@ -79,33 +79,33 @@ class ExplanationAssistant extends BaseAssistant {
         pageId?: string,
         responseOptions?: ResponseOptions
     ): Promise<ExplanationSchemaType> {
-        console.log(`[generateExplanation] Generando explicación para: ${exerciseName}`);
+        console.log(`[generateExplanation] Generating explanation for: ${exerciseName}`);
         if (responseOptions) {
-            console.log(`[generateExplanation] Opciones: verbosity=${responseOptions.verbosity}, reasoning=${responseOptions.reasoningEffort}`);
+            console.log(`[generateExplanation] Options: verbosity=${responseOptions.verbosity}, reasoning=${responseOptions.reasoningEffort}`);
         }
 
         const assistantConfig = this.config.explanationAssistant;
         const pedagogicalContext = this.buildPedagogicalContext(concepts, learningObjectives, progressSummary);
 
-        // Plantilla genérica del system prompt
-        const systemPromptTemplate = `Eres un {role}.
-Tu tarea es {taskDescription}
+        // Generic system prompt template
+        const systemPromptTemplate = `You are a {role}.
+Your task is {taskDescription}
 
-METODOLOGÍA:
+METHODOLOGY:
 
 {methodology}
 
-FORMATO DE SALIDA:
+OUTPUT FORMAT:
 {outputFormat}
 {contextNote}
 {additionalRules}
 
-HERRAMIENTAS PARA CONTENIDO DEL LABORATORIO (usar solo si el alumno lo solicita):
+LAB CONTENT TOOLS (use only if the student requests it):
 {labContentToolsNote}
 
 {pageIdNote}
 
-CONTEXTO PEDAGÓGICO:
+PEDAGOGICAL CONTEXT:
 {conceptsContext}
 {objectivesContext}
 {alignmentNote}
@@ -119,33 +119,33 @@ CONTEXTO PEDAGÓGICO:
             taskDescription: assistantConfig.taskDescription,
             methodology: assistantConfig.methodology,
             outputFormat: assistantConfig.outputFormat,
-            contextNote: exerciseContext ? '- Incluye ejemplos concretos usando el contexto del ejercicio proporcionado.' : '',
+            contextNote: exerciseContext ? '- Include concrete examples using the provided exercise context.' : '',
             additionalRules: assistantConfig.additionalRules || '',
             labContentToolsNote: this.buildLabContentToolsNote(),
-            pageIdNote: pageId ? `ID de la página: ${pageId}\n- Usa este ID como valor para el parámetro 'pageId' cuando llames a getPageContent o getFilteredFileContent.` : '',
+            pageIdNote: pageId ? `Page ID: ${pageId}\n- Use this ID as the value for the 'pageId' parameter when calling getPageContent or getFilteredFileContent.` : '',
             ...pedagogicalContext,
             importantNotes: assistantConfig.importantNotes || ''
         };
 
         const systemPrompt = this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);
 
-        const userPrompt = `Por favor, genera una explicación paso a paso para el siguiente ejercicio:
+        const userPrompt = `Please generate a step-by-step explanation for the following exercise:
 
 **${exerciseName}**
 
 ${exerciseStatement}
 
-${exerciseContext ? `Contexto del ejercicio:\n\`\`\`\n${exerciseContext}\n\`\`\`` : ''}
+${exerciseContext ? `Exercise context:\n\`\`\`\n${exerciseContext}\n\`\`\`` : ''}
 
-Antes de generar la explicación, considera consultar el material de teoría del curso para asegurarte de que tu explicación se alinea con lo que se ha enseñado en clase.
+Before generating the explanation, consider consulting the course theory material to ensure your explanation aligns with what has been taught in class.
 
-NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de hacer preguntas de seguimiento sobre la explicación proporcionada.`;
+NOTE: After generating the explanation, the student will have the opportunity to ask follow-up questions about the provided explanation.`;
 
         try {
-            // Reiniciar historial para esta llamada específica
+            // Reset history for this specific call
             this.openAIService.resetConversation();
 
-            // Usar la nueva función que permite tools con respuestas estructuradas
+            // Use the new function that allows tools with structured responses
             const response = await this.openAIService.generateStructuredResponse<ExplanationSchemaType>(
                 ExplanationSchema,
                 "explanation",
@@ -155,29 +155,29 @@ NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de h
                 responseOptions
             );
 
-            console.log(`[generateExplanation] Explicación generada con ${response.steps.length} pasos`);
+            console.log(`[generateExplanation] Explanation generated with ${response.steps.length} steps`);
             return response;
 
         } catch (error) {
             console.error(`[generateExplanation] Error:`, error);
             if (error instanceof Error) {
-                throw new Error(`Error al generar explicación: ${error.message}`);
+                throw new Error(`Error generating explanation: ${error.message}`);
             }
-            throw new Error('Error desconocido al generar explicación');
+            throw new Error('Unknown error generating explanation');
         }
     }
 
     /**
-     * Continúa la conversación después de generar una explicación
-     * Permite al alumno hacer preguntas de seguimiento
-     * @param userMessage Pregunta del alumno
-     * @returns Respuesta del asistente
+     * Continues the conversation after generating an explanation
+     * Allows the student to ask follow-up questions
+     * @param userMessage Student question
+     * @returns Assistant response
      */
     async continueConversation(userMessage: string): Promise<string> {
-        console.log(`[continueConversation] Procesando pregunta de seguimiento`);
+        console.log(`[continueConversation] Processing follow-up question`);
 
         try {
-            // Usar processResponseWithTools sin resetear el historial
+            // Use processResponseWithTools without resetting history
             const response = await this.openAIService.processResponseWithTools(
                 this.executeToolCall.bind(this),
                 userMessage,
@@ -185,28 +185,28 @@ NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de h
                 this.allowedTools.map(tool => TOOLS.find((t: any) => t.function.name === tool)).filter(Boolean)
             );
 
-            console.log(`[continueConversation] Respuesta generada`);
+            console.log(`[continueConversation] Response generated`);
             return response;
 
         } catch (error) {
             console.error(`[continueConversation] Error:`, error);
             if (error instanceof Error) {
-                throw new Error(`Error al responder pregunta: ${error.message}`);
+                throw new Error(`Error answering question: ${error.message}`);
             }
-            throw new Error('Error desconocido al responder pregunta');
+            throw new Error('Unknown error answering question');
         }
     }
 
     /**
-     * Inicializa el contexto para preguntas de seguimiento cuando se carga una explicación guardada
-     * @param exerciseName - Nombre del ejercicio
-     * @param exerciseStatement - Enunciado completo del ejercicio
-     * @param explanation - Explicación generada previamente
-     * @param exerciseContext - Contexto adicional del ejercicio
-     * @param concepts - Conceptos que se trabajan en la página
-     * @param learningObjectives - Objetivos de aprendizaje de la página
-     * @param progressSummary - Resumen del progreso del alumno
-     * @param chatHistory - Historial previo de mensajes del chat (opcional)
+     * Initializes context for follow-up questions when a saved explanation is loaded
+     * @param exerciseName - Exercise name
+     * @param exerciseStatement - Complete exercise statement
+     * @param explanation - Previously generated explanation
+     * @param exerciseContext - Additional exercise context
+     * @param concepts - Concepts worked on the page
+     * @param learningObjectives - Learning objectives of the page
+     * @param progressSummary - Student progress summary
+     * @param chatHistory - Previous chat message history (optional)
      */
     async initializeContextForFollowUp(
         exerciseName: string,
@@ -219,33 +219,33 @@ NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de h
         chatHistory?: Array<{ role: string; content: string }>,
         pageId?: string
     ): Promise<void> {
-        console.log(`[initializeContextForFollowUp] Inicializando contexto para: ${exerciseName}`);
+        console.log(`[initializeContextForFollowUp] Initializing context for: ${exerciseName}`);
 
         const assistantConfig = this.config.explanationAssistant;
         const pedagogicalContext = this.buildPedagogicalContext(concepts, learningObjectives, progressSummary);
 
-        const systemPromptTemplate = `Eres un {role}.
-    Has generado una explicación paso a paso para el siguiente ejercicio, y ahora el alumno está haciendo preguntas de seguimiento sobre la explicación.
+        const systemPromptTemplate = `You are a {role}.
+    You have generated a step-by-step explanation for the following exercise, and now the student is asking follow-up questions about the explanation.
 
-    EJERCICIO: {exerciseName}
+    EXERCISE: {exerciseName}
 
-    ENUNCIADO:
+    STATEMENT:
     {exerciseStatement}
 
     {contextNote}
 
-    METODOLOGÍA:
+    METHODOLOGY:
 
     {methodology}
 
     {additionalRules}
 
-    HERRAMIENTAS PARA CONTENIDO DEL LABORATORIO (usar solo si el alumno lo solicita):
+    LAB CONTENT TOOLS (use only if the student requests it):
     {labContentToolsNote}
 
     {pageIdNote}
 
-    CONTEXTO PEDAGÓGICO:
+    PEDAGOGICAL CONTEXT:
     {conceptsContext}
     {objectivesContext}
     {alignmentNote}
@@ -254,51 +254,51 @@ NOTA: Después de generar la explicación, el alumno tendrá la oportunidad de h
 
     {importantNotes}
 
-    NOTA: El alumno puede hacer preguntas sobre cualquier aspecto de la explicación. Sé claro, conciso y pedagógico en tus respuestas.`;
+    NOTE: The student may ask questions about any aspect of the explanation. Be clear, concise, and pedagogical in your responses.`;
 
         const systemPromptVariables = {
             role: assistantConfig.role,
             exerciseName: exerciseName,
             exerciseStatement: exerciseStatement,
             methodology: assistantConfig.methodology,
-            contextNote: exerciseContext ? `CONTEXTO DEL EJERCICIO:\n\`\`\`\n${exerciseContext}\n\`\`\`` : '',
+            contextNote: exerciseContext ? `EXERCISE CONTEXT:\n\`\`\`\n${exerciseContext}\n\`\`\`` : '',
             additionalRules: assistantConfig.additionalRules || '',
             labContentToolsNote: this.buildLabContentToolsNote(),
-            pageIdNote: pageId ? `ID de la página: ${pageId}\n- Usa este ID como valor para el parámetro 'pageId' cuando llames a getPageContent o getFilteredFileContent.` : '',
+            pageIdNote: pageId ? `Page ID: ${pageId}\n- Use this ID as the value for the 'pageId' parameter when calling getPageContent or getFilteredFileContent.` : '',
             ...pedagogicalContext,
             importantNotes: assistantConfig.importantNotes || ''
         };
 
         const systemPrompt = this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);
 
-        // Crear un resumen de la explicación para el contexto
+        // Create an explanation summary for context
         const explanationSummary = explanation.steps.map((step, i) =>
-            `Paso ${i + 1} - ${step.title}: ${step.content.substring(0, 200)}...`
+            `Step ${i + 1} - ${step.title}: ${step.content.substring(0, 200)}...`
         ).join('\n\n');
 
-        const assistantMessage = `Ya has generado la siguiente explicación para el ejercicio:
+        const assistantMessage = `You have already generated the following explanation for the exercise:
 
 ${explanationSummary}
 
-El alumno ahora hará preguntas de seguimiento sobre esta explicación.`;
+The student will now ask follow-up questions about this explanation.`;
 
-        // Resetear e inicializar el contexto
+        // Reset and initialize context
         this.openAIService.resetConversation();
 
-        // Agregar el system prompt y el contexto de la explicación al historial
+        // Add system prompt and explanation context to history
         const history: any[] = [
             { role: 'system', content: systemPrompt },
             { role: 'assistant', content: assistantMessage }
         ];
 
-        // Si hay historial de chat previo, restaurarlo
+        // If there is previous chat history, restore it
         if (chatHistory && chatHistory.length > 0) {
-            console.log(`[initializeContextForFollowUp] Restaurando ${chatHistory.length} mensajes del historial`);
+            console.log(`[initializeContextForFollowUp] Restoring ${chatHistory.length} messages from history`);
             history.push(...chatHistory);
         }
 
         this.openAIService.setConversationHistory(history);
 
-        console.log(`[initializeContextForFollowUp] Contexto inicializado`);
+        console.log(`[initializeContextForFollowUp] Context initialized`);
     }
 }

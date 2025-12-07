@@ -11,23 +11,23 @@ export interface FileData {
 }
 
 /**
- * Cache de archivos de texto por página
- * Estructura: { pageId: { fileId: FileData } }
+ * Text file cache per page
+ * Structure: { pageId: { fileId: FileData } }
  */
 const textFileCache: Map<string, Map<string, FileData>> = new Map();
 
 /**
- * Clase responsable de la gestión, descarga y conversión de archivos
+ * Class responsible for file management, download and conversion
  */
 class FileManager {
     /**
-     * Descarga un archivo desde una URL y lo convierte según su tipo
-     * @param url URL del archivo a descargar
-     * @param fileId Identificador único para el archivo (ej: "FILE1")
-     * @returns Datos del archivo procesado
+     * Downloads a file from a URL and converts it according to its type
+     * @param url URL of the file to download
+     * @param fileId Unique identifier for the file (e.g., "FILE1")
+     * @returns Processed file data
      */
     static async fetchAndConvertFile(url: string, fileId: string): Promise<FileData> {
-        console.log(`[FileManager] Descargando archivo: ${url}`);
+        console.log(`[FileManager] Downloading file: ${url}`);
 
         try {
             const response = await fetch(url);
@@ -39,13 +39,13 @@ class FileManager {
             const mimeType = response.headers.get('content-type') || blob.type || 'application/octet-stream';
             const filename = this.extractFilename(url, response);
 
-            console.log(`[FileManager] Archivo descargado: ${filename} (${mimeType}, ${blob.size} bytes)`);
+            console.log(`[FileManager] File downloaded: ${filename} (${mimeType}, ${blob.size} bytes)`);
 
-            // Determinar si es texto o binario
+            // Determine if it is text or binary
             const isText = this.isTextMimeType(mimeType) || this.hasTextExtension(filename);
 
             if (isText) {
-                // Para archivos de texto, extraer contenido
+                // For text files, extract content
                 const text = await blob.text();
                 return {
                     id: fileId,
@@ -56,7 +56,7 @@ class FileManager {
                     url
                 };
             } else {
-                // Para binarios (imágenes, PDFs, etc.), convertir a base64
+                // For binaries (images, PDFs, etc.), convert to base64
                 const dataUrl = await this.blobToDataUrl(blob, mimeType);
                 return {
                     id: fileId,
@@ -68,19 +68,19 @@ class FileManager {
                 };
             }
         } catch (error) {
-            console.error(`[FileManager] Error al descargar archivo:`, error);
+            console.error(`[FileManager] Error downloading file:`, error);
             throw error;
         }
     }
 
     /**
-     * Convierte un Blob a Data URL (base64)
+     * Converts a Blob to Data URL (base64)
      */
     private static async blobToDataUrl(blob: Blob, mimeType: string): Promise<string> {
         const arrayBuffer = await blob.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
 
-        // Convertir a base64 en chunks para evitar stack overflow
+        // Convert to base64 in chunks to avoid stack overflow
         let binary = '';
         const chunkSize = 8192;
         for (let i = 0; i < uint8Array.length; i += chunkSize) {
@@ -93,10 +93,10 @@ class FileManager {
     }
 
     /**
-     * Extrae el nombre del archivo desde la URL o el header Content-Disposition
+     * Extracts the filename from the URL or Content-Disposition header
      */
     private static extractFilename(url: string, response: Response): string {
-        // Intentar extraer desde Content-Disposition
+        // Try to extract from Content-Disposition
         const contentDisposition = response.headers.get('content-disposition');
         if (contentDisposition) {
             const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;

@@ -25,7 +25,7 @@ export default defineConfig({
     hmr: {
       port: 5173,
     },
-    // No abrir navegador automáticamente
+    // Do not open browser automatically
     open: false,
   },
   build: {

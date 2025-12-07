@@ -6,8 +6,8 @@ import { ToolFunctions } from "./ToolFunctions";
 export { BaseAssistant };
 
 /**
- * Clase base para asistentes de IA
- * Proporciona funcionalidad común para manejar cursos y construir prompts modulares
+ * Base class for AI assistants
+ * Provides common functionality to handle courses and build modular prompts
  */
 abstract class BaseAssistant {
     protected course: Course | null = null;
@@ -26,11 +26,11 @@ abstract class BaseAssistant {
     }
 
     /**
-     * Construye un prompt sustituyendo variables en una plantilla
-     * Las variables se especifican con la sintaxis {nombre_variable}
-     * @param template Plantilla de prompt con marcadores {variable}
-     * @param variables Objeto con los valores de las variables a sustituir
-     * @returns El prompt con las variables sustituidas
+     * Builds a prompt by substituting variables in a template
+     * Variables are specified with the syntax {variable_name}
+     * @param template Prompt template with {variable} markers
+     * @param variables Object with variable values to substitute
+     * @returns The prompt with substituted variables
      */
     protected buildPromptFromTemplate(template: string, variables: Record<string, string>): string {
         let result = template;
@@ -44,15 +44,15 @@ abstract class BaseAssistant {
     }
 
     /**
-     * Ejecutor de herramientas compartido por todos los asistentes
-     * Proporciona acceso a getSectionContent, getPageContent, getResourceContent, explainExercise, solveExercise y getFilteredFileContent
+     * Tool executor shared by all assistants
+     * Provides access to getSectionContent, getPageContent, getResourceContent, explainExercise, solveExercise, and getFilteredFileContent
      */
     protected async executeToolCall(
         name: string,
         args: any
     ): Promise<string | { type: 'file'; data: any }> {
         if (!this.allowedTools.includes(name)) {
-            throw new Error(`El asistente no tiene acceso a la herramienta: ${name}`);
+            throw new Error(`The assistant does not have access to the tool: ${name}`);
         }
         switch (name) {
             case 'getSectionContent':
@@ -69,9 +69,9 @@ abstract class BaseAssistant {
                 return ToolFunctions.getFilteredFileContent(args);
             case 'postExercises':
                 // return ToolFunctions.postExercises(args);
-                throw new Error('postExercises debe ser manejado directamente por el asistente');
+                throw new Error('postExercises must be handled directly by the assistant');
             default:
-                throw new Error(`Herramienta desconocida: ${name}`);
+                throw new Error(`Unknown tool: ${name}`);
         }
     }
 }

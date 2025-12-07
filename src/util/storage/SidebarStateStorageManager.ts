@@ -6,51 +6,51 @@ interface SidebarState {
 }
 
 /**
- * Gestor de almacenamiento para el estado del sidebar usando localStorage
+ * Storage manager for sidebar state using localStorage
  */
 class SidebarStateStorageManager {
     private static readonly STORAGE_KEY = 'sidebar_state';
 
     /**
-     * Guarda el estado del sidebar
+     * Saves sidebar state
      */
     static saveSidebarState(state: SidebarState): void {
         try {
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state));
-            console.log('[SidebarStateStorageManager] Estado guardado');
+            console.log('[SidebarStateStorageManager] State saved');
         } catch (error) {
-            console.error('[SidebarStateStorageManager] Error guardando estado:', error);
+            console.error('[SidebarStateStorageManager] Error saving state:', error);
         }
     }
 
     /**
-     * Obtiene el estado del sidebar
+     * Gets sidebar state
      */
     static getSidebarState(): SidebarState | null {
         try {
             const data = localStorage.getItem(this.STORAGE_KEY);
             if (data) {
                 const state = JSON.parse(data) as SidebarState;
-                console.log('[SidebarStateStorageManager] Estado recuperado:', state);
+                console.log('[SidebarStateStorageManager] State retrieved:', state);
                 return state;
             }
-            console.log('[SidebarStateStorageManager] No hay estado guardado');
+            console.log('[SidebarStateStorageManager] No saved state');
             return null;
         } catch (error) {
-            console.error('[SidebarStateStorageManager] Error recuperando estado:', error);
+            console.error('[SidebarStateStorageManager] Error retrieving state:', error);
             return null;
         }
     }
 
     /**
-     * Limpia el estado del sidebar
+     * Clears sidebar state
      */
     static clearSidebarState(): void {
         try {
             localStorage.removeItem(this.STORAGE_KEY);
-            console.log('[SidebarStateStorageManager] Estado limpiado');
+            console.log('[SidebarStateStorageManager] State cleared');
         } catch (error) {
-            console.error('[SidebarStateStorageManager] Error limpiando estado:', error);
+            console.error('[SidebarStateStorageManager] Error clearing state:', error);
         }
     }
 }

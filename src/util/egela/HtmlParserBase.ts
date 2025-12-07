@@ -1,11 +1,11 @@
 export { HtmlParserBase };
 
 /**
- * Clase base con utilidades comunes para parsers de HTML
+ * Base class with common utilities for HTML parsers
  */
 abstract class HtmlParserBase {
     /**
-     * Limpia el texto eliminando espacios extra y caracteres HTML
+     * Cleans text by removing extra spaces and HTML characters
      */
     protected cleanText(text: string): string {
         return text
@@ -15,22 +15,22 @@ abstract class HtmlParserBase {
     }
 
     /**
-     * Normaliza espacios en un texto
+     * Normalizes spaces in a text
      */
     protected normalizeSpaces(text: string): string {
         return text.replace(/\s+/g, ' ');
     }
 
     /**
-     * Limpia líneas eliminando líneas vacías consecutivas
+     * Cleans lines by removing consecutive empty lines
      */
     protected cleanupLines(lines: string[]): string {
         const filteredLines: string[] = [];
         let lastWasEmpty = false;
-        
+
         for (const line of lines) {
             const isEmpty = line.trim().length === 0;
-            
+
             if (!isEmpty) {
                 filteredLines.push(line);
                 lastWasEmpty = false;
@@ -44,31 +44,31 @@ abstract class HtmlParserBase {
     }
 
     /**
-     * Parsea una tabla HTML a formato Markdown
+     * Parses an HTML table to Markdown format
      */
     protected parseTable(table: any): string[] {
         const tableLines: string[] = [];
         const rows = Array.from(table.querySelectorAll('tr'));
-        
+
         if (rows.length === 0) return tableLines;
 
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i] as any;
             const cells = Array.from(row.querySelectorAll('td, th'));
             const cellTexts = cells.map((cell: any) => this.cleanText(cell.textContent || ''));
-            
+
             tableLines.push('| ' + cellTexts.join(' | ') + ' |');
-            
+
             if (i === 0) {
                 tableLines.push('| ' + cellTexts.map(() => '---').join(' | ') + ' |');
             }
         }
-        
+
         return tableLines;
     }
 
     /**
-     * Determina si un nodo debe ser ignorado
+     * Determines if a node should be skipped
      */
     protected shouldSkipNode(node: any, tagName: string | undefined): boolean {
         return (

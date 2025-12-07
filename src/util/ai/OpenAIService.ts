@@ -88,21 +88,21 @@ class OpenAIService {
         const result = await this.generateResponseWithTools(userMessage, systemPrompt, tools);
 
         if (result.type === 'message') {
-            // Respuesta final del LLM
+            // Final LLM response
             return result.content;
         }
 
-        // El LLM quiere llamar a herramientas
-        console.log(`LLM solicita ${result.calls.length} tool call(s)`);
+        // LLM wants to call tools
+        console.log(`LLM requests ${result.calls.length} tool call(s)`);
 
-        // Ejecutar todas las tool calls
+        // Execute all tool calls
         for (const call of result.calls) {
             await this.executeToolCall(call, toolExecutor);
         }
 
-        // Llamar recursivamente para obtener la respuesta final
-        // Importante: pasar el mismo listado de tools para evitar que la siguiente iteración
-        // utilice el conjunto completo `TOOLS` por defecto.
+        // Recursively call to get final response
+        // Important: pass the same list of tools to avoid the next iteration
+        // using the full `TOOLS` set by default.
         return this.processResponseWithTools(toolExecutor, undefined, undefined, tools);
     }
 
@@ -111,29 +111,29 @@ class OpenAIService {
         systemPrompt?: string,
         tools?: any[]
     ): Promise<{ type: 'message'; content: string } | { type: 'tool_calls'; calls: ToolCall[] }> {
-        // Actualizar o agregar el system prompt si se proporciona
+        // Update or add system prompt if provided
         if (systemPrompt) {
-            // Buscar si ya existe un mensaje del sistema (primer mensaje con role='system')
+            // Check if system message already exists (first message with role='system')
             const systemMessageIndex = this.conversationHistory.findIndex(msg => msg.role === 'system');
 
             if (systemMessageIndex >= 0) {
-                // Actualizar el system prompt existente
+                // Update existing system prompt
                 this.conversationHistory[systemMessageIndex] = {
                     role: 'system',
                     content: systemPrompt
                 };
-                console.log('[OpenAIService] System prompt actualizado');
+                console.log('[OpenAIService] System prompt updated');
             } else {
-                // Agregar el system prompt al inicio del historial
+                // Add system prompt to the beginning of history
                 this.conversationHistory.unshift({
                     role: 'system',
                     content: systemPrompt
                 });
-                console.log('[OpenAIService] System prompt agregado');
+                console.log('[OpenAIService] System prompt added');
             }
         }
 
-        // Agregar mensaje del usuario si se proporciona
+        // Add user message if provided
         if (userMessage) {
             this.conversationHistory.push({
                 role: 'user',
@@ -153,17 +153,17 @@ class OpenAIService {
         const message = choice?.message;
 
         if (!message) {
-            throw new Error('No se recibió respuesta del modelo');
+            throw new Error('No response received from model');
         }
 
-        // Agregar mensaje del asistente al historial
+        // Add assistant message to history
         this.conversationHistory.push({
             role: 'assistant',
             content: message.content,
             tool_calls: message.tool_calls as ToolCall[]
         });
 
-        // Verificar si hay tool calls
+        // Check if there are tool calls
         if (message.tool_calls && message.tool_calls.length > 0) {
             return {
                 type: 'tool_calls',
@@ -171,7 +171,7 @@ class OpenAIService {
             };
         }
 
-        // Retornar respuesta final
+        // Return final response
         return {
             type: 'message',
             content: message.content || ''
@@ -179,14 +179,14 @@ class OpenAIService {
     }
 
     async executeToolCall(toolCall: ToolCall, toolExecutor: (name: string, args: any) => Promise<string | { type: 'file'; data: any }>): Promise<void> {
-        console.log(`Ejecutando tool: ${toolCall.function.name}`);
+        console.log(`Executing tool: ${toolCall.function.name}`);
 
         try {
             const args = JSON.parse(toolCall.function.arguments);
             const toolResult = await toolExecutor(toolCall.function.name, args);
 
-            console.log(`Resultado de ${toolCall.function.name}:`,
-                typeof toolResult === 'string' ? toolResult : '[Archivo]');
+            console.log(`Result of ${toolCall.function.name}:`,
+                typeof toolResult === 'string' ? toolResult : '[File]');
 
             if (typeof toolResult === 'object' && toolResult.type === 'file') {
                 this.handleToolFileResult(toolCall, toolResult.data);
@@ -198,11 +198,11 @@ class OpenAIService {
                 );
             }
         } catch (error) {
-            console.error(`Error ejecutando ${toolCall.function.name}:`, error);
+            console.error(`Error executing ${toolCall.function.name}:`, error);
             this.addToolResult(
                 toolCall.id,
                 toolCall.function.name,
-                `Error: ${error instanceof Error ? error.message : 'Error desconocido'}`
+                `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
             );
         }
     }
@@ -216,45 +216,45 @@ class OpenAIService {
         files?: Array<{ filename: string; mimeType?: string; dataUrl?: string; text?: string; url?: string }>,
         options?: ResponseOptions
     ): Promise<T> {
-        console.log(`[generateStructuredResponse] Generando respuesta estructurada: ${schemaName}`);
+        console.log(`[generateStructuredResponse] Generating structured response: ${schemaName}`);
 
         const modelName = ConfigManager.getSelectedModel();
         let finalSystemPrompt = systemPrompt;
 
-        // Si se especifican opciones, verificar compatibilidad del modelo
+        // If options are specified, check model compatibility
         let overrideMaxTokens: number | undefined = undefined;
         if (options) {
-            // Verbosity siempre va en el prompt
+            // Verbosity always goes in the prompt
             if (options.verbosity) {
                 const verbosityInstruction = getVerbosityInstruction(options.verbosity);
                 finalSystemPrompt = `${verbosityInstruction}\n\n${finalSystemPrompt}`;
-                console.log(`[generateStructuredResponse] Instrucción de verbosity añadida al prompt: ${options.verbosity}`);
+                console.log(`[generateStructuredResponse] Verbosity instruction added to prompt: ${options.verbosity}`);
             }
-            // Reasoning solo si el modelo no lo soporta nativamente
+            // Reasoning only if model does not support it natively
             const modelSupportsReasoning = supportsReasoning(modelName);
             if (options.reasoningEffort && !modelSupportsReasoning) {
                 const reasoningInstruction = getReasoningInstruction(options.reasoningEffort);
                 finalSystemPrompt = `${reasoningInstruction}\n\n${finalSystemPrompt}`;
-                console.log(`[generateStructuredResponse] Modelo ${modelName} no soporta reasoning, añadida instrucción al prompt`);
+                console.log(`[generateStructuredResponse] Model ${modelName} does not support reasoning, instruction added to prompt`);
             }
         }
 
-        // Si hay system prompt, añadirlo
-        // Si está vacío, asumimos que ya hay uno en el historial
+        // If there is a system prompt, add it
+        // If empty, assume there is already one in history
         if (finalSystemPrompt.length > 0) {
             this.conversationHistory.push({ role: 'system', content: finalSystemPrompt });
         }
 
         this.conversationHistory.push({ role: 'user', content: userMessage });
 
-        // Si hay archivos adjuntos, añadirlos al historial
+        // If there are attached files, add them to history
         if (files && Array.isArray(files) && files.length > 0) {
             for (const f of files) {
                 this.addFileMessage(f.filename, f.dataUrl, f.mimeType, f.text);
             }
         }
 
-        // Crear el formato de respuesta usando JSON Schema
+        // Create response format using JSON Schema
         const responseFormat: ResponseFormatJSONSchema = {
             type: "json_schema",
             json_schema: {
@@ -264,7 +264,7 @@ class OpenAIService {
             }
         };
 
-        // Construir parámetros de la API
+        // Build API parameters
         const apiParams: any = {
             model: modelName,
             messages: this.conversationHistory as any,
@@ -272,38 +272,38 @@ class OpenAIService {
             max_completion_tokens: 32768
         };
 
-        // Añadir parámetros nativos si el modelo los soporta
+        // Add native parameters if model supports them
         if (options) {
             const modelSupportsVerbosity = supportsVerbosity(modelName);
             const modelSupportsReasoning = supportsReasoning(modelName);
 
             if (options.verbosity && modelSupportsVerbosity) {
-                // Nota: El parámetro text.verbosity es para la API de responses, no chat.completions
-                // Para chat.completions, usamos la instrucción en el prompt (ya añadida arriba si no soporta)
-                // Si el modelo soporta verbosity, la API debería manejarlo
-                console.log(`[generateStructuredResponse] Modelo ${modelName} soporta verbosity: ${options.verbosity}`);
+                // Note: The text.verbosity parameter is for the responses API, not chat.completions
+                // For chat.completions, we use the instruction in the prompt (already added above if not supported)
+                // If model supports verbosity, the API should handle it
+                console.log(`[generateStructuredResponse] Model ${modelName} supports verbosity: ${options.verbosity}`);
             }
 
             if (options.reasoningEffort && modelSupportsReasoning) {
                 apiParams.reasoning = { effort: options.reasoningEffort };
-                console.log(`[generateStructuredResponse] Añadido reasoning effort: ${options.reasoningEffort}`);
+                console.log(`[generateStructuredResponse] Added reasoning effort: ${options.reasoningEffort}`);
             }
         }
 
-        // Usar la API nativa de OpenAI para respuestas estructuradas
+        // Use native OpenAI API for structured responses
         const completion = await OpenAIService.openai.chat.completions.create(apiParams);
 
         const content = completion.choices[0]?.message?.content;
 
         if (!content) {
-            throw new Error('No se recibió respuesta estructurada del modelo');
+            throw new Error('No structured response received from model');
         }
 
         const parsed = JSON.parse(content) as T;
 
-        console.log(`[generateStructuredResponse] Respuesta estructurada recibida exitosamente`);
+        console.log(`[generateStructuredResponse] Structured response received successfully`);
 
-        // Agregar la respuesta del asistente al historial
+        // Add assistant response to history
         this.conversationHistory.push({
             role: 'assistant',
             content: JSON.stringify(parsed),
@@ -323,9 +323,9 @@ class OpenAIService {
     }
 
     /**
-     * Añade un archivo al historial como mensaje del usuario.
-     * Si se proporciona dataUrl se envía como image_url; si se proporciona textContent
-     * se envía como texto (útil para ficheros SQL/Markdown/texto).
+     * Adds a file to history as a user message.
+     * If dataUrl is provided it is sent as image_url; if textContent is provided
+     * it is sent as text (useful for SQL/Markdown/text files).
      */
     private addFileMessage(filename: string, dataUrl?: string, mimeType?: string, textContent?: string): void {
         const usingOpenAI = this.isUsingOpenAIProvider();
@@ -334,7 +334,7 @@ class OpenAIService {
         if (textContent) {
             this.conversationHistory.push({
                 role: 'user',
-                content: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}).\n\nCONTENIDO:\n${textContent}`
+                content: `Attached file: ${filename} (${mimeType || 'unknown'}).\n\nCONTENT:\n${textContent}`
             });
             return;
         }
@@ -345,7 +345,7 @@ class OpenAIService {
                 content: [
                     {
                         type: 'text',
-                        text: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}).`
+                        text: `Attached file: ${filename} (${mimeType || 'unknown'}).`
                     },
                     {
                         type: 'image_url',
@@ -362,7 +362,7 @@ class OpenAIService {
         if (usingOpenAI) {
             this.conversationHistory.push({
                 role: 'user',
-                content: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}). El proveedor OpenAI solo permite adjuntar imágenes en este flujo, por lo que se omitió el archivo.`
+                content: `Attached file: ${filename} (${mimeType || 'unknown'}). The OpenAI provider only allows attaching images in this flow, so the file was omitted.`
             });
             return;
         }
@@ -373,7 +373,7 @@ class OpenAIService {
                 content: [
                     {
                         type: 'text',
-                        text: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}).`
+                        text: `Attached file: ${filename} (${mimeType || 'unknown'}).`
                     },
                     {
                         type: 'image_url',
@@ -389,7 +389,7 @@ class OpenAIService {
 
         this.conversationHistory.push({
             role: 'user',
-            content: `Archivo adjunto: ${filename} (${mimeType || 'unknown'}). El archivo está disponible pero no se ha incluido su contenido.`
+            content: `Attached file: ${filename} (${mimeType || 'unknown'}). The file is available but its content has not been included.`
         });
     }
 
@@ -400,14 +400,14 @@ class OpenAIService {
         dataUrl?: string;
         text?: string;
     }): void {
-        const description = `Archivo adjuntado: ${fileData.filename} (${fileData.mimeType || 'unknown'}${fileData.size ? `, ${(fileData.size / 1024).toFixed(2)} KB` : ''})`;
+        const description = `Attached file: ${fileData.filename} (${fileData.mimeType || 'unknown'}${fileData.size ? `, ${(fileData.size / 1024).toFixed(2)} KB` : ''})`;
 
         if (this.isUsingOpenAIProvider()) {
             if (fileData.text) {
                 this.addToolResult(
                     toolCall.id,
                     toolCall.function.name,
-                    `${description}.\n\nCONTENIDO:\n${fileData.text}`
+                    `${description}.\n\nCONTENT:\n${fileData.text}`
                 );
                 return;
             }
@@ -432,7 +432,7 @@ class OpenAIService {
             this.addToolResult(
                 toolCall.id,
                 toolCall.function.name,
-                `${description}. El proveedor OpenAI solo admite adjuntar imágenes en este flujo, por lo que el archivo se omitió.`
+                `${description}. The OpenAI provider only supports attaching images in this flow, so the file was omitted.`
             );
             return;
         }

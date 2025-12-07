@@ -1,4 +1,4 @@
-// Lista de modelos y sus parámetros compatibles
+// List of models and their compatible parameters
 export interface ModelConfig {
     name: string;
     supportsVerbosity?: boolean;
@@ -34,18 +34,18 @@ export const MODEL_LIST: ModelConfig[] = [
 ];
 
 /**
- * Obtiene la configuración de un modelo por su nombre
- * @param modelName Nombre del modelo
- * @returns Configuración del modelo o undefined si no está en la lista
+ * Gets model configuration by name
+ * @param modelName Model name
+ * @returns Model configuration or undefined if not in the list
  */
 export function getModelConfig(modelName: string): ModelConfig | undefined {
     return MODEL_LIST.find(m => modelName == m.name);
 }
 
 /**
- * Verifica si un modelo soporta el parámetro de verbosidad
- * @param modelName Nombre del modelo
- * @returns true si soporta verbosity, false en caso contrario
+ * Checks if a model supports the verbosity parameter
+ * @param modelName Model name
+ * @returns true if it supports verbosity, false otherwise
  */
 export function supportsVerbosity(modelName: string): boolean {
     const config = getModelConfig(modelName);
@@ -53,9 +53,9 @@ export function supportsVerbosity(modelName: string): boolean {
 }
 
 /**
- * Verifica si un modelo soporta el parámetro de razonamiento
- * @param modelName Nombre del modelo
- * @returns true si soporta reasoning, false en caso contrario
+ * Checks if a model supports the reasoning parameter
+ * @param modelName Model name
+ * @returns true if it supports reasoning, false otherwise
  */
 export function supportsReasoning(modelName: string): boolean {
     const config = getModelConfig(modelName);
@@ -63,35 +63,35 @@ export function supportsReasoning(modelName: string): boolean {
 }
 
 /**
- * Genera una instrucción de sistema para simular verbosidad cuando el modelo no la soporta nativamente
- * @param verbosity Nivel de verbosidad deseado
- * @returns Instrucción para añadir al system prompt
+ * Generates a system instruction to simulate verbosity when the model does not support it natively
+ * @param verbosity Desired verbosity level
+ * @returns Instruction to add to the system prompt
  */
 export function getVerbosityInstruction(verbosity: "low" | "medium" | "high"): string {
     switch (verbosity) {
         case "low":
-            return "INSTRUCCIÓN DE VERBOSIDAD: Sé conciso y directo. Utiliza el mínimo de palabras necesarias para transmitir la información esencial. Evita explicaciones largas o redundantes.";
+            return "VERBOSITY INSTRUCTION: Be concise and direct. Use the minimum words necessary to convey essential information. Avoid long or redundant explanations.";
         case "medium":
-            return "INSTRUCCIÓN DE VERBOSIDAD: Proporciona un nivel de detalle equilibrado. Explica los conceptos importantes sin ser excesivamente verboso.";
+            return "VERBOSITY INSTRUCTION: Provide a balanced level of detail. Explain important concepts without being overly verbose.";
         case "high":
-            return "INSTRUCCIÓN DE VERBOSIDAD: Sé muy detallado y exhaustivo en tus explicaciones. Incluye contexto adicional, ejemplos y elaboraciones que ayuden a la comprensión completa.";
+            return "VERBOSITY INSTRUCTION: Be very detailed and exhaustive in your explanations. Include additional context, examples, and elaborations that help full understanding.";
     }
 }
 
 /**
- * Genera una instrucción de sistema para simular esfuerzo de razonamiento cuando el modelo no lo soporta nativamente
- * @param effort Nivel de esfuerzo de razonamiento deseado
- * @returns Instrucción para añadir al system prompt
+ * Generates a system instruction to simulate reasoning effort when the model does not support it natively
+ * @param effort Desired reasoning effort level
+ * @returns Instruction to add to the system prompt
  */
 export function getReasoningInstruction(effort: "minimal" | "low" | "medium" | "high"): string {
     switch (effort) {
         case "minimal":
-            return "INSTRUCCIÓN DE RAZONAMIENTO: Responde de forma directa sin mostrar proceso de razonamiento. Da la respuesta inmediatamente.";
+            return "REASONING INSTRUCTION: Respond directly without showing reasoning process. Give the answer immediately.";
         case "low":
-            return "INSTRUCCIÓN DE RAZONAMIENTO: Muestra solo el razonamiento esencial. Un breve análisis antes de la respuesta.";
+            return "REASONING INSTRUCTION: Show only essential reasoning. A brief analysis before the answer.";
         case "medium":
-            return "INSTRUCCIÓN DE RAZONAMIENTO: Incluye un proceso de razonamiento moderado. Muestra los pasos principales de tu análisis.";
+            return "REASONING INSTRUCTION: Include a moderate reasoning process. Show the main steps of your analysis.";
         case "high":
-            return "INSTRUCCIÓN DE RAZONAMIENTO: Muestra todo tu proceso de razonamiento paso a paso. Explica cada consideración y decisión antes de llegar a la respuesta final.";
+            return "REASONING INSTRUCTION: Show your entire reasoning process step by step. Explain each consideration and decision before reaching the final answer.";
     }
 }

@@ -24,41 +24,41 @@ class ExerciseAssistant extends BaseAssistant {
     }
 
     /**
-     * Obtiene los learningObjectives y concepts de los laboratorios requeridos anteriores al pageId especificado
-     * @param pageId ID de la página actual
-     * @param allLabs Lista de todos los laboratorios del curso
-     * @returns String formateado con los objetivos y conceptos de laboratorios previos
+     * Gets learningObjectives and concepts from required labs prior to the specified pageId
+     * @param pageId Current page ID
+     * @param allLabs List of all course labs
+     * @returns Formatted string with objectives and concepts from previous labs
      */
     private async getPreviousLabObjectives(pageId: string, allLabs: any[]): Promise<string> {
-        // Filtrar solo laboratorios requeridos
+        // Filter only required labs
         const requiredLabs = allLabs.filter(lab => lab.required);
 
-        // Encontrar el índice del laboratorio actual
+        // Find current lab index
         const currentLabIndex = requiredLabs.findIndex(lab => lab.id === pageId);
 
-        // Si no se encuentra el lab actual o es el primero, no hay laboratorios previos
+        // If current lab is not found or is the first one, there are no previous labs
         if (currentLabIndex <= 0) {
-            return 'No hay laboratorios previos requeridos para este laboratorio.';
+            return 'There are no previous required labs for this lab.';
         }
 
-        // Obtener solo los laboratorios anteriores al actual
+        // Get only labs prior to the current one
         const previousLabs = requiredLabs.slice(0, currentLabIndex);
 
-        // Recopilar información de cada laboratorio previo
+        // Collect information from each previous lab
         const labsInfo = await Promise.all(
             previousLabs.map(async (lab) => {
                 const exerciseData = await ExerciseStorageManager.getExerciseData(lab.id);
 
                 if (!exerciseData) {
-                    return `\n### ${lab.name} (ID: ${lab.id})\n- Sin datos almacenados`;
+                    return `\n### ${lab.name} (ID: ${lab.id})\n- No stored data`;
                 }
 
-                const objectives = exerciseData.learningObjectives || 'No especificados';
+                const objectives = exerciseData.learningObjectives || 'Not specified';
                 const concepts = exerciseData.concepts && exerciseData.concepts.length > 0
                     ? exerciseData.concepts.join(', ')
-                    : 'No especificados';
+                    : 'Not specified';
 
-                return `\n### ${lab.name} (ID: ${lab.id})\n**Objetivos de aprendizaje:** ${objectives}\n**Conceptos trabajados:** ${concepts}`;
+                return `\n### ${lab.name} (ID: ${lab.id})\n**Learning objectives:** ${objectives}\n**Concepts worked:** ${concepts}`;
             })
         );
 
@@ -66,10 +66,10 @@ class ExerciseAssistant extends BaseAssistant {
     }
 
     /**
-     * Identifica los ejercicios en una página usando el LLM con respuestas estructuradas
-     * @param pageId ID de la página de Egela
-     * @param resourceId ID del recurso (para ubicarlo en la lista de recursos de la sección)
-     * @returns Array de ejercicios identificados (vacío si no hay ejercicios), contexto de ejercicios y conceptos pedagógicos
+     * Identifies exercises on a page using the LLM with structured responses
+     * @param pageId Egela page ID
+     * @param resourceId Resource ID (to locate it in the section resource list)
+     * @returns Array of identified exercises (empty if no exercises), exercise context, and pedagogical concepts
      */
     async identifyExercises(pageId: string, resourceId?: string): Promise<{
         exercises: Exercise[];
@@ -77,72 +77,72 @@ class ExerciseAssistant extends BaseAssistant {
         concepts?: string[];
         learningObjectives?: string;
     }> {
-        console.log(`[identifyExercises] Identificando ejercicios en página: ${pageId}. Course ID: ${this.course?.id}`);
+        console.log(`[identifyExercises] Identifying exercises on page: ${pageId}. Course ID: ${this.course?.id}`);
 
         try {
-            // 1. Obtener el contenido de la página en formato Markdown + archivos detectados
+            // 1. Get page content in Markdown format + detected files
             const pageResult = await this.course!.getPageContent(pageId);
             const pageContent = pageResult.markdown;
             const attachedFiles = pageResult.files;
-            console.log(`[identifyExercises] Contenido de la página obtenido (${pageContent.length} caracteres), archivos: ${attachedFiles.length}`);
+            console.log(`[identifyExercises] Page content obtained (${pageContent.length} characters), files: ${attachedFiles.length}`);
 
-            // 2. Construir el system prompt usando la configuración
+            // 2. Build system prompt using configuration
             const assistantConfig = this.config.exerciseAssistant;
             const courseId = this.course?.id;
             const labData = courseId ? await LabStorageManager.getLabData(courseId) : null;
             const allLabs = labData?.labs ?? [];
 
-            // 2.1. Obtener objetivos y conceptos de laboratorios previos
+            // 2.1. Get objectives and concepts from previous labs
             const previousObjectives = await this.getPreviousLabObjectives(pageId, allLabs);
-            console.log(`[identifyExercises] Objetivos previos obtenidos`);
+            console.log(`[identifyExercises] Previous objectives obtained`);
 
-            const systemPromptTemplate = `Eres un asistente experto en {role}.
+            const systemPromptTemplate = `You are an expert assistant in {role}.
 
-Tu tarea es analizar el contenido de una página educativa, identificar los ejercicios y extraer información relevante.
+Your task is to analyze the content of an educational page, identify exercises, and extract relevant information.
 
-El id de la página actual es ${pageId}.
+The current page ID is ${pageId}.
 
-HERRAMIENTAS DISPONIBLES:
-1. getFilteredFileContent: Para extraer contenido específico de archivos de texto usando expresiones regulares.
-   - Usa esta herramienta cuando veas marcadores como [FILE1:TEXT:nombre.sql]
-   - Ejemplo para obtener CREATE TABLEs: usa el patrón "CREATE\\s+TABLE[\\s\\S]+?;"
+AVAILABLE TOOLS:
+1. getFilteredFileContent: To extract specific content from text files using regular expressions.
+   - Use this tool when you see markers like [FILE1:TEXT:name.sql]
+   - Example to get CREATE TABLEs: use the pattern "CREATE\\s+TABLE[\\s\\S]+?;"
    
-2. postExercises: OBLIGATORIA - Debes usar esta herramienta exactamente una vez al final para enviar los ejercicios identificados.
-   - Esta herramienta es tu forma de "responder" con los resultados del análisis
-   - Debes llamarla siempre, incluso si no hay ejercicios (envía un array vacío)
-   - Si recibes como respuesta "Ejercicios recibidos correctamente", significa que tu llamada fue exitosa y no debes que volver a llamarla. Simplemente termina la conversación diciendo "OK", ya que lo que digas después del post se va a ignorar.
+2. postExercises: MANDATORY - You must use this tool exactly once at the end to submit the identified exercises.
+   - This tool is your way of "responding" with the analysis results
+   - You must always call it, even if there are no exercises (send an empty array)
+   - If you receive "Exercises received correctly" as a response, it means your call was successful and you should not call it again. Simply end the conversation by saying "OK", as whatever you say after the post will be ignored.
 
-FLUJO DE TRABAJO:
-1. Analiza el contenido de la página
-2. Si hay archivos de texto (marcadores [FILEn:TEXT:nombre]), usa getFilteredFileContent para extraer información relevante (solo de archivos de texto)
-3. Identifica todos los ejercicios en la página
-4. OBLIGATORIO: Llama a postExercises con toda la información recopilada.
+WORKFLOW:
+1. Analyze page content
+2. If there are text files (markers [FILEn:TEXT:name]), use getFilteredFileContent to extract relevant information (only from text files)
+3. Identify all exercises on the page
+4. MANDATORY: Call postExercises with all collected information.
 
-CONTEXTO DE LABORATORIOS PREVIOS:
-A continuación se muestran los objetivos de aprendizaje y conceptos trabajados en laboratorios anteriores REQUERIDOS.
-Esta información te ayudará a entender qué conocimientos previos tienen los estudiantes para este laboratorio.
-Considera estos conceptos como conocimiento adquirido, y enfócate en identificar qué NUEVOS conceptos se trabajan en los ejercicios actuales.
+PREVIOUS LABS CONTEXT:
+Below are the learning objectives and concepts worked on in previous REQUIRED labs.
+This information will help you understand what prior knowledge students have for this lab.
+Consider these concepts as acquired knowledge, and focus on identifying what NEW concepts are worked on in the current exercises.
 
 {previousObjectives}
 
-CRITERIOS PARA IDENTIFICAR EJERCICIOS:
+CRITERIA FOR IDENTIFYING EXERCISES:
 {exerciseCriteria}
 
-CONTEXTO DE EJERCICIOS:
+EXERCISE CONTEXT:
 - {contextDescription}
-- Si detectas tal información, inclúyela en el campo "exercise_context"
-- Si no la detectas, envía ese campo vacío
+- If you detect such information, include it in the "exercise_context" field
+- If you don't detect it, send that field empty
 
-CONCEPTOS:
-- Analiza los ejercicios e identifica qué {conceptsFieldDescription}
-- Sé específico cuando sea posible
-- Ejemplos: {conceptsExamples}
-- Si no hay ejercicios, este campo debe estar vacío
+CONCEPTS:
+- Analyze the exercises and identify what {conceptsFieldDescription}
+- Be specific when possible
+- Examples: {conceptsExamples}
+- If there are no exercises, this field must be empty
 
-OBJETIVOS DE APRENDIZAJE:
+LEARNING OBJECTIVES:
 - {learningObjectivesGuidance}
 
-IMPORTANTE: Debes llamar a postExercises exactamente una vez al final del análisis.
+IMPORTANT: You must call postExercises exactly once at the end of the analysis.
 `;
 
             const systemPromptVariables = {
@@ -157,28 +157,28 @@ IMPORTANTE: Debes llamar a postExercises exactamente una vez al final del análi
 
             const systemPrompt = this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);
 
-            const userPrompt = `Analiza el siguiente contenido de una página educativa e identifica los ejercicios.
+            const userPrompt = `Analyze the following content of an educational page and identify the exercises.
 
-Contenido de la página:
+Page content:
 
 ${pageContent}`;
 
-            // Usar processResponseWithTools para permitir que el LLM use getFilteredFileContent
-            // y al final llame a postExercises con los resultados
+            // Use processResponseWithTools to allow the LLM to use getFilteredFileContent
+            // and finally call postExercises with the results
             this.openAIService.resetConversation();
-            console.log(`[identifyExercises] Iniciando análisis con tools`);
+            console.log(`[identifyExercises] Starting analysis with tools`);
 
             let exerciseResult: ExerciseListSchemaType | null = null;
 
-            // El toolExecutor captura cuando se llama a postExercises
+            // The toolExecutor captures when postExercises is called
             const result = await this.openAIService.processResponseWithTools(
                 async (name: string, args: any) => {
                     if (name === 'postExercises') {
-                        // Capturar los ejercicios identificados
+                        // Capture identified exercises
                         exerciseResult = args as ExerciseListSchemaType;
-                        return 'Ejercicios recibidos correctamente';
+                        return 'Exercises received correctly';
                     }
-                    // Ejecutar otras tools normalmente (getFilteredFileContent)
+                    // Execute other tools normally (getFilteredFileContent)
                     return this.executeToolCall(name, args);
                 },
                 userPrompt,
@@ -186,9 +186,9 @@ ${pageContent}`;
                 this.allowedTools.map(tool => EXERCISE_ASSISTANT_TOOLS.find((t: any) => t.function.name === tool)).filter(Boolean)
             );
 
-            // Verificar que se recibió una respuesta válida
+            // Verify that a valid response was received
             if (!exerciseResult) {
-                console.warn(`[identifyExercises] El LLM no llamó a postExercises. Retornando resultado vacío.`);
+                console.warn(`[identifyExercises] The LLM did not call postExercises. Returning empty result.`);
                 return {
                     exercises: [],
                     exerciseContext: undefined,
@@ -198,18 +198,18 @@ ${pageContent}`;
             }
 
             const response: ExerciseListSchemaType = exerciseResult;
-            console.log(`[identifyExercises] Respuesta recibida:`, response);
+            console.log(`[identifyExercises] Response received:`, response);
 
-            // 3. Convertir a objetos Exercise
+            // 3. Convert to Exercise objects
             const exercises: Exercise[] = response.exercises.map(
                 (ex: { name: string; statement: string }) => new Exercise(ex.name, ex.statement)
             );
 
-            console.log(`[identifyExercises] Se identificaron ${exercises.length} ejercicios, exercise_context presente: ${!!response.exercise_context}`);
-            console.log(`[identifyExercises] Conceptos: ${response.concepts?.join(', ') || 'N/A'}`);
-            console.log(`[identifyExercises] Objetivos de aprendizaje: ${response.learning_objectives || 'N/A'}`);
+            console.log(`[identifyExercises] Identified ${exercises.length} exercises, exercise_context present: ${!!response.exercise_context}`);
+            console.log(`[identifyExercises] Concepts: ${response.concepts?.join(', ') || 'N/A'}`);
+            console.log(`[identifyExercises] Learning objectives: ${response.learning_objectives || 'N/A'}`);
 
-            // 4. Guardar los datos en el storage para uso futuro
+            // 4. Save data to storage for future use
             const existingExerciseData = await ExerciseStorageManager.getExerciseData(pageId);
             const exerciseDataToStore = exercises.map(ex => {
                 const previous = existingExerciseData?.exercises.find(prev => prev.name === ex.name);
@@ -227,7 +227,7 @@ ${pageContent}`;
                 response.concepts || [],
                 response.learning_objectives || ''
             );
-            console.log(`[identifyExercises] Datos guardados en storage para página ${pageId}`);
+            console.log(`[identifyExercises] Data saved to storage for page ${pageId}`);
 
             return {
                 exercises,
@@ -239,9 +239,9 @@ ${pageContent}`;
         } catch (error) {
             console.error(`[identifyExercises] Error:`, error);
             if (error instanceof Error) {
-                throw new Error(`Error al identificar ejercicios: ${error.message}`);
+                throw new Error(`Error identifying exercises: ${error.message}`);
             }
-            throw new Error('Error desconocido al identificar ejercicios');
+            throw new Error('Unknown error identifying exercises');
         }
     }
 }

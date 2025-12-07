@@ -1,18 +1,18 @@
 import { AppMode, ModeStorageManager } from "../storage/ModeStorageManager";
 
-// Re-exportar AppMode para mantener compatibilidad
+// Re-export AppMode to maintain compatibility
 export { AppMode };
 
 /**
- * Gestor del modo de operación de la extensión
- * Controla si la extensión está en modo alumno o profesor
+ * Extension operation mode manager
+ * Controls whether the extension is in student or teacher mode
  */
 export class ModeManager {
     private static cachedMode: AppMode | null = null;
 
     /**
-     * Obtiene el modo actual de la aplicación
-     * @returns Modo actual (por defecto: alumno)
+     * Gets the current application mode
+     * @returns Current mode (default: student)
      */
     static async getMode(): Promise<AppMode> {
         if (this.cachedMode) {
@@ -24,29 +24,29 @@ export class ModeManager {
             this.cachedMode = mode;
             return mode;
         } catch (error) {
-            console.error("[ModeManager] Error al obtener el modo:", error);
+            console.error("[ModeManager] Error getting mode:", error);
             return AppMode.STUDENT;
         }
     }
 
     /**
-     * Establece el modo de la aplicación
-     * @param mode Modo a establecer
+     * Sets the application mode
+     * @param mode Mode to set
      */
     static async setMode(mode: AppMode): Promise<void> {
         try {
             await ModeStorageManager.saveMode(mode);
             this.cachedMode = mode;
-            console.log(`[ModeManager] Modo cambiado a: ${mode}`);
+            console.log(`[ModeManager] Mode changed to: ${mode}`);
         } catch (error) {
-            console.error("[ModeManager] Error al establecer el modo:", error);
+            console.error("[ModeManager] Error setting mode:", error);
             throw error;
         }
     }
 
     /**
-     * Verifica si el modo actual es profesor
-     * @returns true si es modo profesor
+     * Checks if the current mode is teacher
+     * @returns true if teacher mode
      */
     static async isTeacherMode(): Promise<boolean> {
         const mode = await this.getMode();
@@ -54,8 +54,8 @@ export class ModeManager {
     }
 
     /**
-     * Verifica si el modo actual es alumno
-     * @returns true si es modo alumno
+     * Checks if the current mode is student
+     * @returns true if student mode
      */
     static async isStudentMode(): Promise<boolean> {
         const mode = await this.getMode();
@@ -63,8 +63,8 @@ export class ModeManager {
     }
 
     /**
-     * Alterna entre modo alumno y profesor
-     * @returns El nuevo modo
+     * Toggles between student and teacher mode
+     * @returns The new mode
      */
     static async toggleMode(): Promise<AppMode> {
         const currentMode = await this.getMode();
@@ -74,7 +74,7 @@ export class ModeManager {
     }
 
     /**
-     * Limpia el caché del modo
+     * Clears the mode cache
      */
     static clearCache(): void {
         this.cachedMode = null;

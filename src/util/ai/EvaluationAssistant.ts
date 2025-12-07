@@ -16,14 +16,14 @@ class EvaluationAssistant extends BaseAssistant {
     }
 
     /**
-     * Evalúa una solución propuesta por el estudiante para un ejercicio
-     * @param exerciseName - Nombre del ejercicio
-     * @param exerciseStatement - Enunciado completo del ejercicio
-     * @param studentSolution - Solución propuesta por el estudiante
-     * @param exerciseContext - Contexto adicional del ejercicio (ej. esquema de BD, especificaciones)
-     * @param concepts - Conceptos que se trabajan en la página (opcional)
-     * @param learningObjectives - Objetivos de aprendizaje de la página (opcional)
-     * @returns Evaluación estructurada con puntuación y feedback
+     * Evaluates a solution proposed by the student for an exercise
+     * @param exerciseName - Exercise name
+     * @param exerciseStatement - Complete exercise statement
+     * @param studentSolution - Solution proposed by the student
+     * @param exerciseContext - Additional exercise context (e.g., DB schema, specifications)
+     * @param concepts - Concepts worked on the page (optional)
+     * @param learningObjectives - Learning objectives of the page (optional)
+     * @returns Structured evaluation with score and feedback
      */
     async evaluateSolution(
         exerciseName: string,
@@ -33,43 +33,43 @@ class EvaluationAssistant extends BaseAssistant {
         concepts?: string[],
         learningObjectives?: string
     ): Promise<EvaluationSchemaType> {
-        console.log(`[evaluateSolution] Evaluando solución para: ${exerciseName}`);
+        console.log(`[evaluateSolution] Evaluating solution for: ${exerciseName}`);
 
         const assistantConfig = this.config.evaluationAssistant;
 
-        // Construir contexto pedagógico
+        // Build pedagogical context
         const pedagogicalContext = concepts && concepts.length > 0
-            ? `- Este ejercicio trabaja los siguientes conceptos: ${concepts.join(', ')}`
+            ? `- This exercise works on the following concepts: ${concepts.join(', ')}`
             : '';
         const objectivesContext = learningObjectives
-            ? `- Objetivos de aprendizaje: ${learningObjectives}`
+            ? `- Learning objectives: ${learningObjectives}`
             : '';
         const considerObjectives = concepts || learningObjectives
-            ? '- Considera estos objetivos al evaluar si el estudiante usa las técnicas apropiadas.'
+            ? '- Consider these objectives when evaluating if the student uses appropriate techniques.'
             : '';
 
-        // Plantilla genérica del system prompt
-        const systemPromptTemplate = `Eres un {role}.
+        // Generic system prompt template
+        const systemPromptTemplate = `You are a {role}.
 
-Tu tarea es {taskDescription}
+Your task is {taskDescription}
 
-CRITERIOS DE EVALUACIÓN:
+EVALUATION CRITERIA:
 
 {evaluationCriteria}
 
-ESCALA DE PUNTUACIÓN:
+SCORING SCALE:
 {scoringScale}
 
-FORMATO DEL FEEDBACK:
+FEEDBACK FORMAT:
 {feedbackFormat}
 {contextNote}
 
-CONTEXTO PEDAGÓGICO:
+PEDAGOGICAL CONTEXT:
 {pedagogicalContext}
 {objectivesContext}
 {considerObjectives}
 
-IMPORTANTE:
+IMPORTANT:
 {importantNotes}`;
 
         const systemPromptVariables = {
@@ -78,7 +78,7 @@ IMPORTANTE:
             evaluationCriteria: assistantConfig.evaluationCriteria,
             scoringScale: assistantConfig.scoringScale,
             feedbackFormat: assistantConfig.feedbackFormat,
-            contextNote: exerciseContext ? '- Puedes usar el contexto del ejercicio y los datos de ejemplo para ilustrar problemas' : '',
+            contextNote: exerciseContext ? '- You can use the exercise context and example data to illustrate problems' : '',
             pedagogicalContext: pedagogicalContext,
             objectivesContext: objectivesContext,
             considerObjectives: considerObjectives,
@@ -87,26 +87,26 @@ IMPORTANTE:
 
         const systemPrompt = this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);
 
-        const userPrompt = `Por favor, evalúa la siguiente solución propuesta por un estudiante:
+        const userPrompt = `Please evaluate the following solution proposed by a student:
 
-**Ejercicio: ${exerciseName}**
+**Exercise: ${exerciseName}**
 
 ${exerciseStatement}
 
-${exerciseContext ? `**Contexto del ejercicio:**\n\`\`\`\n${exerciseContext}\n\`\`\`` : ''}
+${exerciseContext ? `**Exercise context:**\n\`\`\`\n${exerciseContext}\n\`\`\`` : ''}
 
-**Solución del estudiante:**
+**Student solution:**
 \`\`\`
 ${studentSolution}
 \`\`\`
 
-Proporciona una evaluación completa con puntuación y feedback detallado.`;
+Provide a complete evaluation with score and detailed feedback.`;
 
         try {
-            // Reiniciar historial para esta llamada específica
+            // Reset history for this specific call
             this.openAIService.resetConversation();
 
-            // Usar la función que permite respuestas estructuradas
+            // Use the function that allows structured responses
             const response: any = await this.openAIService.generateStructuredResponse(
                 EvaluationSchema,
                 "evaluation",
@@ -114,15 +114,15 @@ Proporciona una evaluación completa con puntuación y feedback detallado.`;
                 systemPrompt
             );
 
-            console.log(`[evaluateSolution] Evaluación generada con puntuación: ${response.score}/10`);
+            console.log(`[evaluateSolution] Evaluation generated with score: ${response.score}/10`);
             return response;
 
         } catch (error) {
             console.error(`[evaluateSolution] Error:`, error);
             if (error instanceof Error) {
-                throw new Error(`Error al evaluar solución: ${error.message}`);
+                throw new Error(`Error evaluating solution: ${error.message}`);
             }
-            throw new Error('Error desconocido al evaluar solución');
+            throw new Error('Unknown error evaluating solution');
         }
     }
 }

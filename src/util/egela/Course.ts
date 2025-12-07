@@ -7,8 +7,8 @@ import { SectionParser } from "./SectionParser";
 export { Course };
 
 /**
- * Función auxiliar para obtener el HTML de una sección
- * Puede ser llamada directamente o a través de chrome.runtime.sendMessage
+ * Helper function to get the HTML of a section
+ * Can be called directly or via chrome.runtime.sendMessage
  */
 export async function fetchSectionHtml(courseId: string, sectionNumber: number): Promise<string> {
     const url = `https://egela.ehu.eus/course/view.php?id=${courseId}&section=${sectionNumber}`;
@@ -22,7 +22,7 @@ export async function fetchSectionHtml(courseId: string, sectionNumber: number):
 }
 
 /**
- * Función auxiliar para obtener el HTML de una página
+ * Helper function to get the HTML of a page
  */
 export async function fetchPageHtml(pageId: string): Promise<string> {
     const url = `https://egela.ehu.eus/mod/page/view.php?id=${pageId}`;
@@ -53,28 +53,28 @@ class Course {
     }
 
     /**
-     * Crea una instancia de Course desde un href y el sessionStorage
-     * @param href URL actual de la página
-     * @param sessionStorageData Objeto con todos los datos de sessionStorage
-     * @returns Una instancia de Course o null si no se encuentra
+     * Creates a Course instance from an href and sessionStorage
+     * @param href Current page URL
+     * @param sessionStorageData Object with all sessionStorage data
+     * @returns A Course instance or null if not found
      */
     static async fromHrefAndStorage(href: string, sessionStorageData: Record<string, string>): Promise<Course | null> {
-        console.log('[Course.fromHrefAndStorage] Analizando URL:', href);
-        console.log('[Course.fromHrefAndStorage] Datos de sessionStorage recibidos:', Object.keys(sessionStorageData));
+        console.log('[Course.fromHrefAndStorage] Analyzing URL:', href);
+        console.log('[Course.fromHrefAndStorage] sessionStorage data received:', Object.keys(sessionStorageData));
 
-        // Caso 1: Estamos en una vista de curso (course/view.php?id=...)
+        // Case 1: We are in a course view (course/view.php?id=...)
         if (href.includes('egela.ehu.eus/course/view.php?id=')) {
             const courseId = new URL(href).searchParams.get('id');
             if (!courseId) return null;
 
-            console.log('[Course.fromHrefAndStorage] Detectado courseId:', courseId);
+            console.log('[Course.fromHrefAndStorage] Detected courseId:', courseId);
 
-            // Buscar datos del curso en sessionStorage
+            // Search for course data in sessionStorage
             const courseKey = `-716233041/course/${courseId}/staticState`;
             const courseDataStr = sessionStorageData[courseKey];
 
             if (!courseDataStr) {
-                console.error('[Course.fromHrefAndStorage] No se encontraron datos del curso en sessionStorage');
+                console.error('[Course.fromHrefAndStorage] No course data found in sessionStorage');
                 return null;
             }
 
@@ -82,20 +82,20 @@ class Course {
                 const courseData = JSON.parse(courseDataStr);
                 return new Course(courseData);
             } catch (error) {
-                console.error('[Course.fromHrefAndStorage] Error al parsear datos del curso:', error);
+                console.error('[Course.fromHrefAndStorage] Error parsing course data:', error);
                 return null;
             }
         }
 
-        // Caso 2: Estamos en una página/recurso (mod/page/view.php?id=...)
+        // Case 2: We are in a page/resource (mod/page/view.php?id=...)
         if (href.includes('egela.ehu.eus/mod/')) {
             const resourceId = new URL(href).searchParams.get('id');
             if (!resourceId) return null;
 
-            console.log('[Course.fromHrefAndStorage] Detectado resourceId:', resourceId);
-            console.log('[Course.fromHrefAndStorage] Buscando curso que contenga este recurso...');
+            console.log('[Course.fromHrefAndStorage] Detected resourceId:', resourceId);
+            console.log('[Course.fromHrefAndStorage] Searching for course containing this resource...');
 
-            // Buscar en todos los cursos del sessionStorage
+            // Search in all courses in sessionStorage
             for (const [key, value] of Object.entries(sessionStorageData)) {
                 if (!key.includes('-716233041/course/') || !key.endsWith('/staticState')) continue;
 

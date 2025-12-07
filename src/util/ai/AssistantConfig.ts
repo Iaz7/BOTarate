@@ -1,10 +1,10 @@
 /**
- * Configuración para un asistente específico
- * Define las variables que se sustituirán en las plantillas de prompt
+ * Configuration for a specific assistant
+ * Defines variables to be substituted in prompt templates
  */
 export interface AssistantConfig {
     /**
-     * Variables para el asistente de curso (chat general)
+     * Variables for course assistant (general chat)
      */
     courseAssistant: {
         role: string;
@@ -14,7 +14,7 @@ export interface AssistantConfig {
     };
 
     /**
-     * Variables para el asistente de identificación de ejercicios
+     * Variables for exercise identification assistant
      */
     exerciseAssistant: {
         role: string;
@@ -27,7 +27,7 @@ export interface AssistantConfig {
     };
 
     /**
-     * Variables para el asistente de evaluación
+     * Variables for evaluation assistant
      */
     evaluationAssistant: {
         role: string;
@@ -39,7 +39,7 @@ export interface AssistantConfig {
     };
 
     /**
-     * Variables para el asistente de explicación/tutorial
+     * Variables for explanation/tutorial assistant
      */
     explanationAssistant: {
         role: string;
@@ -51,7 +51,7 @@ export interface AssistantConfig {
     };
 
     /**
-     * Configuración común para todos los asistentes
+     * Common configuration for all assistants
      */
     common: {
         subjectName: string;

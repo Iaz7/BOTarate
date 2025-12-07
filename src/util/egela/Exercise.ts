@@ -1,7 +1,7 @@
 export { Exercise };
 
 /**
- * Representa un ejercicio encontrado en una página de Egela
+ * Represents an exercise found on an Egela page
  */
 class Exercise {
     name: string;

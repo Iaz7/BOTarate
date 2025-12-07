@@ -1,7 +1,7 @@
 import { BaseStorageManager } from "./BaseStorageManager";
 
 /**
- * Estructura de datos de ejercicios para una página
+ * Exercise data structure for a page
  */
 export interface ExerciseData {
     pageId: string;
@@ -12,19 +12,19 @@ export interface ExerciseData {
 }
 
 /**
- * Gestor de almacenamiento para listas de ejercicios
- * Guarda y recupera las listas de ejercicios identificados por el ExerciseAssistant
+ * Storage manager for exercise lists
+ * Saves and retrieves exercise lists identified by ExerciseAssistant
  */
 export class ExerciseStorageManager extends BaseStorageManager {
     private static readonly STORAGE_KEY_PREFIX = 'exercise_data_';
 
     /**
-     * Guarda los datos de ejercicios de una página en el storage
-     * @param pageId ID de la página
-     * @param exercises Lista de ejercicios
-     * @param exerciseContext Contexto de ejercicios opcional (ej. esquema de BD, especificaciones)
-     * @param concepts Conceptos trabajados en los ejercicios
-     * @param learningObjectives Objetivos de aprendizaje opcionales
+     * Saves exercise data for a page to storage
+     * @param pageId Page ID
+     * @param exercises List of exercises
+     * @param exerciseContext Optional exercise context (e.g., DB schema, specifications)
+     * @param concepts Concepts worked on in the exercises
+     * @param learningObjectives Optional learning objectives
      */
     static async saveExerciseData(
         pageId: string,
@@ -45,57 +45,57 @@ export class ExerciseStorageManager extends BaseStorageManager {
     }
 
     /**
-     * Recupera los datos de ejercicios de una página del storage
-     * @param pageId ID de la página
-     * @returns Datos de ejercicios o null si no existen
+     * Retrieves exercise data for a page from storage
+     * @param pageId Page ID
+     * @returns Exercise data or null if not exists
      */
     static async getExerciseData(pageId: string): Promise<(ExerciseData & { timestamp: number }) | null> {
         return await this.getData<ExerciseData>(this.STORAGE_KEY_PREFIX, pageId);
     }
 
     /**
-     * Elimina los datos de ejercicios de una página del storage
-     * @param pageId ID de la página
+     * Deletes exercise data for a page from storage
+     * @param pageId Page ID
      */
     static async removeExerciseData(pageId: string): Promise<void> {
         await this.removeData(this.STORAGE_KEY_PREFIX, pageId);
     }
 
     /**
-     * Limpia todos los datos de ejercicios almacenados
+     * Clears all stored exercise data
      */
     static async clearAllExerciseData(): Promise<void> {
         await this.clearAllData(this.STORAGE_KEY_PREFIX);
     }
 
     /**
-     * Verifica si existen datos guardados para una página
-     * @param pageId ID de la página
-     * @returns true si existen datos, false en caso contrario
+     * Checks if saved data exists for a page
+     * @param pageId Page ID
+     * @returns true if data exists, false otherwise
      */
     static async hasExerciseData(pageId: string): Promise<boolean> {
         return await this.hasData(this.STORAGE_KEY_PREFIX, pageId);
     }
 
     /**
-     * Obtiene la cantidad de días desde que se guardaron los datos
-     * @param pageId ID de la página
-     * @returns Días transcurridos o null si no hay datos
+     * Gets the number of days since data was saved
+     * @param pageId Page ID
+     * @returns Days elapsed or null if no data
      */
     static async getExerciseDataAge(pageId: string): Promise<number | null> {
         return await this.getDaysSinceLastUpdate(this.STORAGE_KEY_PREFIX, pageId);
     }
 
     /**
-     * Actualiza el estado 'allowed' de un ejercicio específico
-     * @param pageId ID de la página
-     * @param exerciseName Nombre del ejercicio
-     * @param allowed Nuevo estado de permitido/bloqueado
+     * Updates the 'allowed' status of a specific exercise
+     * @param pageId Page ID
+     * @param exerciseName Exercise name
+     * @param allowed New allowed/blocked status
      */
     static async updateExerciseAllowed(pageId: string, exerciseName: string, allowed: boolean): Promise<void> {
         const data = await this.getExerciseData(pageId);
         if (!data) {
-            throw new Error(`No se encontraron datos de ejercicios para la página ${pageId}`);
+            throw new Error(`No exercise data found for page ${pageId}`);
         }
 
         const exercise = data.exercises.find(ex => ex.name === exerciseName);

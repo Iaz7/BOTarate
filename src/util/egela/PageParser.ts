@@ -4,8 +4,8 @@ import { HtmlParserBase } from "./HtmlParserBase";
 export { PageParser };
 
 /**
- * Parser especializado para parsear páginas de ejercicios a Markdown
- * con soporte para detección y marcado de archivos adjuntos
+ * Specialized parser for parsing exercise pages to Markdown
+ * with support for attachment detection and marking
  */
 class PageParser extends HtmlParserBase {
     private lines: string[] = [];
@@ -21,9 +21,9 @@ class PageParser extends HtmlParserBase {
     }
 
     /**
-     * Parsea un elemento HTML a formato Markdown con detección de archivos
-     * @param element Elemento HTML a parsear
-     * @returns Objeto con el markdown generado y los archivos detectados
+     * Parses an HTML element to Markdown format with file detection
+     * @param element HTML element to parse
+     * @returns Object with generated markdown and detected files
      */
     async parseToMarkdown(element: any): Promise<{ markdown: string; files: FileData[] }> {
         this.lines = [];
@@ -41,17 +41,17 @@ class PageParser extends HtmlParserBase {
     }
 
     /**
-     * Procesa un nodo HTML de forma recursiva
+     * Processes an HTML node recursively
      */
     private async processNode(node: any): Promise<void> {
         const tagName = node.tagName?.toLowerCase();
 
-        // Saltar elementos irrelevantes
+        // Skip irrelevant elements
         if (this.shouldSkipNode(node, tagName)) {
             return;
         }
 
-        // Procesar según el tipo de elemento
+        // Process according to element type
         switch (tagName) {
             case 'h1':
                 await this.processHeading(node, '#');
@@ -93,7 +93,7 @@ class PageParser extends HtmlParserBase {
     }
 
     /**
-     * Procesa una imagen, descargándola y añadiendo un marcador
+     * Processes an image, downloading it and adding a marker
      */
     private async processImage(node: any): Promise<void> {
         const src = node.getAttribute('src') || node.dataset?.src;

@@ -86,18 +86,18 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
 
             if (response.success) {
                 setIsChatInitialized(true);
-                console.log("Contexto de chat inicializado");
+                console.log("Chat context initialized");
             } else {
-                console.error("Error al inicializar chat:", response.error);
+                console.error("Error initializing chat:", response.error);
             }
         } catch (error) {
-            console.error("Error al inicializar chat:", error);
+            console.error("Error initializing chat:", error);
         }
     };
 
     const handleLoadCachedExplanation = async () => {
         if (!pageId) {
-            setExplanationError("No se puede cargar la explicación: falta el ID de página");
+            setExplanationError("Cannot load explanation: page ID missing");
             return;
         }
 
@@ -113,7 +113,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
 
             if (response.success) {
                 setExplanation(response.explanation);
-                console.log("Explicación cargada del cache");
+                console.log("Explanation loaded from cache");
 
                 // Cargar el historial del chat si existe
                 if (response.explanation.chatHistory && Array.isArray(response.explanation.chatHistory)) {
@@ -123,13 +123,13 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                 // Inicializar el contexto del chat para explicaciones cargadas del cache
                 await initializeChatContext(true);
             } else {
-                const errorMessage = response.error || "No se encontró explicación guardada";
-                console.error("Error al cargar explicación del cache:", errorMessage);
+                const errorMessage = response.error || "No saved explanation found";
+                console.error("Error loading explanation from cache:", errorMessage);
                 setExplanationError(errorMessage);
             }
         } catch (error) {
-            console.error("Error al cargar explicación del cache:", error);
-            setExplanationError("Error de comunicación al cargar la explicación");
+            console.error("Error loading explanation from cache:", error);
+            setExplanationError("Communication error loading explanation");
         } finally {
             setIsLoadingExplanation(false);
         }
@@ -149,7 +149,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
 
             if (response.success) {
                 setExplanation(response.explanation);
-                console.log("Explicación generada exitosamente");
+                console.log("Explanation generated successfully");
 
                 // El contexto ya está en explanationAssistant, no necesitamos inicializar
                 setIsChatInitialized(true);
@@ -159,16 +159,16 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                     onExplanationGenerated();
                 }
             } else {
-                const errorMessage = response.error || "Error desconocido al generar la explicación";
-                console.error("Error al generar explicación:", errorMessage);
+                const errorMessage = response.error || "Unknown error generating explanation";
+                console.error("Error generating explanation:", errorMessage);
                 setExplanationError(errorMessage);
             }
         } catch (error) {
-            console.error("Error al generar explicación:", error);
+            console.error("Error generating explanation:", error);
             const errorMessage =
                 error instanceof Error
-                    ? `Error de comunicación: ${error.message}`
-                    : "Error de comunicación con el asistente de IA";
+                    ? `Communication error: ${error.message}`
+                    : "Communication error with AI assistant";
             setExplanationError(errorMessage);
         } finally {
             setIsLoadingExplanation(false);
@@ -217,17 +217,17 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
             } else {
                 const errorMessage: ChatMessage = {
                     role: "assistant",
-                    content: `Error: ${response.error || "Error desconocido"}`,
+                    content: `Error: ${response.error || "Unknown error"}`,
                     id: `error-${Date.now()}`,
                 };
 
                 setChatMessages([...newMessages, errorMessage]);
             }
         } catch (error) {
-            console.error("Error al enviar mensaje:", error);
+            console.error("Error sending message:", error);
             const errorMessage: ChatMessage = {
                 role: "assistant",
-                content: "Error de comunicación con el asistente de IA",
+                content: "Communication error with AI assistant",
                 id: `error-${Date.now()}`,
             };
 
@@ -252,10 +252,10 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                 <div className="p-4" style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #dee2e6" }}>
                     {exercise.isTiquismiqui && (
                         <div className="alert alert-warning" role="alert">
-                            <strong>⚠️ Ejercicio marcado como tiquismiquis.</strong>
+                            <strong>⚠️ Exercise marked as picky.</strong>
                             <p className="mb-0 mt-1 small">
-                                Esta explicación podría no ser completamente correcta. Revisa los pasos detenidamente y
-                                consulta con tu profesor si encuentras algo raro.
+                                This explanation might not be completely correct. Review the steps carefully and consult
+                                your teacher if you find anything strange.
                             </p>
                         </div>
                     )}
@@ -265,9 +265,9 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                             style={{ minHeight: "200px" }}
                         >
                             <output className="spinner-border text-primary mb-3">
-                                <span className="visually-hidden">Cargando...</span>
+                                <span className="visually-hidden">Loading...</span>
                             </output>
-                            <p className="text-muted">Generando explicación...</p>
+                            <p className="text-muted">Generating explanation...</p>
                         </div>
                     )}
 
@@ -278,13 +278,13 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                         >
                             <div className="alert alert-danger w-100" role="alert">
                                 <h5 className="alert-heading d-flex align-items-center">
-                                    Error al generar la explicación
+                                    Error generating explanation
                                 </h5>
                                 <hr />
                                 <p className="mb-3">{explanationError}</p>
                                 <div className="d-flex gap-2">
                                     <button onClick={handleGenerateExplanation} className="btn btn-danger">
-                                        Reintentar
+                                        Retry
                                     </button>
                                 </div>
                             </div>
@@ -339,7 +339,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                 }}
                                 className="btn btn-outline-primary"
                             >
-                                Regenerar Explicación
+                                Regenerate explanation
                             </button>
                         </div>
                     )}
@@ -351,8 +351,8 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                     style={{ width: "35%", minWidth: "450px", backgroundColor: "#f8f9fa" }}
                 >
                     <div className="px-3 py-2 border-bottom bg-white">
-                        <h6 className="mb-0">💬 Preguntas sobre la explicación</h6>
-                        <small className="text-muted">Haz preguntas sobre cualquier paso de la explicación</small>
+                        <h6 className="mb-0">💬 Questions about the explanation</h6>
+                        <small className="text-muted">Ask questions about any step of the explanation</small>
                     </div>
 
                     {/* Mensajes del chat */}
@@ -370,11 +370,11 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                     >
                         {!isChatInitialized ? (
                             <div className="alert alert-info" role="alert">
-                                <small>Esperando a que se cargue la explicación...</small>
+                                <small>Waiting for explanation to load...</small>
                             </div>
                         ) : chatMessages.length === 0 ? (
                             <div className="alert alert-info" role="alert">
-                                <small>¿Tienes alguna duda sobre la explicación? Pregúntame lo que quieras.</small>
+                                <small>Do you have any questions about the explanation? Ask me anything.</small>
                             </div>
                         ) : (
                             chatMessages.map(message => (
@@ -384,7 +384,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                 >
                                     <div className="card-body p-2">
                                         <div className="small mb-1">
-                                            <strong>{message.role === "user" ? "Tú" : "Asistente"}</strong>
+                                            <strong>{message.role === "user" ? "You" : "Assistant"}</strong>
                                         </div>
                                         <div style={{ fontSize: "0.9rem" }}>
                                             <ReactMarkdown
@@ -433,11 +433,11 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                     <div className="d-flex align-items-center">
                                         <output
                                             className="spinner-border spinner-border-sm me-2"
-                                            aria-label="Generando respuesta"
+                                            aria-label="Generating response"
                                         >
-                                            <span className="visually-hidden">Cargando...</span>
+                                            <span className="visually-hidden">Loading...</span>
                                         </output>
-                                        <span className="small">Generando respuesta...</span>
+                                        <span className="small">Generating response...</span>
                                     </div>
                                 </div>
                             </div>
@@ -449,7 +449,9 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                         <div className="d-flex gap-2 align-items-end">
                             <textarea
                                 className="form-control"
-                                placeholder={!isChatInitialized ? "Esperando explicación..." : "Escribe tu pregunta..."}
+                                placeholder={
+                                    !isChatInitialized ? "Waiting for explanation..." : "Type your question..."
+                                }
                                 value={chatInput}
                                 onChange={e => setChatInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
@@ -462,7 +464,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                 type="button"
                                 onClick={handleSendChatMessage}
                                 disabled={isSendingMessage || !chatInput.trim() || !isChatInitialized}
-                                title="Enviar pregunta"
+                                title="Send question"
                                 style={{
                                     padding: "8px 12px",
                                     display: "flex",

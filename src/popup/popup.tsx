@@ -18,7 +18,7 @@ const Popup: React.FC = () => {
         return (
             <div className="p-4 text-center" style={{ width: "300px" }}>
                 <div className="spinner-border spinner-border-sm" role="status">
-                    <span className="visually-hidden">Cargando...</span>
+                    <span className="visually-hidden">Loading...</span>
                 </div>
             </div>
         );
@@ -27,17 +27,17 @@ const Popup: React.FC = () => {
     return (
         <div className="p-3" style={{ width: "300px" }}>
             <div className="d-flex align-items-center justify-content-center mb-3">
-                <h5 className="mb-0">Egela Assistant</h5>
+                <h5 className="mb-0">Moodlia</h5>
             </div>
 
             <div className="alert alert-info small mb-3" role="alert">
-                Bienvenido al asistente de Egela. Configura la extensión para empezar a usarla.
+                Welcome to Moodlia. Configure the extension to start using it.
             </div>
 
             <div className="d-grid gap-2">
                 <button className="btn btn-primary" onClick={openOptionsPage}>
                     <i className="bi bi-gear me-2" />
-                    {" Abrir Configuración"}
+                    {" Open settings"}
                 </button>
             </div>
 

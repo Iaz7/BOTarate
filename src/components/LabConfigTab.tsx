@@ -190,10 +190,10 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                 onConfigUpdate();
             }
 
-            alert("Configuración del curso guardada correctamente.");
+            alert("Course configuration saved successfully.");
         } catch (error) {
             console.error("Error saving lab config:", error);
-            alert("Error al guardar la configuración. Por favor, inténtalo de nuevo.");
+            alert("Error saving configuration. Please try again.");
         } finally {
             setIsSaving(false);
         }
@@ -202,9 +202,9 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
     const renderVerbositySelector = (labId: string, currentVerbosity: VerbosityLevel) => (
         <div className="mb-2 d-flex align-items-center">
             <div style={{ minWidth: 150 }} className="me-3">
-                <label className="form-label small text-muted mb-0">Nivel de verbosidad</label>
+                <label className="form-label small text-muted mb-0">Verbosity level</label>
             </div>
-            <div className="btn-group" role="group" aria-label="Nivel de verbosidad">
+            <div className="btn-group" role="group" aria-label="Verbosity Level">
                 <input
                     type="radio"
                     className="btn-check"
@@ -218,9 +218,9 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                 <label
                     className="btn btn-outline-primary"
                     htmlFor={`verbosity-low-${labId}`}
-                    title="Respuestas concisas y directas"
+                    title="Concise and direct answers"
                 >
-                    Bajo
+                    Low
                 </label>
                 <input
                     type="radio"
@@ -235,9 +235,9 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                 <label
                     className="btn btn-outline-primary"
                     htmlFor={`verbosity-medium-${labId}`}
-                    title="Nivel de detalle equilibrado"
+                    title="Balanced detail level"
                 >
-                    Medio
+                    Medium
                 </label>
                 <input
                     type="radio"
@@ -252,9 +252,9 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                 <label
                     className="btn btn-outline-primary"
                     htmlFor={`verbosity-high-${labId}`}
-                    title="Explicaciones detalladas y extensas"
+                    title="Detailed and extensive explanations"
                 >
-                    Alto
+                    High
                 </label>
             </div>
         </div>
@@ -263,9 +263,9 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
     const renderReasoningSelector = (labId: string, currentReasoning: ReasoningEffort) => (
         <div className="mb-2 d-flex align-items-center">
             <div style={{ minWidth: 150 }} className="me-3">
-                <label className="form-label small text-muted mb-0">Esfuerzo de razonamiento</label>
+                <label className="form-label small text-muted mb-0">Reasoning effort</label>
             </div>
-            <div className="btn-group" role="group" aria-label="Esfuerzo de razonamiento">
+            <div className="btn-group" role="group" aria-label="Reasoning Effort">
                 <input
                     type="radio"
                     className="btn-check"
@@ -279,9 +279,9 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                 <label
                     className="btn btn-outline-primary"
                     htmlFor={`reasoning-minimal-${labId}`}
-                    title="Respuesta directa sin razonamiento"
+                    title="Direct answer without reasoning"
                 >
-                    Mínimo
+                    Minimal
                 </label>
                 <input
                     type="radio"
@@ -293,12 +293,8 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                     onChange={() => handleReasoningChange(labId, "low")}
                     disabled={isSaving}
                 />
-                <label
-                    className="btn btn-outline-primary"
-                    htmlFor={`reasoning-low-${labId}`}
-                    title="Razonamiento básico"
-                >
-                    Bajo
+                <label className="btn btn-outline-primary" htmlFor={`reasoning-low-${labId}`} title="Basic reasoning">
+                    Low
                 </label>
                 <input
                     type="radio"
@@ -313,9 +309,9 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                 <label
                     className="btn btn-outline-primary"
                     htmlFor={`reasoning-medium-${labId}`}
-                    title="Razonamiento moderado"
+                    title="Moderate reasoning"
                 >
-                    Medio
+                    Medium
                 </label>
                 <input
                     type="radio"
@@ -330,9 +326,9 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                 <label
                     className="btn btn-outline-primary"
                     htmlFor={`reasoning-high-${labId}`}
-                    title="Razonamiento detallado paso a paso"
+                    title="Detailed step-by-step reasoning"
                 >
-                    Alto
+                    High
                 </label>
             </div>
         </div>
@@ -342,9 +338,9 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
         return (
             <div className="text-center py-4">
                 <output className="spinner-border">
-                    <span className="visually-hidden">Cargando laboratorios...</span>
+                    <span className="visually-hidden">Loading labs...</span>
                 </output>
-                <p className="mt-2 text-muted small">Cargando laboratorios...</p>
+                <p className="mt-2 text-muted small">Loading labs...</p>
             </div>
         );
     }
@@ -352,10 +348,9 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
     if (labs.length === 0) {
         return (
             <div className="alert alert-info" role="alert">
-                <strong>No hay laboratorios disponibles</strong>
+                <strong>No labs available</strong>
                 <p className="mb-0 mt-2 small">
-                    No se encontraron recursos de tipo "página" en el curso que puedan ser configurados como
-                    laboratorios.
+                    No 'page' type resources found in the course that can be configured as labs.
                 </p>
             </div>
         );
@@ -366,27 +361,27 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
             {/* Explicación del sistema */}
             <div className="alert alert-primary small mb-3" role="alert">
                 <h6 className="alert-heading">
-                    <i className="bi bi-info-circle"></i> Configuración del curso
+                    <i className="bi bi-info-circle"></i> Course configuration
                 </h6>
                 <p className="mb-2">
-                    Configura cada laboratorio con sus opciones de <strong>nivel requerido</strong>,{" "}
-                    <strong>verbosidad</strong> y <strong>razonamiento</strong>.
+                    Configure each lab with its <strong>required level</strong>, <strong>verbosity</strong> and{" "}
+                    <strong>reasoning</strong> options.
                 </p>
                 <ul className="mb-2 small">
                     <li>
-                        <strong>Laboratorio requerido:</strong> Los laboratorios marcados como requeridos se
-                        desbloquearán secuencialmente cuando el alumno complete los retos del laboratorio anterior.
+                        <strong>Required lab:</strong> Labs marked as required will unlock sequentially when the student
+                        completes the challenges of the previous lab.
                     </li>
                     <li>
-                        <strong>Nivel de verbosidad:</strong> Controla el nivel de detalle en las explicaciones del
-                        asistente (bajo, medio o alto).
+                        <strong>Verbosity level:</strong> Controls the level of detail in the assistant's explanations
+                        (low, medium, or high).
                     </li>
                     <li>
-                        <strong>Esfuerzo de razonamiento:</strong> Configura cuánto detalle debe poner el asistente en
-                        explicar su razonamiento (mínimo, bajo, medio o alto).
+                        <strong>Reasoning effort:</strong> Configures how much detail the assistant should put into
+                        explaining its reasoning (minimal, low, medium, or high).
                     </li>
                 </ul>
-                <p className="mb-0 small">Haz clic en un laboratorio para expandir sus opciones de configuración.</p>
+                <p className="mb-0 small">Click on a lab to expand its configuration options.</p>
             </div>
 
             <div className="accordion" id="labAccordion">
@@ -409,7 +404,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                                     <div className="d-flex align-items-center flex-grow-1 me-2">
                                         <span className="badge bg-secondary me-2">#{index + 1}</span>
                                         <span className="text-truncate">{lab.name}</span>
-                                        {isRequired && <span className="badge bg-primary ms-2">Requerido</span>}
+                                        {isRequired && <span className="badge bg-primary ms-2">Required</span>}
                                     </div>
                                 </button>
                             </h2>
@@ -421,7 +416,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                                             className="form-label small text-muted mb-0"
                                             htmlFor={`switch-lab-${lab.id}`}
                                         >
-                                            Laboratorio requerido
+                                            Required lab
                                         </label>
                                         <div className="form-check form-switch">
                                             <input
@@ -440,7 +435,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                                     <hr className="my-2" />
 
                                     <p className="small text-muted mb-2">
-                                        <strong>Configuración del asistente de explicaciones:</strong>
+                                        <strong>Explanation assistant configuration:</strong>
                                     </p>
 
                                     {/* Selector de Verbosidad */}
@@ -457,8 +452,8 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
 
             {hasUnsavedChanges && (
                 <div className="alert alert-warning small mb-3 mt-3" role="alert">
-                    <strong>⚠️ Tienes cambios sin guardar</strong>
-                    <p className="mb-0 mt-1">Haz clic en "Guardar cambios" para aplicar la configuración.</p>
+                    <strong>⚠️ You have unsaved changes</strong>
+                    <p className="mb-0 mt-1">Click "Save changes" to apply the configuration.</p>
                 </div>
             )}
 
@@ -471,12 +466,12 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                     {isSaving ? (
                         <>
                             <output className="spinner-border spinner-border-sm me-2">
-                                <span className="visually-hidden">Guardando...</span>
+                                <span className="visually-hidden">Saving...</span>
                             </output>
-                            Guardando cambios...
+                            Saving changes...
                         </>
                     ) : (
-                        "Guardar cambios"
+                        "Save changes"
                     )}
                 </button>
             </div>
@@ -484,9 +479,9 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
             {isSaving && (
                 <div className="alert alert-secondary small d-flex align-items-center mt-2" role="alert">
                     <output className="spinner-border spinner-border-sm me-2">
-                        <span className="visually-hidden">Guardando...</span>
+                        <span className="visually-hidden">Saving...</span>
                     </output>
-                    Aplicando configuración...
+                    Applying configuration...
                 </div>
             )}
         </div>

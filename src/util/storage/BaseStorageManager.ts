@@ -1,15 +1,15 @@
 /**
- * Clase base para gestores de almacenamiento
- * Proporciona funcionalidad común para guardar y recuperar datos usando chrome.storage.local
+ * Base class for storage managers
+ * Provides common functionality to save and retrieve data using chrome.storage.local
  * 
- * Las clases hijas deben definir STORAGE_KEY_PREFIX como una propiedad estática
+ * Child classes must define STORAGE_KEY_PREFIX as a static property
  */
 export abstract class BaseStorageManager {
     /**
-     * Guarda datos en el storage
-     * @param prefix Prefijo de la clave de storage
-     * @param key Clave única para los datos
-     * @param data Datos a guardar
+     * Saves data to storage
+     * @param prefix Storage key prefix
+     * @param key Unique key for the data
+     * @param data Data to save
      */
     protected static async saveData(prefix: string, key: string, data: any): Promise<void> {
         try {
@@ -20,18 +20,18 @@ export abstract class BaseStorageManager {
             };
 
             await chrome.storage.local.set({ [storageKey]: dataWithTimestamp });
-            console.log(`[${this.name}] Datos guardados para clave ${key}`);
+            console.log(`[${this.name}] Data saved for key ${key}`);
         } catch (error) {
-            console.error(`[${this.name}] Error al guardar datos:`, error);
+            console.error(`[${this.name}] Error saving data:`, error);
             throw error;
         }
     }
 
     /**
-     * Recupera datos del storage
-     * @param prefix Prefijo de la clave de storage
-     * @param key Clave única de los datos
-     * @returns Datos recuperados o null si no existen
+     * Retrieves data from storage
+     * @param prefix Storage key prefix
+     * @param key Unique key for the data
+     * @returns Retrieved data or null if not exists
      */
     protected static async getData<T>(prefix: string, key: string): Promise<(T & { timestamp: number }) | null> {
         try {
@@ -40,37 +40,37 @@ export abstract class BaseStorageManager {
             const data = result[storageKey];
 
             if (data) {
-                console.log(`[${this.name}] Datos encontrados para clave ${key} (guardados el ${new Date(data.timestamp).toLocaleString()})`);
+                console.log(`[${this.name}] Data found for key ${key} (saved on ${new Date(data.timestamp).toLocaleString()})`);
                 return data;
             }
 
-            console.log(`[${this.name}] No hay datos guardados para clave ${key}`);
+            console.log(`[${this.name}] No saved data for key ${key}`);
             return null;
         } catch (error) {
-            console.error(`[${this.name}] Error al recuperar datos:`, error);
+            console.error(`[${this.name}] Error retrieving data:`, error);
             return null;
         }
     }
 
     /**
-     * Elimina datos del storage
-     * @param prefix Prefijo de la clave de storage
-     * @param key Clave única de los datos
+     * Deletes data from storage
+     * @param prefix Storage key prefix
+     * @param key Unique key for the data
      */
     protected static async removeData(prefix: string, key: string): Promise<void> {
         try {
             const storageKey = `${prefix}${key}`;
             await chrome.storage.local.remove(storageKey);
-            console.log(`[${this.name}] Datos eliminados para clave ${key}`);
+            console.log(`[${this.name}] Data deleted for key ${key}`);
         } catch (error) {
-            console.error(`[${this.name}] Error al eliminar datos:`, error);
+            console.error(`[${this.name}] Error deleting data:`, error);
             throw error;
         }
     }
 
     /**
-     * Limpia todos los datos del storage con este prefijo
-     * @param prefix Prefijo de las claves a eliminar
+     * Clears all data from storage with this prefix
+     * @param prefix Prefix of keys to delete
      */
     protected static async clearAllData(prefix: string): Promise<void> {
         try {
@@ -81,19 +81,19 @@ export abstract class BaseStorageManager {
 
             if (keysToRemove.length > 0) {
                 await chrome.storage.local.remove(keysToRemove);
-                console.log(`[${this.name}] ${keysToRemove.length} entradas eliminadas`);
+                console.log(`[${this.name}] ${keysToRemove.length} entries deleted`);
             }
         } catch (error) {
-            console.error(`[${this.name}] Error al limpiar datos:`, error);
+            console.error(`[${this.name}] Error clearing data:`, error);
             throw error;
         }
     }
 
     /**
-     * Verifica si existen datos para una clave
-     * @param prefix Prefijo de la clave de storage
-     * @param key Clave única de los datos
-     * @returns true si existen datos, false en caso contrario
+     * Checks if data exists for a key
+     * @param prefix Storage key prefix
+     * @param key Unique key for the data
+     * @returns true if data exists, false otherwise
      */
     protected static async hasData(prefix: string, key: string): Promise<boolean> {
         const data = await this.getData(prefix, key);

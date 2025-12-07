@@ -85,27 +85,26 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const isChatDisabled =
         isAnyModalOpen || isGenerating || isLoadingExercises || isLabBlocked || (!!pageId && !hasExercisesLoaded);
     const getChatPlaceholder = () => {
-        if (isAnyModalOpen) return "Chat deshabilitado (modal abierto)...";
-        if (isLabBlocked) return "Laboratorio bloqueado...";
-        if (isLoadingExercises) return "Cargando ejercicios...";
-        if (pageId && !hasExercisesLoaded)
-            return "No hay ejercicios cargados. Presiona 'Identificar' para analizarlos...";
-        return "Escribe tu pregunta...";
+        if (isAnyModalOpen) return "Chat disabled (modal open)...";
+        if (isLabBlocked) return "Lab blocked...";
+        if (isLoadingExercises) return "Loading exercises...";
+        if (pageId && !hasExercisesLoaded) return "No exercises loaded. Press 'Identify' to analyze them...";
+        return "Type your question...";
     };
     const getWelcomeMessage = () => {
         if (!pageId) {
-            return "Puedes preguntarme sobre el contenido del curso. Si quieres trabajar ejercicios, abre un laboratorio primero.";
+            return "You can ask me about the course content. If you want to work on exercises, open a lab first.";
         }
 
         if (exercises.length > 0) {
-            return "Los ejercicios de esta página están listos. Pídeme una explicación o dime si quieres revisar tu solución para cualquiera de ellos. Si quieres también puedo darte la lista de ejercicios disponibles.";
+            return "The exercises on this page are ready. Ask me for an explanation or tell me if you want to check your solution for any of them. If you want, I can also give you the list of available exercises.";
         }
 
         if (pageId && !hasExercisesLoaded) {
-            return "En cuanto identifiques los ejercicios podré ayudarte con ellos.";
+            return "As soon as you identify the exercises, I will be able to help you with them.";
         }
 
-        return "Estoy aquí para ayudarte con el curso.";
+        return "I am here to help you with the course.";
     };
 
     React.useEffect(() => {
@@ -467,7 +466,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             console.error("Error generating response:", error);
             const errorMessage: ChatMessage = {
                 role: "assistant",
-                content: "Error al generar la respuesta. Por favor, inténtalo de nuevo.",
+                content: "Error generating response. Please try again.",
                 id: `error-${Date.now()}`,
             };
             setMessages(prev => [...prev, errorMessage]);
@@ -532,7 +531,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     fontSize: "16px",
                     boxShadow: "-4px 0 16px rgba(0,0,0,0.6)",
                 }}
-                title={isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"}
+                title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
                 {isCollapsed ? "◀" : "▶"}
             </button>
@@ -543,7 +542,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     <div className="d-flex align-items-center">
                         <img
                             src={chrome.runtime.getURL("icons/icon128.png")}
-                            alt="DBot Icon"
+                            alt="Moodlia Icon"
                             style={{ width: "48px", height: "48px", marginRight: "16px" }}
                         />
                         <h2 className="h2 mb-0">{APP_CONFIG.NAME}</h2>
@@ -551,7 +550,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     {/* Selector de modo solo visible para profesores */}
                     {isUserTeacher && (
                         <div className="d-flex flex-column bg-light p-3 rounded border">
-                            <label className="form-label fw-bold mb-2">Modo</label>
+                            <label className="form-label fw-bold mb-2">Mode</label>
                             <div className="d-flex flex-column gap-1">
                                 <div className="form-check">
                                     <input
@@ -563,7 +562,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                         onChange={() => handleModeToggle()}
                                     />
                                     <label className="form-check-label" htmlFor="modeStudent">
-                                        Alumno
+                                        Student
                                     </label>
                                 </div>
                                 <div className="form-check">
@@ -576,7 +575,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                         onChange={() => handleModeToggle()}
                                     />
                                     <label className="form-check-label" htmlFor="modeTeacher">
-                                        Profesor
+                                        Teacher
                                     </label>
                                 </div>
                             </div>
@@ -599,7 +598,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                             type="button"
                                             role="tab"
                                         >
-                                            Configurar curso
+                                            Configure course
                                         </button>
                                     </li>
                                 )}
@@ -611,7 +610,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                         type="button"
                                         role="tab"
                                     >
-                                        Configurar laboratorio
+                                        Configure lab
                                     </button>
                                 </li>
                             </>
@@ -638,9 +637,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                     type="button"
                                     role="tab"
                                     disabled={isLabBlocked}
-                                    title={isLabBlocked ? "No disponible mientras el laboratorio esté bloqueado" : ""}
+                                    title={isLabBlocked ? "Not available while lab is blocked" : ""}
                                 >
-                                    Ejercicios
+                                    Exercises
                                     {(exercisesWithExplanations.length > 0 || exercisesWithEvaluations.length > 0) && (
                                         <span className="badge bg-primary ms-2">
                                             {Math.max(
@@ -662,7 +661,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                     type="button"
                                     role="tab"
                                 >
-                                    Mi progreso
+                                    My progress
                                 </button>
                             </li>
                         )}
@@ -685,9 +684,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "400px" }}>
                         <div className="text-center">
                             <div className="spinner-border text-primary mb-3" role="status">
-                                <span className="visually-hidden">Verificando configuración...</span>
+                                <span className="visually-hidden">Checking configuration...</span>
                             </div>
-                            <p className="text-muted">Verificando configuración...</p>
+                            <p className="text-muted">Checking configuration...</p>
                         </div>
                     </div>
                 ) : needsConfiguration || missingLLMConfig ? (
@@ -703,9 +702,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 <div className="card-body p-3">
                                     <div className="d-flex align-items-center mb-2">
                                         <div className="spinner-border spinner-border-sm text-primary me-2">
-                                            <span className="visually-hidden">Verificando acceso...</span>
+                                            <span className="visually-hidden">Checking access...</span>
                                         </div>
-                                        <strong>Verificando acceso al laboratorio...</strong>
+                                        <strong>Checking lab access...</strong>
                                     </div>
                                 </div>
                             </div>
@@ -713,23 +712,23 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             <div className="alert alert-danger" role="alert">
                                 <h5 className="alert-heading">
                                     <i className="bi bi-lock-fill me-2"></i>
-                                    Laboratorio bloqueado
+                                    Lab blocked
                                 </h5>
                                 <p>
-                                    Este laboratorio está bloqueado porque es un laboratorio requerido y aún no has
-                                    completado el laboratorio anterior.
+                                    This lab is blocked because it is a required lab and you have not yet completed the
+                                    previous lab.
                                 </p>
                                 <hr />
                                 <p className="mb-0">
-                                    <strong>Para desbloquear este laboratorio:</strong>
+                                    <strong>To unlock this lab:</strong>
                                 </p>
                                 <ul className="mb-0 mt-2">
-                                    <li>Completa los ejercicios de reto requeridos del laboratorio anterior</li>
+                                    <li>Complete the required challenge exercises from the previous lab</li>
                                     <li>
-                                        Cumple los criterios definidos por tu profesor en las opciones de la extensión o
-                                        consulta los detalles en "Mi progreso"
+                                        Meet the criteria defined by your teacher in the extension options or check the
+                                        details in "My progress"
                                     </li>
-                                    <li>Revisa tu progreso en la pestaña "Mi progreso"</li>
+                                    <li>Check your progress in the "My progress" tab</li>
                                 </ul>
                             </div>
                         ) : isLoadingExercises ? (
@@ -737,13 +736,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 <div className="card-body p-3">
                                     <div className="d-flex align-items-center mb-2">
                                         <div className="spinner-border spinner-border-sm text-primary me-2">
-                                            <span className="visually-hidden">Cargando...</span>
+                                            <span className="visually-hidden">Loading...</span>
                                         </div>
-                                        <strong>Buscando ejercicios...</strong>
+                                        <strong>Searching for exercises...</strong>
                                     </div>
                                     <p className="text-muted small mb-0">
-                                        Analizando el contenido de la página para identificar los ejercicios
-                                        disponibles.
+                                        Analyzing page content to identify available exercises.
                                     </p>
                                 </div>
                             </div>
@@ -752,11 +750,10 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 <div className="alert alert-warning" role="alert">
                                     <h6 className="alert-heading mb-2">
                                         <i className="bi bi-exclamation-triangle me-2"></i>
-                                        No hay ejercicios cargados
+                                        No exercises loaded
                                     </h6>
                                     <p className="mb-3 small">
-                                        Para poder usar el chat con el contexto de los ejercicios, primero debes
-                                        identificarlos.
+                                        To use the chat with exercise context, you must first identify them.
                                     </p>
                                     <button
                                         type="button"
@@ -764,7 +761,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                         onClick={onIdentifyExercises}
                                     >
                                         <i className="bi bi-play-circle me-1"></i>
-                                        Identificar ejercicios ahora
+                                        Identify exercises now
                                     </button>
                                 </div>
                             </>
@@ -779,11 +776,10 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                         <div className="card-body p-3">
                                             <h6 className="card-title mb-2">
                                                 <i className="bi bi-search me-2"></i>
-                                                Identificar ejercicios
+                                                Identify exercises
                                             </h6>
                                             <p className="card-text small text-muted mb-3">
-                                                Presiona el botón para analizar la página e identificar los ejercicios
-                                                disponibles.
+                                                Press the button to analyze the page and identify available exercises.
                                             </p>
                                             <button
                                                 type="button"
@@ -791,7 +787,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                                 onClick={onIdentifyExercises}
                                             >
                                                 <i className="bi bi-play-circle me-1"></i>
-                                                Identificar ejercicios
+                                                Identify exercises
                                             </button>
                                         </div>
                                     </div>
@@ -826,7 +822,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                     >
                                         <div className="card-body p-2">
                                             <div className="small mb-1">
-                                                <strong>{message.role === "user" ? "Tú" : "Asistente"}</strong>
+                                                <strong>{message.role === "user" ? "You" : "Assistant"}</strong>
                                             </div>
                                             <div style={{ whiteSpace: "pre-wrap" }}>{message.content}</div>
                                         </div>
@@ -841,11 +837,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                     <div className="d-flex align-items-center">
                                         <div
                                             className="spinner-border spinner-border-sm me-2"
-                                            aria-label="Generando respuesta"
+                                            aria-label="Generating response"
                                         >
-                                            <span className="visually-hidden">Cargando...</span>
+                                            <span className="visually-hidden">Loading...</span>
                                         </div>
-                                        <span className="small">Generando respuesta...</span>
+                                        <span className="small">Generating response...</span>
                                     </div>
                                 </div>
                             </div>
@@ -861,18 +857,18 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 <div className="card-body p-3">
                                     <div className="d-flex align-items-center">
                                         <div className="spinner-border spinner-border-sm text-primary me-2">
-                                            <span className="visually-hidden">Cargando...</span>
+                                            <span className="visually-hidden">Loading...</span>
                                         </div>
-                                        <span>Cargando ejercicios...</span>
+                                        <span>Loading exercises...</span>
                                     </div>
                                 </div>
                             </div>
                         ) : exercisesWithExplanations.length === 0 && exercisesWithEvaluations.length === 0 ? (
                             <div className="alert alert-info" role="alert">
-                                <strong>No hay explicaciones ni evaluaciones guardadas</strong>
+                                <strong>No explanations or evaluations saved</strong>
                                 <p className="mb-0 mt-2 small">
-                                    Las explicaciones y evaluaciones generadas a través del chat se guardarán aquí para
-                                    que puedas acceder a ellas más tarde.
+                                    Explanations and evaluations generated through the chat will be saved here so you
+                                    can access them later.
                                 </p>
                             </div>
                         ) : (
@@ -895,7 +891,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                                                 onClick={() => handleExplanationClick(exerciseName)}
                                                             >
                                                                 <i className="bi bi-book me-1"></i>
-                                                                Ver explicación
+                                                                View explanation
                                                             </button>
                                                         )}
                                                         {hasEvaluation && (
@@ -905,7 +901,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                                                 onClick={() => handleEvaluationClick(exerciseName)}
                                                             >
                                                                 <i className="bi bi-clipboard-check me-1"></i>
-                                                                Ver evaluaciones
+                                                                View evaluations
                                                             </button>
                                                         )}
                                                     </div>
@@ -965,7 +961,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             type="button"
                             onClick={handleSendMessage}
                             disabled={isChatDisabled || !inputValue.trim()}
-                            title="Enviar mensaje"
+                            title="Send message"
                             style={{
                                 padding: "8px 12px",
                                 display: "flex",
@@ -989,7 +985,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         </button>
                         <button
                             onClick={handleResetChat}
-                            title="Reiniciar conversación"
+                            title="Restart conversation"
                             disabled={isAnyModalOpen}
                             style={{
                                 background: "transparent",

@@ -3,10 +3,10 @@
  */
 
 export const APP_CONFIG = {
-    /** Nombre de la extensión */
-    NAME: 'DBot',
+    /** Extension Name */
+    NAME: 'Moodlia',
 
-    /** Versión de la extensión */
+    /** Extension Version */
     VERSION: '1.0.0',
 
     /** Descripción de la extensión */

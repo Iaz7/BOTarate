@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 
 interface NoExercisesMessageProps {
     onTimeout: () => void;
@@ -17,22 +17,20 @@ const NoExercisesMessage: React.FC<NoExercisesMessageProps> = ({ onTimeout, dura
     return (
         <div
             style={{
-                position: 'fixed',
-                top: '50%',
-                right: '20px',
-                transform: 'translateY(-50%)',
-                zIndex: '9999'
+                position: "fixed",
+                top: "50%",
+                right: "20px",
+                transform: "translateY(-50%)",
+                zIndex: "9999",
             }}
         >
-            <div className="card shadow-lg border-warning" style={{ minWidth: '280px' }}>
+            <div className="card shadow-lg border-warning" style={{ minWidth: "280px" }}>
                 <div className="card-body text-center">
-                    <div className="text-warning mb-2" style={{ fontSize: '3rem' }}>
+                    <div className="text-warning mb-2" style={{ fontSize: "3rem" }}>
                         📄
                     </div>
-                    <h5 className="card-title">No se encontraron ejercicios</h5>
-                    <p className="card-text text-muted small mb-0">
-                        Esta página no parece contener ejercicios
-                    </p>
+                    <h5 className="card-title">No exercises found</h5>
+                    <p className="card-text text-muted small mb-0">This page does not seem to contain exercises</p>
                 </div>
             </div>
         </div>

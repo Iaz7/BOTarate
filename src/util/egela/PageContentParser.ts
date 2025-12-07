@@ -3,8 +3,8 @@ import { FileData, FileManager } from "./FileManager";
 export { PageContentParser };
 
 /**
- * Clase responsable de parsear contenido HTML a Markdown
- * con soporte para detección y marcado de archivos adjuntos
+ * Class responsible for parsing HTML content to Markdown
+ * with support for attachment detection and marking
  */
 class PageContentParser {
     private lines: string[] = [];
@@ -18,9 +18,9 @@ class PageContentParser {
     }
 
     /**
-     * Parsea un elemento HTML a formato Markdown con detección de archivos
-     * @param element Elemento HTML a parsear
-     * @returns Objeto con el markdown generado y los archivos detectados
+     * Parses an HTML element to Markdown format with file detection
+     * @param element HTML element to parse
+     * @returns Object with generated markdown and detected files
      */
     async parseToMarkdown(element: any): Promise<{ markdown: string; files: FileData[] }> {
         this.lines = [];
@@ -37,7 +37,7 @@ class PageContentParser {
     }
 
     /**
-     * Limpia el texto eliminando espacios extra y caracteres HTML
+     * Cleans text by removing extra spaces and HTML characters
      */
     private cleanText(text: string): string {
         return text
@@ -47,7 +47,7 @@ class PageContentParser {
     }
 
     /**
-     * Parsea una tabla HTML a formato Markdown
+     * Parses an HTML table to Markdown format
      */
     private parseTable(table: any): string[] {
         const tableLines: string[] = [];
@@ -71,17 +71,17 @@ class PageContentParser {
     }
 
     /**
-     * Procesa un nodo HTML de forma recursiva
+     * Processes an HTML node recursively
      */
     private async processNode(node: any): Promise<void> {
         const tagName = node.tagName?.toLowerCase();
 
-        // Saltar elementos irrelevantes
+        // Skip irrelevant elements
         if (this.shouldSkipNode(node, tagName)) {
             return;
         }
 
-        // Procesar según el tipo de elemento
+        // Process according to element type
         switch (tagName) {
             case 'h1':
                 await this.processHeading(node, '#');

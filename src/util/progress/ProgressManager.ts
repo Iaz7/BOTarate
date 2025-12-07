@@ -126,13 +126,13 @@ export class ProgressManager {
     }
 
     /**
-     * Verifica si un laboratorio está completado
-     * Aplica los requisitos configurados (nota mínima y porcentaje mínimo superado)
+     * Checks if a lab is completed
+     * Applies configured requirements (minimum score and minimum percentage passed)
      */
     static isLabCompleted(progress: LabProgress, requirements?: ProgressRequirements): boolean {
         const criteria = requirements ?? this.DEFAULT_REQUIREMENTS;
 
-        // Sin ejercicios de reto = completado
+        // No challenge exercises = completed
         if (progress.challengeExercises.length === 0) return true;
 
         const requiredChallenges = Math.ceil(
@@ -148,7 +148,7 @@ export class ProgressManager {
         for (const exercise of progress.challengeExercises) {
             const evaluations = progress.challengeEvaluations.get(exercise.name);
             if (!evaluations || evaluations.length === 0) {
-                continue; // No cuenta como aprobado
+                continue; // Does not count as passed
             }
 
             const bestScore = Math.max(...evaluations.map(e => e.score));
@@ -161,7 +161,7 @@ export class ProgressManager {
     }
 
     /**
-     * Verifica si todos los laboratorios requeridos anteriores están completados
+     * Checks if all previous required labs are completed
      */
     static checkLabsUnlocked(
         labList: Lab[],
@@ -169,7 +169,7 @@ export class ProgressManager {
         progressData: LabProgress[],
         requirements: ProgressRequirements
     ): boolean {
-        // Verificar todos los labs requeridos anteriores (todos en la lista son requeridos)
+        // Check all previous required labs (all in the list are required)
         for (let i = 0; i < currentIndex; i++) {
             const prevProgress = progressData[i];
             if (!prevProgress) return false;
@@ -183,12 +183,12 @@ export class ProgressManager {
     }
 
     /**
-     * Carga el progreso completo de todos los laboratorios requeridos
+     * Loads full progress of all required labs
      */
     static async loadProgressData(courseId: string): Promise<CourseProgressData> {
         try {
             const requirements = await this.getProgressRequirements();
-            // 1. Obtener la lista de laboratorios
+            // 1. Get lab list
             const labResponse = await chrome.runtime.sendMessage({
                 action: "getLabData",
                 courseId: courseId,
@@ -200,10 +200,10 @@ export class ProgressManager {
 
             const labList: Lab[] = labResponse.data.labs;
 
-            // Filtrar solo los laboratorios requeridos para la progresión
+            // Filter only required labs for progression
             const requiredLabs = labList.filter(lab => lab.required);
 
-            // 2. Para cada laboratorio requerido, obtener ejercicios y evaluaciones
+            // 2. For each required lab, get exercises and evaluations
             const progressData: LabProgress[] = [];
 
             for (let i = 0; i < requiredLabs.length; i++) {
@@ -215,18 +215,18 @@ export class ProgressManager {
                     challengeExercises
                 );
 
-                // Calcular estadísticas
+                // Calculate statistics
                 const stats = {
                     totalExercises: allExercises.length,
                     completedExercises: evaluatedCount,
                     averageScore: evaluatedCount > 0 ? totalScore / evaluatedCount : 0,
                 };
 
-                // Determinar si el laboratorio está desbloqueado
+                // Determine if lab is unlocked
                 let isUnlocked = true;
 
                 if (i > 0) {
-                    // Verificar si todos los laboratorios requeridos anteriores están completados
+                    // Check if all previous required labs are completed
                     isUnlocked = this.checkLabsUnlocked(requiredLabs, i, progressData, requirements);
                 }
 
@@ -254,54 +254,54 @@ export class ProgressManager {
     }
 
     /**
-     * Verifica si un laboratorio específico está bloqueado
-     * @param pageId ID de la página/laboratorio a verificar
-     * @param courseId ID del curso
-     * @returns true si está bloqueado, false si está desbloqueado o no es requerido
+     * Checks if a specific lab is blocked
+     * @param pageId ID of the page/lab to check
+     * @param courseId Course ID
+     * @returns true if blocked, false if unlocked or not required
      */
     static async isLabBlocked(pageId: string, courseId: string): Promise<boolean> {
         try {
-            // 1. Obtener la lista de laboratorios
+            // 1. Get lab list
             const labResponse = await chrome.runtime.sendMessage({
                 action: "getLabData",
                 courseId: courseId,
             });
 
             if (!labResponse?.success || !labResponse?.data?.labs) {
-                return false; // Sin configuración de labs, no hay bloqueo
+                return false; // No lab config, no blocking
             }
 
             const labList: Lab[] = labResponse.data.labs;
 
-            // Buscar el lab actual
+            // Find current lab
             const currentLab = labList.find(lab => lab.id === pageId);
 
-            // Si no es un lab requerido, no está bloqueado
+            // If not a required lab, it is not blocked
             if (!currentLab?.required) {
                 return false;
             }
 
-            // Filtrar solo los laboratorios requeridos
+            // Filter only required labs
             const requiredLabs = labList.filter(lab => lab.required);
 
-            // Encontrar el índice del lab actual en la lista de requeridos
+            // Find index of current lab in required list
             const currentIndex = requiredLabs.findIndex(lab => lab.id === pageId);
 
-            // Si es el primero, no está bloqueado
+            // If it is the first one, it is not blocked
             if (currentIndex <= 0) {
                 return false;
             }
 
-            // Cargar el progreso de todos los labs
+            // Load progress of all labs
             const { labs: progressData, requirements } = await this.loadProgressData(courseId);
 
-            // Verificar si está desbloqueado
+            // Check if unlocked
             const isUnlocked = this.checkLabsUnlocked(requiredLabs, currentIndex, progressData, requirements);
 
-            return !isUnlocked; // Bloqueado = NO desbloqueado
+            return !isUnlocked; // Blocked = NOT unlocked
         } catch (error) {
             console.error("[ProgressManager] Error checking lab blocked status:", error);
-            return false; // En caso de error, no bloquear
+            return false; // In case of error, do not block
         }
     }
 }

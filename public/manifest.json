@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "DBot",
+    "name": "Moodlia",
     "version": "1.0.0",
-    "description": "Una extensión de Chrome para eGela",
+    "description": "A Chrome extension for eGela",
     "icons": {
         "16": "icons/icon64.png",
         "64": "icons/icon64.png",
