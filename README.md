@@ -1,301 +1,114 @@
-# Chrome Extension with React, TypeScript and Vite
-
-This project is a modern Chrome extension built with **React**, **TypeScript** and **Vite**. The extension dynamically modifies specific web pages (https://egela.ehu.eus/*) by injecting interactive React components. It includes a complete architecture with background script, content script, popup and options page.
-
-## 🚀 Quick Start
-
-### Installation
-
-```bash
-npm install
-```
-
-### Development
-
-1. **Start the development server** (keep this terminal open):
+# Moodlia - Chrome Extension for Egela
 
-    ```bash
-    npm run dev
-    ```
+Moodlia is a Chrome extension designed to enhance the learning experience on the Egela platform (University of the Basque Country). It integrates an advanced AI assistant to help students with SQL exercises, provide course guidance, and track progress. For teachers, it offers tools to configure courses, labs, and exercises, tailoring the AI's assistance to their specific curriculum.
 
-2. **Load the extension in Chrome**:
+# User Guide
 
-    - Open Chrome and go to `chrome://extensions/`
-    - Enable "Developer mode" (top right corner)
-    - Click on "Load unpacked"
-    - Select the `dist/` folder of the project
+## Installation
 
-3. **Debugging from VS Code**:
-    - Press `F5` in VS Code
-    - Chrome will open with the extension loaded
-    - Place breakpoints in your TypeScript/TSX code
-    - Changes are reflected automatically (hot reload)
+1.  Open Google Chrome and navigate to `chrome://extensions`.
+2.  Enable "Developer mode" using the toggle switch in the top right corner.
+3.  Locate the provided ZIP file on your computer.
+4.  Drag and drop the ZIP file directly onto the extensions page.
+5.  The extension should now appear in your list of installed extensions.
 
-### Build for Production
+## Configuration
 
-```bash
-npm run build
-```
+### Loading a Configuration File
 
-## 🏗️ Project Structure
+If you have a configuration file (JSON format):
 
-```
-chrome-extension-vite/
-├── src/                          # Source code
-│   ├── background/               # Background Service Worker
-│   │   └── background.ts         # Service worker logic
-│   ├── content/                  # Content Scripts
-│   │   ├── content.tsx          # React component injected into the page
-│   │   └── index.tsx            # Content script entry point
-│   ├── popup/                    # Extension Popup
-│   │   ├── popup.html           # Popup HTML
-│   │   ├── popup.tsx            # Popup React component
-│   │   └── index.tsx            # Popup entry point
-│   ├── options/                  # Options Page
-│   │   ├── options.html         # Options page HTML
-│   │   ├── options.tsx          # Options React component
-│   │   └── index.tsx            # Options entry point
-│   └── types/                    # TypeScript definitions
-│       └── index.ts             # Shared types
-├── public/                       # Static files
-│   └── manifest.json            # Chrome Extension Manifest V3
-├── dist/                         # Built files (generated)
-│   ├── assets/                  # Compiled and optimized assets
-│   ├── src/                     # Copied HTML files
-│   └── manifest.json            # Processed manifest
-├── package.json                  # NPM dependencies and scripts
-├── tsconfig.json                # TypeScript configuration
-├── vite.config.ts               # Vite configuration with CRX plugin
-└── README.md                    # Project documentation
-```
+1.  Right-click the extension icon and select "Options".
+2.  Navigate to the "Import/Export" tab.
+3.  In the "Import Configuration" section, click "Choose File" and select your JSON configuration file.
+4.  Click "Import" to load the settings.
 
-## 🔧 Technologies Used
+### Creating a Configuration (Teacher Mode)
 
--   **[React 18](https://reactjs.org/)** - Library for user interfaces
--   **[TypeScript](https://www.typescriptlang.org/)** - Static typing for JavaScript
--   **[Vite](https://vitejs.dev/)** - Build tool and ultrafast dev server
--   **[@crxjs/vite-plugin](https://crxjs.dev/vite-plugin)** - Specialized plugin for Chrome Extensions
--   **Chrome Extension Manifest V3** - Latest version of the extension system
+To create a new configuration for your students:
 
-## 📁 Component Description
+1.  Open the extension popup.
+2.  Go to the "Mode" tab and select "Teacher Mode".
+3.  Configure the LLM settings in the Options page (see below).
+4.  Navigate through the course pages to identify exercises and configure them using the "Course Config" and "Lab Config" tabs in the popup.
+5.  Once configured, go to the Options page -> "Import/Export" tab and click "Export" to save the configuration to a JSON file.
+6.  Distribute this file to your students.
 
-### Background Script (`src/background/`)
+### Configuring the LLM
 
--   **background.ts**: Service worker running in the background
--   Handles global extension events
--   Manages communication between different parts of the extension
+1.  Right-click the extension icon and select "Options".
+2.  In the "LLM Configuration" tab:
+    -   Select the **Provider** (OpenAI, Google).
+    -   Enter your **API Key**.
+    -   Select the desired **Model** from the list.
+    -   Click "Save configuration".
 
-### Content Script (`src/content/`)
+## Functionalities
 
--   **content.tsx**: React component injected into web pages
--   Runs in the context of the visited page (https://egela.ehu.eus/*)
--   Dynamically modifies the page DOM
--   Includes interactive UI with buttons and states
+### Common Features
 
-### Popup (`src/popup/`)
+#### Course Chat
 
--   **popup.html**: Popup HTML structure
--   **popup.tsx**: React interface of the extension popup
--   **index.tsx**: Entry point that mounts the React component
--   Opens when clicking the extension icon
+The chat interface allows users to interact with the AI assistant.
 
-### Options (`src/options/`)
+-   **Ask Questions**: Users can ask questions about the course content.
+-   **Context Awareness**: The assistant is aware of the current page content and exercises if a lab is open.
 
--   **options.html**: Configuration HTML page
--   **options.tsx**: React interface for configuring the extension
--   **index.tsx**: Options page entry point
--   Accesible desde chrome://extensions/
+#### Options Page
 
-### Types (`src/types/`)
+Accessible by right-clicking the extension icon and selecting "Open settings".
 
--   **index.ts**: Definiciones de tipos TypeScript compartidas
--   Interfaces y tipos para mantener consistencia en el proyecto
+-   **LLM Configuration**: Manage AI provider settings.
+-   **Assistant Configuration**: Customize the behavior and prompts of the AI assistants (General, Course, Exercise, Evaluation, Explanation).
+-   **Import/Export**: Manage configuration files and clear data.
 
-## 🚀 Instalación y Configuración
+### Teacher Features
 
-### Prerrequisitos
+#### Mode Selection
 
--   **Node.js** (versión 16 o superior)
--   **npm** o **yarn**
--   **Google Chrome** (para pruebas)
+In the "Mode" tab of the popup, teachers can switch between "Student Mode" and "Teacher Mode".
 
-### Pasos de Instalación
+-   **Student Mode**: Simulates the student experience.
+-   **Teacher Mode**: Unlocks configuration tools and unrestricted access to all content.
 
-1. **Clona el repositorio:**
+#### Course Configuration
 
-    ```bash
-    git clone <URL_DEL_REPOSITORIO>
-    cd chrome-extension-vite
-    ```
+Allows setting up course-wide parameters.
 
-2. **Instala las dependencias:**
+-   **Labs**: Configure lab sequences and requirements.
+-   **Progress Criteria**: Define the minimum score and percentage of challenge exercises required to pass.
 
-    ```bash
-    npm install
-    ```
+#### Lab Configuration
 
-3. **Variables de entorno (opcional):**
-    ```bash
-    # Crea un archivo .env si necesitas variables específicas
-    cp .env.example .env
-    ```
+Customize settings for specific labs.
 
-## 🛠️ Scripts de Desarrollo
+-   **Required**: Mark labs as mandatory for the progression system.
+-   **Verbosity**: Set the detail level of AI responses (Low, Medium, High).
+-   **Reasoning Effort**: Adjust the AI's reasoning depth (Minimal, Low, Medium, High).
 
-### Desarrollo
+#### Exercise Configuration
 
-```bash
-npm run dev
-```
+Manage individual exercises within a lab.
 
--   Inicia el servidor de desarrollo con hot-reload
--   Los cambios se reflejan automáticamente
--   Ideal para desarrollo iterativo
+-   **Challenge**: Use the exercise for the progression system.
+-   **Picky (Tiquismiquis)**: Mark exercises where the AI is more likely to give unreliable responses to warn the students.
 
-### Construcción para Producción
+### Student Features
 
-```bash
-npm run build
-```
+#### Chat Assistance
 
--   Compila y optimiza todos los assets
--   Genera la carpeta `dist/` lista para producción
--   Utiliza el plugin CRX para crear bundles compatibles con Chrome
+Students use the chat to get help with their coursework.
 
-### Verificación de Tipos
+-   **Explanations**: Request detailed explanations exercises.
+-   **Solution Checking**: Submit solutions for review. The AI provides feedback and a score.
 
-```bash
-npm run type-check
-```
+#### Exercises Tab
 
--   Ejecuta verificación de tipos TypeScript
--   No genera archivos, solo valida el código
+Displays a list of exercises on the current page.
 
-## 📦 Instalación en Chrome
+-   **Status**: Shows which exercises have explanations or evaluations saved.
+-   **Review**: Students can revisit previous explanations and evaluation reports.
 
-### Modo Desarrollador (Recomendado para desarrollo)
+#### Progress Tracking
 
-1. Abre Chrome y navega a `chrome://extensions/`
-2. Activa el **"Modo de desarrollador"** (toggle en la esquina superior derecha)
-3. Haz clic en **"Cargar descomprimida"**
-4. Selecciona la carpeta `dist/` del proyecto
-5. La extensión aparecerá en la lista y estará lista para usar
-
-### Recarga de la Extensión
-
--   Después de cada `npm run build`, haz clic en el botón de **recarga** (🔄) en `chrome://extensions/`
--   Los content scripts se actualizarán automáticamente
--   Para cambios en el background script, puede ser necesario recargar las pestañas activas
-
-## 🎯 Funcionalidades
-
-### Content Script
-
--   **Inyección Automática**: Se ejecuta automáticamente en `https://egela.ehu.eus/*`
--   **Componente React**: Interfaz interactiva superpuesta en la página
--   **Estado Persistente**: Mantiene el estado durante la navegación
--   **Diseño Responsivo**: Adaptable a diferentes tamaños de pantalla
-
-### Popup de Extensión
-
--   **Acceso Rápido**: Click en el icono de la extensión
--   **Interfaz Intuitiva**: Controles para gestionar la extensión
--   **Comunicación Bidireccional**: Interactúa con content scripts y background
-
-### Página de Opciones
-
--   **Configuración Avanzada**: Personalización detallada
--   **Almacenamiento Persistente**: Configuraciones guardadas en Chrome Storage
--   **Interfaz Familiar**: Integrada con el diseño de Chrome
-
-## 🔧 Configuración Avanzada
-
-### Manifest V3
-
-El proyecto utiliza **Manifest V3**, la última versión del sistema de extensiones de Chrome:
-
--   **Service Workers** en lugar de background pages
--   **Declarative Net Request** para filtrado de red
--   **Permisos granulares** para mayor seguridad
-
-### Plugin CRX
-
-Utilizamos `@crxjs/vite-plugin` que proporciona:
-
--   **Hot Module Replacement** para development
--   **Bundle splitting** optimizado para extensiones
--   **Manejo automático** de assets y manifest
--   **Soporte completo** para React y TypeScript
-
-### Estructura de Build
-
-```
-dist/
-├── assets/                    # JS/CSS optimizados con hash
-│   ├── content.tsx-loader-*.js    # Loader del content script
-│   ├── content.tsx-*.js           # Bundle principal del content script
-│   ├── background.ts-*.js         # Background service worker
-│   └── *.js                       # Otros bundles (popup, options)
-├── src/                       # HTML files
-│   ├── popup/popup.html
-│   └── options/options.html
-├── service-worker-loader.js   # Loader del service worker
-└── manifest.json              # Manifest procesado y optimizado
-```
-
-## 🐛 Debugging y Desarrollo
-
-### DevTools
-
--   **Content Script**: F12 en la página web → Console/Sources
--   **Background Script**: `chrome://extensions/` → "Inspeccionar vistas" → "service worker"
--   **Popup**: Click derecho en popup → "Inspeccionar"
--   **Options**: F12 en la página de opciones
-
-### Logs Comunes
-
-```javascript
-// En content script
-console.log("Content script loaded:", window.location.href);
-
-// En background script
-console.log("Background script initialized");
-
-// En popup
-console.log("Popup opened");
-```
-
-### Problemas Comunes
-
-1. **"Cannot use import statement"**: Resuelto con el plugin CRX
-2. **Content script no se inyecta**: Verificar permisos en manifest.json
-3. **Hot reload no funciona**: Recargar extensión manualmente
-
-## 🤝 Contribución
-
-### Workflow de Desarrollo
-
-1. Fork del repositorio
-2. Crear rama feature: `git checkout -b feature/nueva-funcionalidad`
-3. Commits descriptivos: `git commit -m "feat: añadir nueva funcionalidad"`
-4. Push: `git push origin feature/nueva-funcionalidad`
-5. Abrir Pull Request
-
-### Standards del Código
-
--   **ESLint** para linting
--   **Prettier** para formateo
--   **TypeScript strict mode** habilitado
--   **Conventional Commits** para mensajes
-
-## 📝 Licencia
-
-Este proyecto está bajo la **Licencia MIT**. Ver el archivo `LICENSE` para más detalles.
-
-## 🔗 Enlaces Útiles
-
--   [Chrome Extension Documentation](https://developer.chrome.com/docs/extensions/)
--   [Manifest V3 Migration Guide](https://developer.chrome.com/docs/extensions/migrating/)
--   [React Documentation](https://reactjs.org/docs)
--   [Vite Documentation](https://vitejs.dev/guide/)
--   [CRX Plugin Documentation](https://crxjs.dev/vite-plugin)
+Students can view their progress through the course, including completed labs and challenge exercises, ensuring they meet the criteria defined by the teacher.
