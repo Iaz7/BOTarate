@@ -16,8 +16,8 @@ export class ConfigManager {
     private static readonly STORAGE_KEY = 'config';
 
     private static readonly providers: AIProvider[] = [
-        { name: "OpenAI", baseUrl: "https://api.openai.com/v1/", key: "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" },
-        { name: "Google", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/", key: "AIzaSyDSeG899Oq9za0NHnyEBdRstlfoqupEUNE" }
+        { name: "OpenAI", baseUrl: "https://api.openai.com/v1/", key: import.meta.env.VITE_OPENAI_API_KEY || "" },
+        { name: "Google", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/", key: import.meta.env.VITE_GOOGLE_API_KEY || "" }
     ];
 
     static readonly COMPATIBLE_MODELS: string[] = MODEL_LIST.map(model => model.name);
