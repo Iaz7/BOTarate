@@ -276,108 +276,98 @@ class Course {
     async isCurrentUserTeacher(): Promise<boolean> {
         console.log(`[isCurrentUserTeacher] Verificando rol del usuario en curso ${this.id}`);
 
-        try {
-            // 1. Obtener el correo electrónico del usuario actual desde su perfil
-            const profileUrl = 'https://egela.ehu.eus/user/profile.php';
-            const profileResponse = await fetch(profileUrl);
-            if (!profileResponse.ok) {
-                throw new Error(`Error al obtener perfil: ${profileResponse.status}`);
+        // 1. Obtener el correo electrónico del usuario actual desde su perfil
+        const profileUrl = 'https://egela.ehu.eus/user/profile.php';
+        const profileResponse = await fetch(profileUrl);
+        if (!profileResponse.ok) {
+            throw new Error(`[isCurrentUserTeacher] Error al obtener perfil: ${profileResponse.status}`);
+        }
+
+        const profileHtml = await profileResponse.text();
+        const { document: profileDoc } = parseHTML(profileHtml);
+
+        // Selector para obtener el correo del usuario actual
+        const emailElement = profileDoc.querySelector('#region-main-box > div > div.col-md-4 > div > div.userinfo.my-2 > ul > li > dl > dd > a');
+        if (!emailElement) {
+            throw new Error('[isCurrentUserTeacher] No se pudo obtener el correo del usuario actual');
+        }
+
+        const currentUserEmail = emailElement.textContent?.trim();
+        if (!currentUserEmail) {
+            throw new Error('[isCurrentUserTeacher] El correo del usuario actual está vacío');
+        }
+
+        console.log(`[isCurrentUserTeacher] Correo del usuario actual: ${currentUserEmail}`);
+
+        // 2. Obtener la lista de participantes del curso
+        const participantsUrl = `https://egela.ehu.eus/user/index.php?id=${this.id}`;
+        const participantsResponse = await fetch(participantsUrl);
+        if (!participantsResponse.ok) {
+            throw new Error(`[isCurrentUserTeacher] Error al obtener participantes: ${participantsResponse.status}`);
+        }
+
+        const participantsHtml = await participantsResponse.text();
+        const { document: participantsDoc } = parseHTML(participantsHtml);
+
+        // 3. Buscar el usuario actual en la lista de participantes
+        let userIndex = 0;
+        while (true) {
+            const userNameCellId = `user-index-participants-${this.id}_r${userIndex}_c1`;
+            const userNameCell = participantsDoc.querySelector(`#${userNameCellId}`);
+
+            if (!userNameCell) {
+                // No hay más usuarios en la lista
+                throw new Error(`[isCurrentUserTeacher] Usuario ${currentUserEmail} no encontrado en la lista de participantes`);
             }
 
-            const profileHtml = await profileResponse.text();
-            const { document: profileDoc } = parseHTML(profileHtml);
-
-            // Selector para obtener el correo del usuario actual
-            const emailElement = profileDoc.querySelector('#region-main-box > div > div.col-md-4 > div > div.userinfo.my-2 > ul > li > dl > dd > a');
-            if (!emailElement) {
-                console.error('[isCurrentUserTeacher] No se pudo obtener el correo del usuario actual');
-                return false;
-            }
-
-            const currentUserEmail = emailElement.textContent?.trim();
-            if (!currentUserEmail) {
-                console.error('[isCurrentUserTeacher] El correo del usuario actual está vacío');
-                return false;
-            }
-
-            console.log(`[isCurrentUserTeacher] Correo del usuario actual: ${currentUserEmail}`);
-
-            // 2. Obtener la lista de participantes del curso
-            const participantsUrl = `https://egela.ehu.eus/user/index.php?id=${this.id}`;
-            const participantsResponse = await fetch(participantsUrl);
-            if (!participantsResponse.ok) {
-                throw new Error(`Error al obtener participantes: ${participantsResponse.status}`);
-            }
-
-            const participantsHtml = await participantsResponse.text();
-            const { document: participantsDoc } = parseHTML(participantsHtml);
-
-            // 3. Buscar el usuario actual en la lista de participantes
-            let userIndex = 0;
-            while (true) {
-                const userNameCellId = `user-index-participants-${this.id}_r${userIndex}_c1`;
-                const userNameCell = participantsDoc.querySelector(`#${userNameCellId}`);
-
-                if (!userNameCell) {
-                    // No hay más usuarios en la lista
-                    console.warn(`[isCurrentUserTeacher] Usuario ${currentUserEmail} no encontrado en la lista de participantes`);
-                    return false;
-                }
-
-                // Obtener el enlace al perfil del usuario
-                const userProfileLink = userNameCell.querySelector('a');
-                if (!userProfileLink) {
-                    userIndex++;
-                    continue;
-                }
-
-                const userProfileUrl = userProfileLink.getAttribute('href');
-                if (!userProfileUrl) {
-                    userIndex++;
-                    continue;
-                }
-
-                // Obtener el correo del usuario desde su perfil
-                const userProfileResponse = await fetch(userProfileUrl);
-                if (!userProfileResponse.ok) {
-                    userIndex++;
-                    continue;
-                }
-
-                const userProfileHtml = await userProfileResponse.text();
-                const { document: userProfileDoc } = parseHTML(userProfileHtml);
-
-                const userEmailElement = userProfileDoc.querySelector('#region-main-box > div > div.col-md-4 > div > div.userinfo.my-2 > ul > li > dl > dd > a');
-                const userEmail = userEmailElement?.textContent?.trim();
-
-                // Si es el usuario actual, obtener su rol
-                if (userEmail === currentUserEmail) {
-                    const userRoleCellId = `user-index-participants-${this.id}_r${userIndex}_c2`;
-                    const userRoleCell = participantsDoc.querySelector(`#${userRoleCellId}`);
-
-                    if (!userRoleCell) {
-                        console.error(`[isCurrentUserTeacher] No se pudo obtener el rol para el usuario ${currentUserEmail}`);
-                        return false;
-                    }
-
-                    const role = userRoleCell.textContent?.trim();
-                    console.log(`[isCurrentUserTeacher] Rol encontrado: ${role}`);
-
-                    // Verificar si el rol es "Profesor" (o variaciones)
-                    const isTeacher =
-                        [
-                            'Teacher', 'Profesor', 'Irakaslea',
-                            'Eskuz matrikulatutako ikaslea', 'Estudiante manual', 'Manual enrollment student' // TODO: Eliminar esto. Solo para que yo pueda probar sin ser profesor
-                        ].includes(role);
-                    return isTeacher;
-                }
-
+            // Obtener el enlace al perfil del usuario
+            const userProfileLink = userNameCell.querySelector('a');
+            if (!userProfileLink) {
                 userIndex++;
+                continue;
             }
 
-        } catch (error) {
-            console.error('[isCurrentUserTeacher] Error al verificar el rol del usuario:', error);
-            return false;
+            const userProfileUrl = userProfileLink.getAttribute('href');
+            if (!userProfileUrl) {
+                userIndex++;
+                continue;
+            }
+
+            // Obtener el correo del usuario desde su perfil
+            const userProfileResponse = await fetch(userProfileUrl);
+            if (!userProfileResponse.ok) {
+                userIndex++;
+                continue;
+            }
+
+            const userProfileHtml = await userProfileResponse.text();
+            const { document: userProfileDoc } = parseHTML(userProfileHtml);
+
+            const userEmailElement = userProfileDoc.querySelector('#region-main-box > div > div.col-md-4 > div > div.userinfo.my-2 > ul > li > dl > dd > a');
+            const userEmail = userEmailElement?.textContent?.trim();
+
+            // Si es el usuario actual, obtener su rol
+            if (userEmail === currentUserEmail) {
+                const userRoleCellId = `user-index-participants-${this.id}_r${userIndex}_c2`;
+                const userRoleCell = participantsDoc.querySelector(`#${userRoleCellId}`);
+
+                if (!userRoleCell) {
+                    throw new Error(`[isCurrentUserTeacher] No se pudo obtener el rol para el usuario ${currentUserEmail}`);
+                }
+
+                const role = userRoleCell.textContent?.trim();
+                console.log(`[isCurrentUserTeacher] Rol encontrado: ${role}`);
+
+                // Verificar si el rol es "Profesor" (o variaciones)
+                const isTeacher =
+                    [
+                        'Teacher', 'Profesor', 'Irakaslea',
+                        'Eskuz matrikulatutako ikaslea', 'Estudiante manual', 'Manual enrollment student' // TODO: Eliminar esto. Solo para que yo pueda probar sin ser profesor
+                    ].includes(role);
+                return isTeacher;
+            }
+
+            userIndex++;
         }
     }
 }

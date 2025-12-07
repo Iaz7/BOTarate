@@ -211,23 +211,29 @@ export function handleCheckUserRole(request: any, sendResponse: (response?: any)
             const course: Course = getCachedCourse();
 
             if (!course) {
-                console.warn('[handleCheckUserRole] No se pudo determinar el curso, asumiendo rol de alumno');
-                // Guardar en caché el resultado
-                await ModeStorageManager.saveUserRole(false);
-                sendResponse({ success: true, isTeacher: false });
+                console.warn('[handleCheckUserRole] No se pudo determinar el curso, no se puede verificar el rol');
+                sendResponse({ success: false, error: 'No se pudo determinar el curso', isTeacher: false });
                 return;
             }
 
             // Verificar el rol del usuario
-            const isTeacher = await course.isCurrentUserTeacher();
+            let isTeacher;
+            try {
+                isTeacher = await course.isCurrentUserTeacher();
+            } catch (error: any) {
+                console.error('[handleCheckUserRole] Error al verificar rol del usuario en Egela:', error);
+                sendResponse({ success: false, error: error.message, isTeacher: false });
+                return;
+            }
+
             console.log(`[handleCheckUserRole] Usuario es profesor: ${isTeacher}`);
 
-            // Guardar en caché el resultado
+            // Guardar en caché solo si la verificación fue exitosa
             await ModeStorageManager.saveUserRole(isTeacher);
 
             sendResponse({ success: true, isTeacher });
         } catch (error: any) {
-            console.error('[handleCheckUserRole] Error al verificar rol del usuario:', error);
+            console.error('[handleCheckUserRole] Error general al verificar rol del usuario:', error);
             sendResponse({ success: false, error: error.message, isTeacher: false });
         }
     })();

@@ -104,10 +104,11 @@ const Options: React.FC = () => {
             const userIsTeacher = response?.success ? response.isTeacher : false;
             setIsUserTeacher(userIsTeacher);
 
-            // Si el usuario no es profesor, forzar modo alumno
+            // Si el usuario no es profesor, forzar modo alumno y seleccionar pestaña import-export
             if (!userIsTeacher) {
                 await ModeManager.setMode(AppMode.STUDENT);
                 setIsTeacherMode(false);
+                setActiveTab("import-export");
             } else {
                 // Si es profesor, usar el modo configurado
                 const teacherMode = await ModeManager.isTeacherMode();
@@ -451,38 +452,33 @@ const Options: React.FC = () => {
 
                     {/* Tabs de navegación principal */}
                     <ul className="nav nav-pills mb-4">
-                        {/* Solo mostrar configuración completa a profesores */}
-                        {isUserTeacher && (
-                            <>
-                                <li className="nav-item">
-                                    <button
-                                        className={`nav-link ${activeTab === "llm" ? "active" : ""}`}
-                                        onClick={() => setActiveTab("llm")}
-                                    >
-                                        LLM configuration
-                                    </button>
-                                </li>
-                                {isTeacherMode && (
-                                    <li className="nav-item">
-                                        <button
-                                            className={`nav-link ${activeTab === "assistants" ? "active" : ""}`}
-                                            onClick={() => setActiveTab("assistants")}
-                                        >
-                                            Assistants configuration
-                                        </button>
-                                    </li>
-                                )}
-                                {isTeacherMode && (
-                                    <li className="nav-item">
-                                        <button
-                                            className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
-                                            onClick={() => setActiveTab("progress")}
-                                        >
-                                            Configure progress
-                                        </button>
-                                    </li>
-                                )}
-                            </>
+                        <li className="nav-item">
+                            <button
+                                className={`nav-link ${activeTab === "llm" ? "active" : ""}`}
+                                onClick={() => setActiveTab("llm")}
+                            >
+                                LLM configuration
+                            </button>
+                        </li>
+                        {isUserTeacher && isTeacherMode && (
+                            <li className="nav-item">
+                                <button
+                                    className={`nav-link ${activeTab === "assistants" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("assistants")}
+                                >
+                                    Assistants configuration
+                                </button>
+                            </li>
+                        )}
+                        {isUserTeacher && isTeacherMode && (
+                            <li className="nav-item">
+                                <button
+                                    className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("progress")}
+                                >
+                                    Configure progress
+                                </button>
+                            </li>
                         )}
                         <li className="nav-item">
                             <button
@@ -502,8 +498,8 @@ const Options: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Contenido de LLM - solo para profesores */}
-                    {activeTab === "llm" && isUserTeacher && (
+                    {/* Contenido de LLM */}
+                    {activeTab === "llm" && (
                         <div className="card mb-4">
                             <div className="card-header">
                                 <h5 className="card-title mb-0">LLM providers</h5>

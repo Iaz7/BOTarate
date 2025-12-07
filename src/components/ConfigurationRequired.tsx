@@ -149,11 +149,6 @@ export const ConfigurationRequired: React.FC<ConfigurationRequiredProps> = ({
                         To configure the LLM, go to the extension options page.
                     </div>
                 )}
-
-                <p className="text-muted mt-3 small">
-                    <strong>Teacher Mode:</strong> If you are the teacher, activate teacher mode from the extension
-                    popup to create a new configuration.
-                </p>
             </div>
         </div>
     );
