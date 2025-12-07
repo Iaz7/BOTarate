@@ -60,7 +60,6 @@ const Options: React.FC = () => {
     const [assistantSaveMessage, setAssistantSaveMessage] = useState<string>("");
 
     // Mode Configuration
-    const [isTeacherMode, setIsTeacherMode] = useState<boolean>(false);
     const [isUserTeacher, setIsUserTeacher] = useState<boolean>(false);
 
     // Validación y carga de modelos/API key
@@ -107,12 +106,7 @@ const Options: React.FC = () => {
             // Si el usuario no es profesor, forzar modo alumno y seleccionar pestaña import-export
             if (!userIsTeacher) {
                 await ModeManager.setMode(AppMode.STUDENT);
-                setIsTeacherMode(false);
                 setActiveTab("import-export");
-            } else {
-                // Si es profesor, usar el modo configurado
-                const teacherMode = await ModeManager.isTeacherMode();
-                setIsTeacherMode(teacherMode);
             }
 
             // Cargar configuración LLM
@@ -430,7 +424,7 @@ const Options: React.FC = () => {
     };
 
     const renderProgressTab = () => {
-        if (!isTeacherMode) return null;
+        if (!isUserTeacher) return null;
 
         return (
             <div className="card mb-4">
@@ -460,7 +454,7 @@ const Options: React.FC = () => {
                                 LLM configuration
                             </button>
                         </li>
-                        {isUserTeacher && isTeacherMode && (
+                        {isUserTeacher && (
                             <li className="nav-item">
                                 <button
                                     className={`nav-link ${activeTab === "assistants" ? "active" : ""}`}
@@ -470,7 +464,7 @@ const Options: React.FC = () => {
                                 </button>
                             </li>
                         )}
-                        {isUserTeacher && isTeacherMode && (
+                        {isUserTeacher && (
                             <li className="nav-item">
                                 <button
                                     className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
