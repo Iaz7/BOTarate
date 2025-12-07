@@ -1,0 +1,491 @@
+import { useEffect, useRef, useState } from "react";
+import { AppMode, ModeManager } from "../../util/config/ModeManager";
+import { ProgressManager } from "../../util/progress/ProgressManager";
+import { SidebarStateStorageManager } from "../../util/storage/SidebarStateStorageManager";
+
+export interface Exercise {
+    name: string;
+    statement: string;
+    allowed?: boolean;
+    isTiquismiqui?: boolean;
+}
+
+export interface ChatMessage {
+    role: "user" | "assistant" | "tool";
+    content: string | null;
+    id: string;
+    tool_calls?: Array<{
+        function: {
+            name: string;
+            arguments: string;
+        };
+        id: string;
+        type: string;
+    }>;
+    name?: string;
+}
+
+export interface ChatSidebarProps {
+    onClose: () => void;
+    isLoadingExercises?: boolean;
+    pageId?: string;
+    courseId?: string;
+    onOpenExplanation?: (exerciseName: string) => void;
+    onExplanationGenerated?: () => void;
+    onOpenEvaluation?: (exerciseName: string) => void;
+    onEvaluationGenerated?: () => void;
+    isAnyModalOpen?: boolean;
+    hasExercisesLoaded?: boolean;
+    onIdentifyExercises?: () => void;
+}
+
+export type TabType = "chat" | "exercises" | "config" | "labs" | "progress" | "mode";
+
+export const useChatSidebar = (props: ChatSidebarProps) => {
+    const {
+        isLoadingExercises = false,
+        pageId,
+        courseId,
+        onOpenExplanation,
+        onExplanationGenerated,
+        onOpenEvaluation,
+        isAnyModalOpen = false,
+        hasExercisesLoaded = false,
+    } = props;
+
+    const savedState = SidebarStateStorageManager.getSidebarState();
+    const [isCollapsed, setIsCollapsed] = useState(savedState?.isCollapsed ?? false);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [inputValue, setInputValue] = useState<string>("");
+    const [isGenerating, setIsGenerating] = useState<boolean>(false);
+    const [activeTab, setActiveTab] = useState<TabType>(savedState?.activeTab ?? "chat");
+    const [enableTransition, setEnableTransition] = useState(false);
+    const [exercisesWithExplanations, setExercisesWithExplanations] = useState<string[]>([]);
+    const [exercisesWithEvaluations, setExercisesWithEvaluations] = useState<string[]>([]);
+    const [isLoadingExplanations, setIsLoadingExplanations] = useState(false);
+    const [isLoadingEvaluations, setIsLoadingEvaluations] = useState(false);
+    const [exercises, setExercises] = useState<Exercise[]>([]);
+    const [isLabBlocked, setIsLabBlocked] = useState<boolean>(false);
+    const [isCheckingBlocked, setIsCheckingBlocked] = useState<boolean>(true);
+    const [isTeacherMode, setIsTeacherMode] = useState<boolean>(false);
+    const [isUserTeacher, setIsUserTeacher] = useState<boolean>(false);
+    const [needsConfiguration, setNeedsConfiguration] = useState<boolean>(false);
+    const [missingLLMConfig, setMissingLLMConfig] = useState<boolean>(false);
+    const [isCheckingConfig, setIsCheckingConfig] = useState<boolean>(true);
+    const [reloadKey, setReloadKey] = useState<number>(0);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const isChatDisabled =
+        isAnyModalOpen || isGenerating || isLoadingExercises || isLabBlocked || (!!pageId && !hasExercisesLoaded);
+
+    // Effect: Verificar modo y configuración
+    useEffect(() => {
+        const checkModeAndConfiguration = async () => {
+            setIsCheckingConfig(true);
+            try {
+                ModeManager.clearCache();
+
+                const response = await chrome.runtime.sendMessage({ action: "checkUserRole" });
+                const userIsTeacher = response?.success ? response.isTeacher : false;
+                setIsUserTeacher(userIsTeacher);
+
+                if (!userIsTeacher) {
+                    await ModeManager.setMode(AppMode.STUDENT);
+                    setIsTeacherMode(false);
+                } else {
+                    const teacherMode = await ModeManager.isTeacherMode();
+                    setIsTeacherMode(teacherMode);
+                }
+
+                const configResponse = await chrome.runtime.sendMessage({ action: "checkConfiguration" });
+
+                if (configResponse?.success) {
+                    setMissingLLMConfig(!configResponse.hasLLMConfig);
+
+                    const currentMode = await ModeManager.getMode();
+                    if (currentMode === AppMode.STUDENT) {
+                        setNeedsConfiguration(!configResponse.hasStudentConfig);
+                    } else {
+                        setNeedsConfiguration(false);
+                    }
+                } else {
+                    setMissingLLMConfig(false);
+                    setNeedsConfiguration(false);
+                }
+            } catch (error) {
+                console.error("[ChatSidebar] Error verificando configuración:", error);
+                setNeedsConfiguration(false);
+                setMissingLLMConfig(false);
+            } finally {
+                setIsCheckingConfig(false);
+            }
+        };
+
+        checkModeAndConfiguration();
+    }, [reloadKey]);
+
+    // Effect: Escuchar mensajes de recarga
+    useEffect(() => {
+        const messageListener = (
+            message: any,
+            sender: chrome.runtime.MessageSender,
+            sendResponse: (response?: any) => void
+        ) => {
+            if (message.action === "reloadSidebar") {
+                setReloadKey(prev => prev + 1);
+                sendResponse({ success: true });
+                return true;
+            }
+        };
+
+        chrome.runtime.onMessage.addListener(messageListener);
+
+        return () => {
+            chrome.runtime.onMessage.removeListener(messageListener);
+        };
+    }, []);
+
+    // Effect: Habilitar transición
+    useEffect(() => {
+        setEnableTransition(true);
+    }, []);
+
+    // Effect: Guardar estado del sidebar
+    useEffect(() => {
+        try {
+            SidebarStateStorageManager.saveSidebarState({
+                isCollapsed,
+                activeTab,
+            });
+        } catch (error) {
+            console.error("Error guardando estado del sidebar:", error);
+        }
+    }, [isCollapsed, activeTab]);
+
+    // Effect: Verificar si el lab está bloqueado
+    useEffect(() => {
+        const checkLabBlocked = async () => {
+            if (!pageId || !courseId) {
+                setIsLabBlocked(false);
+                setIsCheckingBlocked(false);
+                return;
+            }
+
+            setIsCheckingBlocked(true);
+            try {
+                if (isUserTeacher) {
+                    setIsLabBlocked(false);
+                } else {
+                    const blocked = await ProgressManager.isLabBlocked(pageId, courseId);
+                    setIsLabBlocked(blocked);
+                }
+            } catch (error) {
+                console.error("[ChatSidebar] Error checking if lab is blocked:", error);
+                setIsLabBlocked(false);
+            } finally {
+                setIsCheckingBlocked(false);
+            }
+        };
+
+        checkLabBlocked();
+    }, [pageId, courseId, isUserTeacher]);
+
+    // Effect: Cargar ejercicios cuando haya pageId
+    useEffect(() => {
+        if (pageId && !needsConfiguration) {
+            loadExercises();
+            loadExercisesWithExplanations();
+            loadExercisesWithEvaluations();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageId, reloadKey, needsConfiguration]);
+
+    // Effect: Cargar historial del chat
+    useEffect(() => {
+        const loadChatHistory = async () => {
+            try {
+                const response: any = await chrome.runtime.sendMessage({ action: "loadChatHistory" });
+
+                if (response && response.success && Array.isArray(response.messages)) {
+                    const uiMessages: ChatMessage[] = response.messages
+                        .filter((m: any) => m.role === "user" || m.role === "assistant" || m.role === "tool")
+                        .map((m: any, idx: number) => ({
+                            role: m.role as "user" | "assistant" | "tool",
+                            content: m.content,
+                            id: `${m.role}-${Date.now()}-${idx}`,
+                            tool_calls: m.tool_calls,
+                            name: m.name,
+                        }));
+
+                    setMessages(uiMessages);
+                    console.log(`[ChatSidebar] Historial de chat cargado: ${uiMessages.length} mensajes`);
+                } else {
+                    console.log("[ChatSidebar] No hay historial de chat en background");
+                }
+            } catch (error) {
+                console.error("[ChatSidebar] Error cargando historial de chat:", error);
+            }
+        };
+
+        loadChatHistory();
+    }, []);
+
+    // Effect: Scroll automático en el chat
+    useEffect(() => {
+        if (activeTab === "chat") {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages, isGenerating, activeTab]);
+
+    // Función: Cargar ejercicios con explicaciones
+    const loadExercisesWithExplanations = async () => {
+        if (!pageId) return;
+
+        setIsLoadingExplanations(true);
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: "getExercisesWithExplanations",
+                pageId: pageId,
+            });
+
+            if (response.success) {
+                setExercisesWithExplanations(response.exerciseNames);
+            }
+        } catch (error) {
+            console.error("Error loading exercises with explanations:", error);
+        } finally {
+            setIsLoadingExplanations(false);
+        }
+    };
+
+    // Función: Cargar ejercicios con evaluaciones
+    const loadExercisesWithEvaluations = async () => {
+        if (!pageId) return;
+
+        setIsLoadingEvaluations(true);
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: "getExercisesWithEvaluations",
+                pageId: pageId,
+            });
+
+            if (response.success) {
+                setExercisesWithEvaluations(response.exerciseNames);
+            }
+        } catch (error) {
+            console.error("Error loading exercises with evaluations:", error);
+        } finally {
+            setIsLoadingEvaluations(false);
+        }
+    };
+
+    // Función: Cargar ejercicios
+    const loadExercises = async () => {
+        if (!pageId) return;
+
+        try {
+            const resp = await chrome.runtime.sendMessage({ action: "getExerciseData", pageId });
+            if (resp && resp.success && resp.data && Array.isArray(resp.data.exercises)) {
+                const loaded = resp.data.exercises.map((ex: any) => ({
+                    name: ex.name,
+                    statement: ex.statement,
+                    allowed: ex.allowed ?? true,
+                    isTiquismiqui: ex.isTiquismiqui ?? false,
+                }));
+                setExercises(loaded);
+            } else {
+                setExercises([]);
+            }
+        } catch (error) {
+            console.error("Error loading exercises:", error);
+            setExercises([]);
+        }
+    };
+
+    // Handler: Configuración cargada
+    const handleConfigLoaded = async () => {
+        setReloadKey(prev => prev + 1);
+
+        if (pageId) {
+            await loadExercises();
+            await loadExercisesWithExplanations();
+            await loadExercisesWithEvaluations();
+        }
+    };
+
+    // Handler: Cambiar modo
+    const handleModeToggle = async () => {
+        if (!isUserTeacher) return;
+
+        try {
+            const newMode = await ModeManager.toggleMode();
+            const newIsTeacherMode = newMode === AppMode.TEACHER;
+            setIsTeacherMode(newIsTeacherMode);
+
+            setReloadKey(prev => prev + 1);
+
+            const tabs = await chrome.tabs.query({});
+            for (const tab of tabs) {
+                if (tab.id && tab.url && !tab.url.startsWith("chrome://")) {
+                    try {
+                        await chrome.tabs.sendMessage(tab.id, { action: "reloadSidebar" });
+                    } catch (error) {
+                        // Ignorar errores
+                    }
+                }
+            }
+
+            const extensionTabs = tabs.filter(tab => tab.url?.includes("chrome-extension://"));
+            for (const tab of extensionTabs) {
+                if (tab.id) {
+                    chrome.tabs.reload(tab.id);
+                }
+            }
+        } catch (error) {
+            console.error("[ChatSidebar] Error al cambiar el modo:", error);
+        }
+    };
+
+    // Handler: Click en explicación
+    const handleExplanationClick = (exerciseName: string) => {
+        if (onOpenExplanation) {
+            onOpenExplanation(exerciseName);
+        }
+    };
+
+    // Handler: Click en evaluación
+    const handleEvaluationClick = (exerciseName: string) => {
+        if (onOpenEvaluation) {
+            onOpenEvaluation(exerciseName);
+        }
+    };
+
+    // Handler: Actualización de configuración
+    const handleConfigUpdate = async () => {
+        if (pageId) {
+            try {
+                const response = await chrome.runtime.sendMessage({
+                    action: "getExerciseData",
+                    pageId: pageId,
+                });
+
+                if (response.success && response.data) {
+                    setExercises(
+                        response.data.exercises.map((ex: any) => ({
+                            name: ex.name,
+                            statement: ex.statement,
+                            allowed: ex.allowed ?? true,
+                            isTiquismiqui: ex.isTiquismiqui ?? false,
+                        }))
+                    );
+                }
+            } catch (error) {
+                console.error("Error loading updated exercises:", error);
+            }
+        }
+
+        await loadExercisesWithExplanations();
+
+        if (onExplanationGenerated) {
+            onExplanationGenerated();
+        }
+    };
+
+    // Handler: Enviar mensaje
+    const handleSendMessage = async () => {
+        if (!inputValue.trim() || isGenerating) return;
+
+        const userMessage: ChatMessage = {
+            role: "user",
+            content: inputValue,
+            id: `user-${Date.now()}`,
+        };
+
+        setMessages(prev => [...prev, userMessage]);
+        setInputValue("");
+        setIsGenerating(true);
+
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: "generateResponse",
+                userMessage: inputValue,
+                resetHistory: false,
+                exercises: exercises.length > 0 ? exercises : undefined,
+            });
+
+            const assistantMessage: ChatMessage = {
+                role: "assistant",
+                content: response,
+                id: `assistant-${Date.now()}`,
+            };
+
+            setMessages(prev => [...prev, assistantMessage]);
+        } catch (error) {
+            console.error("Error generating response:", error);
+            const errorMessage: ChatMessage = {
+                role: "assistant",
+                content: "Error generating response. Please try again.",
+                id: `error-${Date.now()}`,
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    // Handler: Reiniciar chat
+    const handleResetChat = async () => {
+        try {
+            await chrome.runtime.sendMessage({ action: "resetChatHistory" });
+            setMessages([]);
+            console.log("[ChatSidebar] Chat reiniciado");
+        } catch (error) {
+            console.error("[ChatSidebar] Error reiniciando chat:", error);
+        }
+    };
+
+    // Handler: Tecla presionada
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    };
+
+    return {
+        // Estado
+        isCollapsed,
+        setIsCollapsed,
+        messages,
+        inputValue,
+        setInputValue,
+        isGenerating,
+        activeTab,
+        setActiveTab,
+        enableTransition,
+        exercisesWithExplanations,
+        exercisesWithEvaluations,
+        isLoadingExplanations,
+        isLoadingEvaluations,
+        exercises,
+        isLabBlocked,
+        isCheckingBlocked,
+        isTeacherMode,
+        isUserTeacher,
+        needsConfiguration,
+        missingLLMConfig,
+        isCheckingConfig,
+        reloadKey,
+        messagesEndRef,
+        isChatDisabled,
+        // Handlers
+        handleConfigLoaded,
+        handleModeToggle,
+        handleExplanationClick,
+        handleEvaluationClick,
+        handleConfigUpdate,
+        handleSendMessage,
+        handleResetChat,
+        handleKeyDown,
+    };
+};

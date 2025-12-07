@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import ChatSidebar from "../components/ChatSidebar";
+import ChatSidebar from "../components/ChatSidebar/ChatSidebar.tsx";
 import EvaluationListModal from "../components/EvaluationListModal";
 import ExerciseModal from "../components/ExerciseModal";
 import SolutionModal from "../components/SolutionModal";
