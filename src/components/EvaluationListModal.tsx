@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import BaseModal from "./BaseModal";
 
 interface SavedEvaluation {
     exerciseName: string;
@@ -75,156 +76,129 @@ const EvaluationListModal: React.FC<EvaluationListModalProps> = ({ exerciseName,
         return "Insuficiente";
     };
 
-    if (!isOpen) return null;
+    const formatScore = (score: number) => {
+        return score % 1 === 0 ? score.toString() : score.toFixed(1);
+    };
 
     return (
-        <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex={-1} role="dialog">
-            <div className="modal-dialog modal-xl modal-dialog-scrollable" role="document">
-                <div className="modal-content">
-                    <div className="modal-header">
-                        <h5 className="modal-title">
-                            Evaluaciones de: <strong>{exerciseName}</strong>
-                        </h5>
-                        <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
+        <BaseModal isOpen={isOpen} onClose={onClose} title={`Evaluaciones de ${exerciseName}`}>
+            {isLoading ? (
+                <div className="text-center py-5">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Cargando evaluaciones...</span>
+                    </div>
+                    <p className="mt-3">Cargando evaluaciones...</p>
+                </div>
+            ) : evaluations.length === 0 ? (
+                <div className="alert alert-info">
+                    <strong>No hay evaluaciones guardadas</strong>
+                    <p className="mb-0 mt-2">Aún no has enviado soluciones para evaluación en este ejercicio.</p>
+                </div>
+            ) : (
+                <div className="row" style={{ height: "85vh", minHeight: 400 }}>
+                    {/* Lista de evaluaciones */}
+                    <div className="col-md-4">
+                        {/* Estadísticas */}
+                        <div className="card mb-3">
+                            <div className="card-body">
+                                <h6 className="card-title">Estadísticas</h6>
+                                <ul className="list-unstyled mb-0">
+                                    <li>
+                                        <strong>Mejor puntuación:</strong>{" "}
+                                        {formatScore(Math.max(...evaluations.map(e => e.score)))}
+                                    </li>
+                                    <li>
+                                        <strong>Puntuación media:</strong>{" "}
+                                        {formatScore(
+                                            evaluations.reduce((sum, e) => sum + e.score, 0) / evaluations.length
+                                        )}
+                                    </li>
+                                    <li>
+                                        <strong>Total intentos:</strong> {evaluations.length}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <h6 className="mb-3">Historial de intentos ({evaluations.length})</h6>
+                        <div className="list-group">
+                            {evaluations.map((evaluation, index) => (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    className={`list-group-item list-group-item-action ${
+                                        selectedEvaluation === evaluation ? "active" : ""
+                                    }`}
+                                    onClick={() => setSelectedEvaluation(evaluation)}
+                                >
+                                    <div className="d-flex w-100 justify-content-between align-items-center">
+                                        <div>
+                                            <h6 className="mb-1">Intento #{evaluations.length - index}</h6>
+                                            <small className={selectedEvaluation === evaluation ? "" : "text-muted"}>
+                                                {formatDate(evaluation.timestamp)}
+                                            </small>
+                                        </div>
+                                        <span
+                                            className={`badge bg-${getScoreColor(evaluation.score)}`}
+                                            style={{ fontSize: "1rem" }}
+                                        >
+                                            {formatScore(evaluation.score)}
+                                        </span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="modal-body">
-                        {isLoading ? (
-                            <div className="text-center py-5">
-                                <div className="spinner-border text-primary" role="status">
-                                    <span className="visually-hidden">Cargando evaluaciones...</span>
+                    {/* Detalles de la evaluación seleccionada */}
+                    <div className="col-md-8 d-flex flex-column" style={{ height: "100%" }}>
+                        {selectedEvaluation ? (
+                            <>
+                                <div className={`alert alert-${getScoreColor(selectedEvaluation.score)}`}>
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 className="mb-0">
+                                                Puntuación: {formatScore(selectedEvaluation.score)} / 10
+                                            </h5>
+                                            <small>
+                                                {getScoreLabel(selectedEvaluation.score)} -{" "}
+                                                {formatDate(selectedEvaluation.timestamp)}
+                                            </small>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p className="mt-3">Cargando evaluaciones...</p>
-                            </div>
-                        ) : evaluations.length === 0 ? (
-                            <div className="alert alert-info">
-                                <strong>No hay evaluaciones guardadas</strong>
-                                <p className="mb-0 mt-2">
-                                    Aún no has enviado soluciones para evaluación en este ejercicio.
-                                </p>
-                            </div>
+
+                                <h6>Tu solución:</h6>
+                                <pre
+                                    className="bg-light p-3 rounded"
+                                    style={{
+                                        height: "20vh",
+                                        overflowY: "auto",
+                                        fontSize: "0.9rem",
+                                    }}
+                                >
+                                    <code>{selectedEvaluation.solution}</code>
+                                </pre>
+
+                                <h6 className="mt-1">Feedback del evaluador:</h6>
+                                <div
+                                    className="border rounded p-3 flex-fill"
+                                    style={{ height: "75vh", overflowY: "auto" }}
+                                >
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {selectedEvaluation.feedback}
+                                    </ReactMarkdown>
+                                </div>
+                            </>
                         ) : (
-                            <div className="row">
-                                {/* Lista de evaluaciones */}
-                                <div className="col-md-4">
-                                    <h6 className="mb-3">Historial de intentos ({evaluations.length})</h6>
-                                    <div className="list-group">
-                                        {evaluations.map((evaluation, index) => (
-                                            <button
-                                                key={index}
-                                                type="button"
-                                                className={`list-group-item list-group-item-action ${
-                                                    selectedEvaluation === evaluation ? "active" : ""
-                                                }`}
-                                                onClick={() => setSelectedEvaluation(evaluation)}
-                                            >
-                                                <div className="d-flex w-100 justify-content-between align-items-center">
-                                                    <div>
-                                                        <h6 className="mb-1">Intento #{evaluations.length - index}</h6>
-                                                        <small
-                                                            className={
-                                                                selectedEvaluation === evaluation ? "" : "text-muted"
-                                                            }
-                                                        >
-                                                            {formatDate(evaluation.timestamp)}
-                                                        </small>
-                                                    </div>
-                                                    <span
-                                                        className={`badge bg-${getScoreColor(evaluation.score)}`}
-                                                        style={{ fontSize: "1rem" }}
-                                                    >
-                                                        {evaluation.score.toFixed(1)}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {/* Estadísticas */}
-                                    <div className="card mt-3">
-                                        <div className="card-body">
-                                            <h6 className="card-title">Estadísticas</h6>
-                                            <ul className="list-unstyled mb-0">
-                                                <li>
-                                                    <strong>Mejor puntuación:</strong>{" "}
-                                                    {Math.max(...evaluations.map(e => e.score)).toFixed(1)}
-                                                </li>
-                                                <li>
-                                                    <strong>Puntuación media:</strong>{" "}
-                                                    {(
-                                                        evaluations.reduce((sum, e) => sum + e.score, 0) /
-                                                        evaluations.length
-                                                    ).toFixed(1)}
-                                                </li>
-                                                <li>
-                                                    <strong>Total intentos:</strong> {evaluations.length}
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Detalles de la evaluación seleccionada */}
-                                <div className="col-md-8">
-                                    {selectedEvaluation ? (
-                                        <>
-                                            <div className={`alert alert-${getScoreColor(selectedEvaluation.score)}`}>
-                                                <div className="d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <h5 className="mb-0">
-                                                            Puntuación: {selectedEvaluation.score.toFixed(1)} / 10
-                                                        </h5>
-                                                        <small>
-                                                            {getScoreLabel(selectedEvaluation.score)} -{" "}
-                                                            {formatDate(selectedEvaluation.timestamp)}
-                                                        </small>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <h6>Tu solución:</h6>
-                                            <pre
-                                                className="bg-light p-3 rounded"
-                                                style={{
-                                                    maxHeight: "200px",
-                                                    overflowY: "auto",
-                                                    fontSize: "0.9rem",
-                                                }}
-                                            >
-                                                <code>{selectedEvaluation.solution}</code>
-                                            </pre>
-
-                                            <h6 className="mt-4">Feedback del evaluador:</h6>
-                                            <div
-                                                className="border rounded p-3"
-                                                style={{
-                                                    maxHeight: "400px",
-                                                    overflowY: "auto",
-                                                }}
-                                            >
-                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                    {selectedEvaluation.feedback}
-                                                </ReactMarkdown>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="alert alert-info">
-                                            Selecciona una evaluación del historial para ver los detalles.
-                                        </div>
-                                    )}
-                                </div>
+                            <div className="alert alert-info">
+                                Selecciona una evaluación del historial para ver los detalles.
                             </div>
                         )}
                     </div>
-
-                    <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>
-                            Cerrar
-                        </button>
-                    </div>
                 </div>
-            </div>
-        </div>
+            )}
+        </BaseModal>
     );
 };
 

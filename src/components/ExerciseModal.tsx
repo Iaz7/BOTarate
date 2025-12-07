@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import BaseModal from "./BaseModal";
 
 interface Exercise {
     name: string;
@@ -244,29 +245,9 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
     };
 
     return (
-        <div
-            className="card shadow-lg border-primary"
-            style={{
-                position: "fixed",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                width: "80vw",
-                height: "80vh",
-                zIndex: 10000,
-                overflow: "hidden",
-            }}
-        >
-            {/* Header */}
-            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h3 className="h5 mb-0">{exercise.name}</h3>
-                <button onClick={onClose} className="btn btn-sm btn-light" title="Cerrar">
-                    ×
-                </button>
-            </div>
-
+        <BaseModal isOpen={isOpen} onClose={onClose} title={exercise.name}>
             {/* Content - Explicación y Chat */}
-            <div className="d-flex" style={{ flex: 1, overflow: "hidden", height: "calc(80vh - 60px)" }}>
+            <div className="d-flex" style={{ flex: 1, overflow: "hidden", height: "87vh" }}>
                 {/* Columna izquierda - Explicación */}
                 <div className="p-4" style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #dee2e6" }}>
                     {exercise.isTiquismiqui && (
@@ -369,20 +350,22 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                     className="d-flex flex-column"
                     style={{ width: "35%", minWidth: "450px", backgroundColor: "#f8f9fa" }}
                 >
-                    <div className="p-3 border-bottom bg-white">
+                    <div className="px-3 py-2 border-bottom bg-white">
                         <h6 className="mb-0">💬 Preguntas sobre la explicación</h6>
                         <small className="text-muted">Haz preguntas sobre cualquier paso de la explicación</small>
                     </div>
 
                     {/* Mensajes del chat */}
                     <div
-                        className="p-3"
+                        className="px-3"
                         style={{
                             flex: 1,
                             overflowY: "auto",
                             display: "flex",
                             flexDirection: "column",
                             gap: "12px",
+                            paddingTop: "12px",
+                            paddingBottom: "12px",
                         }}
                     >
                         {!isChatInitialized ? (
@@ -462,7 +445,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                     </div>
 
                     {/* Input del chat */}
-                    <div className="p-3 border-top bg-white">
+                    <div className="px-3 py-2 border-top bg-white">
                         <div className="d-flex gap-2 align-items-end">
                             <textarea
                                 className="form-control"
@@ -471,7 +454,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                 onChange={e => setChatInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 disabled={isSendingMessage || !isChatInitialized}
-                                rows={2}
+                                rows={4}
                                 style={{ resize: "none", fontSize: "0.9rem" }}
                             />
                             <button
@@ -505,7 +488,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                     </div>
                 </div>
             </div>
-        </div>
+        </BaseModal>
     );
 };
 

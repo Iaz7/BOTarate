@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { APP_CONFIG } from "../constants";
 import { AppMode, ModeManager } from "../util/config/ModeManager";
 import { ProgressManager } from "../util/progress/ProgressManager";
+import { SidebarStateStorageManager } from "../util/storage/SidebarStateStorageManager";
 import { ConfigurationRequired } from "./ConfigurationRequired";
 import ExerciseConfigTab from "./ExerciseConfigTab";
 import LabConfigTab from "./LabConfigTab";
@@ -56,11 +57,15 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     hasExercisesLoaded = false,
     onIdentifyExercises,
 }) => {
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const savedState = SidebarStateStorageManager.getSidebarState();
+    const [isCollapsed, setIsCollapsed] = useState(savedState?.isCollapsed ?? false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState<string>("");
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
-    const [activeTab, setActiveTab] = useState<"chat" | "exercises" | "config" | "labs" | "progress">("chat");
+    const [activeTab, setActiveTab] = useState<"chat" | "exercises" | "config" | "labs" | "progress">(
+        savedState?.activeTab ?? "chat"
+    );
+    const [enableTransition, setEnableTransition] = useState(false);
     const [exercisesWithExplanations, setExercisesWithExplanations] = useState<string[]>([]);
     const [exercisesWithEvaluations, setExercisesWithEvaluations] = useState<string[]>([]);
     const [isLoadingExplanations, setIsLoadingExplanations] = useState(false);
@@ -172,6 +177,23 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         };
     }, []);
 
+    // Habilitar transición después del primer render
+    useEffect(() => {
+        setEnableTransition(true);
+    }, []);
+
+    // Guardar estado del sidebar cuando cambie
+    useEffect(() => {
+        try {
+            SidebarStateStorageManager.saveSidebarState({
+                isCollapsed,
+                activeTab,
+            });
+        } catch (error) {
+            console.error("Error guardando estado del sidebar:", error);
+        }
+    }, [isCollapsed, activeTab]);
+
     const handleConfigLoaded = async () => {
         setReloadKey(prev => prev + 1);
 
@@ -187,7 +209,21 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
         try {
             const newMode = await ModeManager.toggleMode();
-            setIsTeacherMode(newMode === AppMode.TEACHER);
+            const newIsTeacherMode = newMode === AppMode.TEACHER;
+            setIsTeacherMode(newIsTeacherMode);
+
+            // Cambiar pestaña si la actual no está disponible en el nuevo modo
+            if (newIsTeacherMode) {
+                // Modo profesor: pestañas disponibles: labs (si courseId), config, chat
+                if (activeTab === "exercises" || activeTab === "progress") {
+                    setActiveTab("chat");
+                }
+            } else {
+                // Modo estudiante: pestañas disponibles: exercises (si hay ejercicios), progress (si courseId), chat
+                if (activeTab === "labs" || activeTab === "config") {
+                    setActiveTab("chat");
+                }
+            }
 
             // Recargar el componente
             setReloadKey(prev => prev + 1);
@@ -470,7 +506,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 borderLeft: "1px solid #dee2e6",
                 boxShadow: "-2px 0 8px rgba(0,0,0,0.1)",
                 zIndex: "9999",
-                transition: "right 0.3s ease-in-out",
+                transition: enableTransition ? "right 0.3s ease-in-out" : "none",
                 display: "flex",
                 flexDirection: "column",
                 fontFamily: "Inter, sans-serif",
@@ -482,19 +518,19 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 style={{
                     position: "absolute",
                     left: "-40px",
-                    top: "20px",
+                    top: "0",
                     width: "40px",
-                    height: "40px",
-                    backgroundColor: "#007bff",
+                    height: "80px",
+                    backgroundColor: "#0f47ad",
                     color: "white",
                     border: "none",
-                    borderRadius: "4px 0 0 4px",
+                    borderRadius: "0 0 0 8px",
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "16px",
-                    boxShadow: "-2px 0 8px rgba(0,0,0,0.1)",
+                    boxShadow: "-4px 0 16px rgba(0,0,0,0.6)",
                 }}
                 title={isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"}
             >
@@ -514,7 +550,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     </div>
                     {/* Selector de modo solo visible para profesores */}
                     {isUserTeacher && (
-                        <div className="d-flex flex-column">
+                        <div className="d-flex flex-column bg-light p-3 rounded border">
                             <label className="form-label fw-bold mb-2">Modo</label>
                             <div className="d-flex flex-column gap-1">
                                 <div className="form-check">
