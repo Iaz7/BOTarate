@@ -59,35 +59,18 @@ class ExplanationAssistant extends BaseAssistant {
     }
 
     /**
-     * Generates a structured step-by-step explanation for an exercise
-     * @param exerciseName - Exercise name
-     * @param exerciseStatement - Complete exercise statement
-     * @param exerciseContext - Additional exercise context (e.g., DB schema, specifications)
-     * @param concepts - Concepts worked on the page (optional)
-     * @param learningObjectives - Learning objectives of the page (optional)
-     * @param progressSummary - Student progress summary (optional)
-     * @param responseOptions - Verbosity and reasoning options (optional)
-     * @returns Structured explanation with steps
+     * Builds the system prompt for explanations (shared between generateExplanation and initializeContextForFollowUp)
      */
-    async generateExplanation(
-        exerciseName: string,
-        exerciseStatement: string,
+    private buildExplanationSystemPrompt(
         exerciseContext?: string,
         concepts?: string[],
         learningObjectives?: string,
         progressSummary?: string,
-        pageId?: string,
-        responseOptions?: ResponseOptions
-    ): Promise<ExplanationSchemaType> {
-        console.log(`[generateExplanation] Generating explanation for: ${exerciseName}`);
-        if (responseOptions) {
-            console.log(`[generateExplanation] Options: verbosity=${responseOptions.verbosity}, reasoning=${responseOptions.reasoningEffort}`);
-        }
-
+        pageId?: string
+    ): string {
         const assistantConfig = this.config.explanationAssistant;
         const pedagogicalContext = this.buildPedagogicalContext(concepts, learningObjectives, progressSummary);
 
-        // Generic system prompt template
         const systemPromptTemplate = `You are a {role}.
 Your task is {taskDescription}
 
@@ -127,9 +110,18 @@ PEDAGOGICAL CONTEXT:
             importantNotes: assistantConfig.importantNotes || ''
         };
 
-        const systemPrompt = this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);
+        return this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);
+    }
 
-        const userPrompt = `Please generate a step-by-step explanation for the following exercise:
+    /**
+     * Builds the user prompt for requesting an explanation
+     */
+    private buildExplanationUserPrompt(
+        exerciseName: string,
+        exerciseStatement: string,
+        exerciseContext?: string
+    ): string {
+        return `Please generate a step-by-step explanation for the following exercise:
 
 **${exerciseName}**
 
@@ -140,6 +132,36 @@ ${exerciseContext ? `Exercise context:\n\`\`\`\n${exerciseContext}\n\`\`\`` : ''
 Before generating the explanation, consider consulting the course theory material to ensure your explanation aligns with what has been taught in class.
 
 NOTE: After generating the explanation, the student will have the opportunity to ask follow-up questions about the provided explanation.`;
+    }
+
+    /**
+     * Generates a structured step-by-step explanation for an exercise
+     * @param exerciseName - Exercise name
+     * @param exerciseStatement - Complete exercise statement
+     * @param exerciseContext - Additional exercise context (e.g., DB schema, specifications)
+     * @param concepts - Concepts worked on the page (optional)
+     * @param learningObjectives - Learning objectives of the page (optional)
+     * @param progressSummary - Student progress summary (optional)
+     * @param responseOptions - Verbosity and reasoning options (optional)
+     * @returns Structured explanation with steps
+     */
+    async generateExplanation(
+        exerciseName: string,
+        exerciseStatement: string,
+        exerciseContext?: string,
+        concepts?: string[],
+        learningObjectives?: string,
+        progressSummary?: string,
+        pageId?: string,
+        responseOptions?: ResponseOptions
+    ): Promise<ExplanationSchemaType> {
+        console.log(`[generateExplanation] Generating explanation for: ${exerciseName}`);
+        if (responseOptions) {
+            console.log(`[generateExplanation] Options: verbosity=${responseOptions.verbosity}, reasoning=${responseOptions.reasoningEffort}`);
+        }
+
+        const systemPrompt = this.buildExplanationSystemPrompt(exerciseContext, concepts, learningObjectives, progressSummary, pageId);
+        const userPrompt = this.buildExplanationUserPrompt(exerciseName, exerciseStatement, exerciseContext);
 
         try {
             // Reset history for this specific call
@@ -198,7 +220,8 @@ NOTE: After generating the explanation, the student will have the opportunity to
     }
 
     /**
-     * Initializes context for follow-up questions when a saved explanation is loaded
+     * Initializes context for follow-up questions when a saved explanation is loaded.
+     * Uses the same system prompt and history format as generateExplanation to ensure consistency.
      * @param exerciseName - Exercise name
      * @param exerciseStatement - Complete exercise statement
      * @param explanation - Previously generated explanation
@@ -207,6 +230,7 @@ NOTE: After generating the explanation, the student will have the opportunity to
      * @param learningObjectives - Learning objectives of the page
      * @param progressSummary - Student progress summary
      * @param chatHistory - Previous chat message history (optional)
+     * @param pageId - Page ID for tool calls
      */
     async initializeContextForFollowUp(
         exerciseName: string,
@@ -221,77 +245,27 @@ NOTE: After generating the explanation, the student will have the opportunity to
     ): Promise<void> {
         console.log(`[initializeContextForFollowUp] Initializing context for: ${exerciseName}`);
 
-        const assistantConfig = this.config.explanationAssistant;
-        const pedagogicalContext = this.buildPedagogicalContext(concepts, learningObjectives, progressSummary);
+        // Use the same system prompt as generateExplanation
+        const systemPrompt = this.buildExplanationSystemPrompt(exerciseContext, concepts, learningObjectives, progressSummary, pageId);
 
-        const systemPromptTemplate = `You are a {role}.
-    You have generated a step-by-step explanation for the following exercise, and now the student is asking follow-up questions about the explanation.
+        // Reconstruct the original user prompt
+        const userPrompt = this.buildExplanationUserPrompt(exerciseName, exerciseStatement, exerciseContext);
 
-    EXERCISE: {exerciseName}
-
-    STATEMENT:
-    {exerciseStatement}
-
-    {contextNote}
-
-    METHODOLOGY:
-
-    {methodology}
-
-    {additionalRules}
-
-    LAB CONTENT TOOLS (use only if the student requests it):
-    {labContentToolsNote}
-
-    {pageIdNote}
-
-    PEDAGOGICAL CONTEXT:
-    {conceptsContext}
-    {objectivesContext}
-    {alignmentNote}
-
-    {progressContext}
-
-    {importantNotes}
-
-    NOTE: The student may ask questions about any aspect of the explanation. Be clear, concise, and pedagogical in your responses.`;
-
-        const systemPromptVariables = {
-            role: assistantConfig.role,
-            exerciseName: exerciseName,
-            exerciseStatement: exerciseStatement,
-            methodology: assistantConfig.methodology,
-            contextNote: exerciseContext ? `EXERCISE CONTEXT:\n\`\`\`\n${exerciseContext}\n\`\`\`` : '',
-            additionalRules: assistantConfig.additionalRules || '',
-            labContentToolsNote: this.buildLabContentToolsNote(),
-            pageIdNote: pageId ? `Page ID: ${pageId}\n- Use this ID as the value for the 'pageId' parameter when calling getPageContent or getFilteredFileContent.` : '',
-            ...pedagogicalContext,
-            importantNotes: assistantConfig.importantNotes || ''
-        };
-
-        const systemPrompt = this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);
-
-        // Create an explanation summary for context
-        const explanationSummary = explanation.steps.map((step, i) =>
-            `Step ${i + 1} - ${step.title}: ${step.content.substring(0, 200)}...`
-        ).join('\n\n');
-
-        const assistantMessage = `You have already generated the following explanation for the exercise:
-
-${explanationSummary}
-
-The student will now ask follow-up questions about this explanation.`;
+        // Serialize the explanation as the assistant's original response
+        const assistantResponse = JSON.stringify(explanation, null, 2);
 
         // Reset and initialize context
         this.openAIService.resetConversation();
 
-        // Add system prompt and explanation context to history
+        // Build history exactly as it was after generateExplanation:
+        // system -> user (request) -> assistant (explanation JSON)
         const history: any[] = [
             { role: 'system', content: systemPrompt },
-            { role: 'assistant', content: assistantMessage }
+            { role: 'user', content: userPrompt },
+            { role: 'assistant', content: assistantResponse }
         ];
 
-        // If there is previous chat history, restore it
+        // Restore any follow-up chat history
         if (chatHistory && chatHistory.length > 0) {
             console.log(`[initializeContextForFollowUp] Restoring ${chatHistory.length} messages from history`);
             history.push(...chatHistory);
@@ -299,6 +273,6 @@ The student will now ask follow-up questions about this explanation.`;
 
         this.openAIService.setConversationHistory(history);
 
-        console.log(`[initializeContextForFollowUp] Context initialized`);
+        console.log(`[initializeContextForFollowUp] Context initialized with ${history.length} messages`);
     }
 }
