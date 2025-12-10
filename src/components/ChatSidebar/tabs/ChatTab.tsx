@@ -34,6 +34,7 @@ interface ChatTabProps {
     hasExercisesLoaded?: boolean;
     exercises: Exercise[];
     isAnyModalOpen: boolean;
+    isTeacherMode: boolean;
     onSendMessage: () => void;
     onResetChat: () => void;
     onInputChange: (value: string) => void;
@@ -54,6 +55,7 @@ const ChatTab: React.FC<ChatTabProps> = ({
     hasExercisesLoaded,
     exercises,
     isAnyModalOpen,
+    isTeacherMode,
     onSendMessage,
     onResetChat,
     onInputChange,
@@ -63,9 +65,10 @@ const ChatTab: React.FC<ChatTabProps> = ({
 }) => {
     const getChatPlaceholder = () => {
         if (isAnyModalOpen) return "Chat disabled (modal open)...";
+        if (isTeacherMode && pageId) return "Switch to student mode to work on the lab...";
         if (isLabBlocked) return "Lab blocked...";
         if (isLoadingExercises) return "Loading exercises...";
-        if (pageId && !hasExercisesLoaded) return "No exercises loaded. Press 'Identify' to analyze them...";
+        if (pageId && !hasExercisesLoaded) return "Lab not configured by teacher...";
         return "Type your question...";
     };
 
@@ -131,6 +134,20 @@ const ChatTab: React.FC<ChatTabProps> = ({
                             <li>Check your progress in the "My progress" tab</li>
                         </ul>
                     </div>
+                ) : isTeacherMode && pageId ? (
+                    <div className="alert alert-info" role="alert">
+                        <h5 className="alert-heading">
+                            <i className="bi bi-info-circle-fill me-2"></i>
+                            Teacher mode active
+                        </h5>
+                        <p>
+                            You are in teacher mode. To work on this lab's exercises, you must switch to student mode.
+                        </p>
+                        <hr />
+                        <p className="mb-0">
+                            Go to the <strong>"Mode"</strong> tab to change your mode.
+                        </p>
+                    </div>
                 ) : isLoadingExercises ? (
                     <div className="card border-primary">
                         <div className="card-body p-3">
@@ -148,17 +165,18 @@ const ChatTab: React.FC<ChatTabProps> = ({
                 ) : pageId && !hasExercisesLoaded && !isLoadingExercises ? (
                     <>
                         <div className="alert alert-warning" role="alert">
-                            <h6 className="alert-heading mb-2">
+                            <h5 className="alert-heading">
                                 <i className="bi bi-exclamation-triangle me-2"></i>
-                                No exercises loaded
-                            </h6>
-                            <p className="mb-3 small">
-                                To use the chat with exercise context, you must first identify them.
+                                Lab not configured
+                            </h5>
+                            <p>
+                                The teacher has not configured this lab yet. The chat is disabled until the
+                                configuration is available.
                             </p>
-                            <button type="button" className="btn btn-primary btn-sm" onClick={onIdentifyExercises}>
-                                <i className="bi bi-play-circle me-1"></i>
-                                Identify exercises now
-                            </button>
+                            <hr />
+                            <p className="mb-0">
+                                Please wait for your teacher to configure this lab or contact them for more information.
+                            </p>
                         </div>
                     </>
                 ) : messages.length === 0 ? (
@@ -166,27 +184,6 @@ const ChatTab: React.FC<ChatTabProps> = ({
                         <div className="alert alert-info" role="alert">
                             {getWelcomeMessage()}
                         </div>
-                        {pageId && exercises.length === 0 && !isLoadingExercises && (
-                            <div className="card border-primary">
-                                <div className="card-body p-3">
-                                    <h6 className="card-title mb-2">
-                                        <i className="bi bi-search me-2"></i>
-                                        Identify exercises
-                                    </h6>
-                                    <p className="card-text small text-muted mb-3">
-                                        Press the button to analyze the page and identify available exercises.
-                                    </p>
-                                    <button
-                                        type="button"
-                                        className="btn btn-primary btn-sm"
-                                        onClick={onIdentifyExercises}
-                                    >
-                                        <i className="bi bi-play-circle me-1"></i>
-                                        Identify exercises
-                                    </button>
-                                </div>
-                            </div>
-                        )}
                     </>
                 ) : (
                     messages.map(message => {

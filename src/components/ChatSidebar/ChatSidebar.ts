@@ -76,7 +76,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const isChatDisabled =
-        isAnyModalOpen || isGenerating || isLoadingExercises || isLabBlocked || (!!pageId && !hasExercisesLoaded);
+        isAnyModalOpen || isGenerating || isLoadingExercises || isLabBlocked || (!!pageId && !hasExercisesLoaded) || (isTeacherMode && !!pageId);
 
     // Effect: Verificar modo y configuración
     useEffect(() => {

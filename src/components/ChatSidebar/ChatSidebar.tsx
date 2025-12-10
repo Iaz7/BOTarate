@@ -219,6 +219,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                         hasExercisesLoaded={props.hasExercisesLoaded}
                         exercises={exercises}
                         isAnyModalOpen={props.isAnyModalOpen || false}
+                        isTeacherMode={isTeacherMode}
                         onSendMessage={handleSendMessage}
                         onResetChat={handleResetChat}
                         onInputChange={setInputValue}
