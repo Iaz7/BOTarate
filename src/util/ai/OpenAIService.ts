@@ -328,7 +328,6 @@ class OpenAIService {
      * it is sent as text (useful for SQL/Markdown/text files).
      */
     private addFileMessage(filename: string, dataUrl?: string, mimeType?: string, textContent?: string): void {
-        const usingOpenAI = this.isUsingOpenAIProvider();
         const isImage = this.isImageMimeType(mimeType);
 
         if (textContent) {
@@ -338,8 +337,7 @@ class OpenAIService {
             });
             return;
         }
-
-        if (dataUrl && isImage) {
+        else if (dataUrl && isImage) {
             this.conversationHistory.push({
                 role: 'user',
                 content: [
@@ -356,41 +354,13 @@ class OpenAIService {
                     }
                 ]
             });
-            return;
         }
-
-        if (usingOpenAI) {
+        else {
             this.conversationHistory.push({
                 role: 'user',
-                content: `Attached file: ${filename} (${mimeType || 'unknown'}). The OpenAI provider only allows attaching images in this flow, so the file was omitted.`
+                content: `Attached file: ${filename} (${mimeType || 'unknown'}). The file is available but its content has not been included.`
             });
-            return;
         }
-
-        if (dataUrl) {
-            this.conversationHistory.push({
-                role: 'user',
-                content: [
-                    {
-                        type: 'text',
-                        text: `Attached file: ${filename} (${mimeType || 'unknown'}).`
-                    },
-                    {
-                        type: 'image_url',
-                        image_url: {
-                            url: dataUrl,
-                            detail: 'high'
-                        }
-                    }
-                ]
-            });
-            return;
-        }
-
-        this.conversationHistory.push({
-            role: 'user',
-            content: `Attached file: ${filename} (${mimeType || 'unknown'}). The file is available but its content has not been included.`
-        });
     }
 
     private handleToolFileResult(toolCall: ToolCall, fileData: {
@@ -402,43 +372,37 @@ class OpenAIService {
     }): void {
         const description = `Attached file: ${fileData.filename} (${fileData.mimeType || 'unknown'}${fileData.size ? `, ${(fileData.size / 1024).toFixed(2)} KB` : ''})`;
 
-        if (this.isUsingOpenAIProvider()) {
-            if (fileData.text) {
-                this.addToolResult(
-                    toolCall.id,
-                    toolCall.function.name,
-                    `${description}.\n\nCONTENT:\n${fileData.text}`
-                );
-                return;
-            }
-
-            if (fileData.dataUrl && this.isImageMimeType(fileData.mimeType)) {
-                this.addToolMessageWithContent(toolCall.id, toolCall.function.name, [
-                    {
-                        type: 'text',
-                        text: description
-                    },
-                    {
-                        type: 'image_url',
-                        image_url: {
-                            url: fileData.dataUrl,
-                            detail: 'high'
-                        }
-                    }
-                ]);
-                return;
-            }
-
+        if (fileData.text) {
             this.addToolResult(
                 toolCall.id,
                 toolCall.function.name,
-                `${description}. The OpenAI provider only supports attaching images in this flow, so the file was omitted.`
+                `${description}.\n\nCONTENT:\n${fileData.text}`
             );
             return;
         }
 
-        this.addToolResult(toolCall.id, toolCall.function.name, description);
-        this.addFileMessage(fileData.filename, fileData.dataUrl, fileData.mimeType, fileData.text);
+        if (fileData.dataUrl && this.isImageMimeType(fileData.mimeType)) {
+            this.addToolMessageWithContent(toolCall.id, toolCall.function.name, [
+                {
+                    type: 'text',
+                    text: description
+                },
+                {
+                    type: 'image_url',
+                    image_url: {
+                        url: fileData.dataUrl,
+                        detail: 'high'
+                    }
+                }
+            ]);
+            return;
+        }
+
+        this.addToolResult(
+            toolCall.id,
+            toolCall.function.name,
+            `${description}. The OpenAI provider only supports attaching images in this flow, so the file was omitted.`
+        );
     }
 
     private addToolMessageWithContent(toolCallId: string, toolName: string, content: Exclude<Message['content'], string | null>): void {
@@ -448,13 +412,6 @@ class OpenAIService {
             name: toolName,
             content
         });
-    }
-
-    private isUsingOpenAIProvider(): boolean {
-        const provider = ConfigManager.getSelectedProvider();
-        const normalizedName = provider.name.toLowerCase();
-        const normalizedUrl = provider.baseUrl.toLowerCase();
-        return normalizedName.includes('openai') || normalizedUrl.includes('openai.com');
     }
 
     private isImageMimeType(mimeType?: string): boolean {

@@ -17,7 +17,8 @@ export class ConfigManager {
 
     private static readonly providers: AIProvider[] = [
         { name: "OpenAI", baseUrl: "https://api.openai.com/v1/", key: import.meta.env.VITE_OPENAI_API_KEY || "" },
-        { name: "Google", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/", key: import.meta.env.VITE_GOOGLE_API_KEY || "" }
+        { name: "Google", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/", key: import.meta.env.VITE_GOOGLE_API_KEY || "" },
+        { name: "Groq", baseUrl: "https://api.groq.com/openai/v1/", key: import.meta.env.VITE_GROQ_API_KEY || "" }
     ];
 
     static readonly COMPATIBLE_MODELS: string[] = MODEL_LIST.map(model => model.name);

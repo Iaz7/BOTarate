@@ -135,6 +135,7 @@ EXERCISE CONTEXT:
 
 CONCEPTS:
 - Analyze the exercises and identify what {conceptsFieldDescription}
+- If a concept is not mentioned explicitly, do not infer it from the exercise statements. The intent of the teacher may not align with your inference.
 - Be specific when possible
 - Examples: {conceptsExamples}
 - If there are no exercises, this field must be empty
