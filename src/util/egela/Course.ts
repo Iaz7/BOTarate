@@ -348,20 +348,31 @@ class Course {
 
             // Si es el usuario actual, obtener su rol
             if (userEmail === currentUserEmail) {
-                const userRoleCellId = `user-index-participants-${this.id}_r${userIndex}_c2`;
+                const userRoleCellIdWithSpan = `user-index-participants-${this.id}_r${userIndex}_c3 > span > a`;
+                const userRoleCellWithSpan = participantsDoc.querySelector(`#${userRoleCellIdWithSpan}`);
+
+                const userRoleCellId = `user-index-participants-${this.id}_r${userIndex}_c2`; // puede haber un span en medio, no directamente texto
+                // hacer con dos selectors, si encuentra uno con span usar ese, sino el que está ahora
                 const userRoleCell = participantsDoc.querySelector(`#${userRoleCellId}`);
 
-                if (!userRoleCell) {
+                let role: string = '';
+
+                if (userRoleCellWithSpan) {
+                    role = userRoleCellWithSpan.textContent?.trim();
+                }
+                else if (userRoleCell) {
+                    role = userRoleCell.textContent?.trim() || '';
+                }
+                else {
                     throw new Error(`[isCurrentUserTeacher] No se pudo obtener el rol para el usuario ${currentUserEmail}`);
                 }
 
-                const role = userRoleCell.textContent?.trim();
                 console.log(`[isCurrentUserTeacher] Rol encontrado: ${role}`);
 
                 // Verificar si el rol es "Profesor" (o variaciones)
                 const isTeacher =
                     [
-                        'Teacher', 'Profesor', 'Irakaslea',
+                        'Teacher', 'Profesor', 'Irakaslea', 'Docente',
                         'Eskuz matrikulatutako ikaslea', 'Estudiante manual', 'Manual enrollment student' // TODO: Eliminar esto. Solo para que yo pueda probar sin ser profesor
                     ].includes(role);
                 return isTeacher;
