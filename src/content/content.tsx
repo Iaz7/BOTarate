@@ -154,7 +154,7 @@ const ExtensionContent: React.FC = () => {
                         await loadExercisesFromCache(pageId);
                     }
                 } else {
-                    console.error("[content] Could not load course:", response.error);
+                    console.log("[content] Could not load course:", response.error);
                     setCourseName("Error loading course");
                 }
             } catch (error) {

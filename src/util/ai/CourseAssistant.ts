@@ -151,6 +151,12 @@ IMPORTANT INSTRUCTIONS:
 {exerciseContext}
 {additionalRules}
 
+RESPONSE FORMAT:
+In the following cases, respond as follows:
+- If you call explainExercise, just respond with: "I have opened the explanation for exercise {exercise name} for you." in the same language as the user.
+- If you call solveExercise, just respond with: "I have opened the solution form for exercise {exercise name}." in the same language as the user.
+- If you do not need to use any tool, respond normally.
+
 COURSE INFORMATION:
 Below is the complete course structure with all available sections. Each section has a unique ID that you must use when you need to get its detailed content.
 

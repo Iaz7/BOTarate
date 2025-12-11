@@ -41,7 +41,7 @@ class ExplanationAssistant extends BaseAssistant {
             : '';
 
         const alignmentNote = concepts || learningObjectives
-            ? '- Ensure your explanation aligns with these learning objectives and focuses especially on the mentioned concepts. If a concept is not listed, avoid including it in your explanation. Try another approach with the concepts and objectives provided.'
+            ? '- Ensure your explanation aligns with these learning objectives and focuses especially on the mentioned concepts.'
             : '';
 
         return { conceptsContext, objectivesContext, alignmentNote, progressContext };
