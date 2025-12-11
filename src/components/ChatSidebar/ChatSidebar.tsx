@@ -8,7 +8,6 @@ import { ChatSidebarProps, useChatSidebar } from "./ChatSidebar";
 import "./ChatSidebar.css";
 import ChatTab from "./tabs/ChatTab";
 import ExercisesTab from "./tabs/ExercisesTab";
-import ModeTab from "./tabs/ModeTab";
 
 const ChatSidebar: React.FC<ChatSidebarProps> = props => {
     const { onIdentifyExercises } = props;
@@ -75,15 +74,19 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                         <h2 className="h2 mb-0">{APP_CONFIG.NAME}</h2>
                     </div>
                     {isUserTeacher && (
-                        <div className="d-flex align-items-center ms-auto">
-                            <strong className="me-2 mr-4">{isTeacherMode ? "Teacher mode" : "Student mode"}</strong>
-                            <img
-                                src={chrome.runtime.getURL(
-                                    isTeacherMode ? "assets/icons/teacher.svg" : "assets/icons/student.svg"
-                                )}
-                                alt={isTeacherMode ? "Teacher mode" : "Student mode"}
-                                className="header-icon"
-                            />
+                        <div className="d-flex align-items-center ms-auto mode-switch">
+                            <span className={`${!isTeacherMode ? "fw-bold" : "text-muted"}`}>Student</span>
+                            <div className="form-check form-switch mb-0">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="modeSwitch"
+                                    checked={isTeacherMode}
+                                    onChange={handleModeToggle}
+                                    role="switch"
+                                />
+                            </div>
+                            <span className={`${isTeacherMode ? "fw-bold" : "text-muted"}`}>Teacher</span>
                         </div>
                     )}
                 </div>
@@ -172,20 +175,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                             )}
                         </>
                     )}
-
-                    {/* Pestaña Mode - solo para profesores */}
-                    {isUserTeacher && (
-                        <li className="nav-item" role="presentation">
-                            <button
-                                className={`nav-link ${activeTab === "mode" ? "active" : ""}`}
-                                onClick={() => setActiveTab("mode")}
-                                type="button"
-                                role="tab"
-                            >
-                                Mode
-                            </button>
-                        </li>
-                    )}
                 </ul>
             </div>
 
@@ -200,7 +189,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                             <p className="text-muted">Checking configuration...</p>
                         </div>
                     </div>
-                ) : (needsConfiguration || missingLLMConfig) && activeTab !== "mode" ? (
+                ) : needsConfiguration || missingLLMConfig ? (
                     <ConfigurationRequired
                         onConfigLoaded={handleConfigLoaded}
                         missingExerciseConfig={needsConfiguration}
@@ -253,22 +242,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                     />
                 ) : activeTab === "progress" ? (
                     <ProgressTab courseId={props.courseId || ""} />
-                ) : activeTab === "mode" ? (
-                    <div>
-                        {needsConfiguration && (
-                            <div className="alert alert-info mb-3" role="alert">
-                                <p className="mb-0">
-                                    No configuration is currently loaded. You can create it in teacher mode or import a
-                                    configuration file provided by your teacher.
-                                </p>
-                            </div>
-                        )}
-                        <ModeTab
-                            isUserTeacher={isUserTeacher}
-                            isTeacherMode={isTeacherMode}
-                            onModeToggle={handleModeToggle}
-                        />
-                    </div>
                 ) : null}
             </div>
         </div>

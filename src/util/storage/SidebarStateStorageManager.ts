@@ -2,7 +2,7 @@ export { SidebarStateStorageManager };
 
 interface SidebarState {
     isCollapsed: boolean;
-    activeTab: "chat" | "exercises" | "config" | "labs" | "progress" | "mode";
+    activeTab: "chat" | "exercises" | "config" | "labs" | "progress";
 }
 
 /**

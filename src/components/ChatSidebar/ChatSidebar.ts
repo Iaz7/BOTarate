@@ -39,7 +39,7 @@ export interface ChatSidebarProps {
     onIdentifyExercises?: () => void;
 }
 
-export type TabType = "chat" | "exercises" | "config" | "labs" | "progress" | "mode";
+export type TabType = "chat" | "exercises" | "config" | "labs" | "progress";
 
 export const useChatSidebar = (props: ChatSidebarProps) => {
     const {

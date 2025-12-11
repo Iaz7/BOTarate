@@ -64,3 +64,36 @@
     height: 48px;
     margin-right: 16px;
 }
+
+/* Contenedor del switch de modo: crea padding simétrico para evitar solapamiento */
+.mode-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem; /* separación uniforme entre Student, el switch y Teacher */
+}
+
+/* Forzar un ancho fijo al contenedor del switch y centrar el input dentro */
+.mode-switch .form-switch {
+    width: 2.2rem; /* ancho del área del switch */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Neutralizar desplazamientos que Bootstrap aplica al input del switch */
+.mode-switch .form-check-input {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 2rem;
+    height: 1.15rem;
+}
+
+/* Asegurar padding simétrico en los textos laterales para mantener distancia
+   consistente entre texto y borde del control */
+.mode-switch > span {
+    padding: 0 0.35rem;
+}
+
+/* Ajusta `gap` o el `width` del .form-switch si quieres más/menos espacio */
