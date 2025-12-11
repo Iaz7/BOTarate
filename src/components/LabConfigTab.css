@@ -1,0 +1,150 @@
+.lab-switch {
+    width: 2.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.lab-config-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.lab-config-item {
+    display: flex;
+    align-items: center;
+    padding-left: 12px;
+    padding-right: 0px;
+    border-bottom: 1px solid #e9ecef;
+    gap: 5px;
+    min-height: 40px;
+    background: #fff;
+}
+
+.lab-config-item:last-child {
+    border-bottom: none;
+}
+
+.lab-config-item:hover {
+    background-color: #f8f9fa;
+}
+
+.lab-config-item.expandable {
+    cursor: pointer;
+}
+
+.lab-config-item.expanded {
+    background-color: #e7f1ff;
+}
+
+.lab-number-badge {
+    flex-shrink: 0;
+    font-size: 12px;
+    padding: 3px 8px;
+    min-width: 32px;
+    text-align: center;
+    background: #dee2e6;
+    color: #495057;
+}
+
+.lab-name {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.lab-name.inactive {
+    color: #adb5bd;
+}
+
+.lab-include-row {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 1rem;
+    height: auto;
+}
+
+.lab-include-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.lab-switch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+}
+
+.lab-include-label {
+    flex-shrink: 0;
+    font-size: 13px;
+    color: #495057;
+    margin-bottom: 0;
+}
+
+.lab-switch-row {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    height: auto;
+    width: 150px;
+    justify-content: flex-end;
+}
+
+.lab-switch-container .form-check {
+    margin: 0;
+    padding: 0;
+    min-height: auto;
+}
+
+.lab-switch-container .form-check-input {
+    margin: 0;
+    cursor: pointer;
+}
+
+.lab-switch-container .form-check-input:disabled {
+    cursor: not-allowed;
+}
+
+.lab-status-icon {
+    flex-shrink: 0;
+    width: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    height: auto;
+}
+
+.lab-required-badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    padding: 2px 6px;
+    margin-left: 8px;
+}
+
+.lab-expand-icon {
+    flex-shrink: 0;
+    width: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 18px;
+}
+
+.lab-config-body {
+    padding: 12px 16px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.lab-switch-container .spinner-border {
+    width: 1rem;
+    height: 1rem;
+}

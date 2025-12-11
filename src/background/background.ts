@@ -14,6 +14,8 @@ import {
 } from "./handlers/assistantHandlers";
 import { handleCheckConfiguration, handleGetModelList, handleReloadAssistantConfig, handleUpdateConfig } from "./handlers/configHandlers";
 import {
+    handleGenerateLabContext,
+    handleGetAccumulatedConcepts,
     handleGetCachedExplanation,
     handleGetCourseData,
     handleGetEvaluations,
@@ -138,6 +140,10 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleCheckUserRole(request, sendResponse);
         case "checkConfiguration":
             return handleCheckConfiguration(request, sendResponse);
+        case "generateLabContext":
+            return handleGenerateLabContext(request, sendResponse);
+        case "getAccumulatedConcepts":
+            return handleGetAccumulatedConcepts(request, sendResponse);
         default:
             return false;
     }

@@ -5,7 +5,7 @@ import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManage
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
 import { Lab, LabStorageManager } from "../../util/storage/LabStorageManager";
 import { ProgressConfigStorageManager } from "../../util/storage/ProgressConfigStorageManager";
-import { getCourseAssistant, getEvaluationAssistant, getExerciseAssistant, getExplanationAssistant } from "../context";
+import { createExerciseAssistant, getCourseAssistant, getEvaluationAssistant, getExerciseAssistant, getExplanationAssistant } from "../context";
 
 let cachedCourse: Course;
 
@@ -32,7 +32,7 @@ export function handleGetCourseData(request: any, sendResponse: (response?: any)
                 console.log('[background] Curso cargado:', course);
             } else {
                 sendResponse({ success: false, error: 'No se pudo cargar el curso' });
-                console.error('[background] No se pudo crear el curso desde href y storage');
+                console.log('[background] No se pudo crear el curso desde href y storage');
             }
         })
         .catch(error => {
@@ -166,6 +166,22 @@ export function handleGetExerciseData(request: any, sendResponse: (response?: an
     return true;
 }
 
+export function handleGetAccumulatedConcepts(request: any, sendResponse: (response?: any) => void): boolean {
+    const { courseId, pageId } = request;
+
+    (async () => {
+        try {
+            const concepts = await ExerciseStorageManager.getAccumulatedConcepts(courseId, pageId);
+            sendResponse({ success: true, concepts: concepts });
+        } catch (error: any) {
+            console.error('Error al obtener concepts acumulados:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
+
 export function handleGetLabData(request: any, sendResponse: (response?: any) => void): boolean {
     const { courseId } = request;
 
@@ -277,4 +293,43 @@ async function initializeLabDataIfNeeded(course: Course): Promise<void> {
     } else {
         console.log('[background] No se encontraron laboratorios (recursos tipo "page")');
     }
+}
+
+/**
+ * Handles generating context for a specific lab using a new ExerciseAssistant instance
+ * This allows parallel context generation for multiple labs
+ */
+export function handleGenerateLabContext(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId } = request;
+
+    console.log(`[handleGenerateLabContext] Generating context for lab: ${pageId}`);
+
+    (async () => {
+        try {
+            // Create a new ExerciseAssistant instance for this specific generation
+            // This allows parallel generation without sharing state
+            const exerciseAssistant = createExerciseAssistant();
+
+            const result = await exerciseAssistant.identifyExercises(pageId);
+
+            console.log(`[handleGenerateLabContext] Context generated for ${pageId}:`, {
+                exercises: result.exercises.length,
+                hasContext: !!result.exerciseContext,
+                concepts: result.concepts?.length || 0
+            });
+
+            sendResponse({
+                success: true,
+                exercises: result.exercises,
+                exerciseContext: result.exerciseContext,
+                concepts: result.concepts,
+                learningObjectives: result.learningObjectives,
+            });
+        } catch (error: any) {
+            console.error(`[handleGenerateLabContext] Error generating context for ${pageId}:`, error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
 }

@@ -22,6 +22,7 @@ interface SolutionModalProps {
     concepts?: string[];
     learningObjectives?: string;
     pageId?: string;
+    courseId?: string;
     onEvaluationGenerated?: () => void;
 }
 
@@ -33,6 +34,7 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
     concepts,
     learningObjectives,
     pageId,
+    courseId,
     onEvaluationGenerated,
 }) => {
     const [solution, setSolution] = useState<string>("");
@@ -68,9 +70,9 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
                 exerciseStatement: exercise.statement,
                 studentSolution: solution,
                 exercise_context: exerciseContext || undefined,
-                concepts: concepts || undefined,
                 learning_objectives: learningObjectives || undefined,
                 pageId: pageId || undefined,
+                courseId: courseId || undefined,
             });
 
             if (response.success) {

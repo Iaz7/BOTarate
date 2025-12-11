@@ -1,6 +1,5 @@
 import { Exercise } from "../egela/Exercise";
 import { ExerciseStorageManager } from "../storage/ExerciseStorageManager";
-import { LabStorageManager } from "../storage/LabStorageManager";
 import { AssistantConfig } from "./AssistantConfig";
 import { BaseAssistant } from "./BaseAssistant";
 import { ExerciseListSchemaType } from "./schemas";
@@ -21,48 +20,6 @@ class ExerciseAssistant extends BaseAssistant {
 
     constructor(config: AssistantConfig) {
         super(config, ExerciseAssistant.TOOLS);
-    }
-
-    /**
-     * Gets learningObjectives and concepts from required labs prior to the specified pageId
-     * @param pageId Current page ID
-     * @param allLabs List of all course labs
-     * @returns Formatted string with objectives and concepts from previous labs
-     */
-    private async getPreviousLabObjectives(pageId: string, allLabs: any[]): Promise<string> {
-        // Filter only required labs
-        const requiredLabs = allLabs.filter(lab => lab.required);
-
-        // Find current lab index
-        const currentLabIndex = requiredLabs.findIndex(lab => lab.id === pageId);
-
-        // If current lab is not found or is the first one, there are no previous labs
-        if (currentLabIndex <= 0) {
-            return 'There are no previous required labs for this lab.';
-        }
-
-        // Get only labs prior to the current one
-        const previousLabs = requiredLabs.slice(0, currentLabIndex);
-
-        // Collect information from each previous lab
-        const labsInfo = await Promise.all(
-            previousLabs.map(async (lab) => {
-                const exerciseData = await ExerciseStorageManager.getExerciseData(lab.id);
-
-                if (!exerciseData) {
-                    return `\n### ${lab.name} (ID: ${lab.id})\n- No stored data`;
-                }
-
-                const objectives = exerciseData.learningObjectives || 'Not specified';
-                const concepts = exerciseData.concepts && exerciseData.concepts.length > 0
-                    ? exerciseData.concepts.join(', ')
-                    : 'Not specified';
-
-                return `\n### ${lab.name} (ID: ${lab.id})\n**Learning objectives:** ${objectives}\n**Concepts worked:** ${concepts}`;
-            })
-        );
-
-        return labsInfo.join('\n');
     }
 
     /**
@@ -88,13 +45,6 @@ class ExerciseAssistant extends BaseAssistant {
 
             // 2. Build system prompt using configuration
             const assistantConfig = this.config.exerciseAssistant;
-            const courseId = this.course?.id;
-            const labData = courseId ? await LabStorageManager.getLabData(courseId) : null;
-            const allLabs = labData?.labs ?? [];
-
-            // 2.1. Get objectives and concepts from previous labs
-            const previousObjectives = await this.getPreviousLabObjectives(pageId, allLabs);
-            console.log(`[identifyExercises] Previous objectives obtained`);
 
             const systemPromptTemplate = `You are an expert assistant in {role}.
 
@@ -117,13 +67,6 @@ WORKFLOW:
 2. If there are text files (markers [FILEn:TEXT:name]), use getFilteredFileContent to extract relevant information (only from text files)
 3. Identify all exercises on the page
 4. MANDATORY: Call postExercises with all collected information.
-
-PREVIOUS LABS CONTEXT:
-Below are the learning objectives and concepts worked on in previous REQUIRED labs.
-This information will help you understand what prior knowledge students have for this lab.
-Consider these concepts as acquired knowledge, and focus on identifying what NEW concepts are worked on in the current exercises.
-
-{previousObjectives}
 
 CRITERIA FOR IDENTIFYING EXERCISES:
 {exerciseCriteria}
@@ -153,7 +96,6 @@ IMPORTANT: You must call postExercises exactly once at the end of the analysis.
                 conceptsFieldDescription: assistantConfig.conceptsFieldDescription,
                 conceptsExamples: assistantConfig.conceptsExamples,
                 learningObjectivesGuidance: assistantConfig.learningObjectivesGuidance,
-                previousObjectives: previousObjectives
             };
 
             const systemPrompt = this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);

@@ -39,7 +39,6 @@ interface ChatTabProps {
     onResetChat: () => void;
     onInputChange: (value: string) => void;
     onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-    onIdentifyExercises?: () => void;
     messagesEndRef: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -60,7 +59,6 @@ const ChatTab: React.FC<ChatTabProps> = ({
     onResetChat,
     onInputChange,
     onKeyDown,
-    onIdentifyExercises,
     messagesEndRef,
 }) => {
     const getChatPlaceholder = () => {

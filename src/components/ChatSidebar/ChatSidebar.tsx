@@ -10,8 +10,6 @@ import ChatTab from "./tabs/ChatTab";
 import ExercisesTab from "./tabs/ExercisesTab";
 
 const ChatSidebar: React.FC<ChatSidebarProps> = props => {
-    const { onIdentifyExercises } = props;
-
     const {
         isCollapsed,
         setIsCollapsed,
@@ -213,7 +211,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                         onResetChat={handleResetChat}
                         onInputChange={setInputValue}
                         onKeyDown={handleKeyDown}
-                        onIdentifyExercises={onIdentifyExercises}
                         messagesEndRef={messagesEndRef}
                     />
                 ) : activeTab === "exercises" ? (
@@ -231,8 +228,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                         pageId={props.pageId || ""}
                         onConfigUpdate={handleConfigUpdate}
                         isActive={activeTab === "config"}
-                        isLoadingExercises={props.isLoadingExercises || false}
-                        onIdentifyExercises={onIdentifyExercises}
                     />
                 ) : activeTab === "labs" ? (
                     <LabConfigTab

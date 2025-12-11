@@ -321,6 +321,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
             const newMode = await ModeManager.toggleMode();
             const newIsTeacherMode = newMode === AppMode.TEACHER;
             setIsTeacherMode(newIsTeacherMode);
+            setActiveTab("chat"); // Fuerza la pestaña de chat al cambiar el modo
 
             setReloadKey(prev => prev + 1);
 

@@ -135,6 +135,11 @@ export function handleGenerateExplanation(request: any, sendResponse: (response?
                 }
                 const progressSummary = await buildProgressSummary(courseId);
 
+                // Get accumulated concepts from current and previous required labs
+                const accumulatedConcepts = courseId
+                    ? await ExerciseStorageManager.getAccumulatedConcepts(courseId, pageId)
+                    : exerciseData?.concepts;
+
                 // Cargar configuración del laboratorio actual (pageId es el labId)
                 let responseOptions = undefined;
                 if (courseId) {
@@ -152,7 +157,7 @@ export function handleGenerateExplanation(request: any, sendResponse: (response?
                     exerciseName,
                     exercise?.statement || '',
                     exerciseData?.exerciseContext,
-                    exerciseData?.concepts,
+                    accumulatedConcepts,
                     exerciseData?.learningObjectives,
                     progressSummary,
                     pageId,
@@ -188,19 +193,25 @@ export function handleGenerateExplanation(request: any, sendResponse: (response?
 }
 
 export function handleEvaluateSolution(request: any, sendResponse: (response?: any) => void): boolean {
-    const { exerciseName, exerciseStatement, studentSolution, exercise_context, concepts, learning_objectives, pageId } = request;
+    const { exerciseName, exerciseStatement, studentSolution, exercise_context, learning_objectives, pageId, courseId } = request;
     const evaluationAssistant = getEvaluationAssistant();
 
     console.log(`Evaluando solución para ejercicio: ${exerciseName}`);
 
     (async () => {
         try {
+            // Get accumulated concepts from current and previous required labs
+            let accumulatedConcepts: string[] | undefined;
+            if (courseId && pageId) {
+                accumulatedConcepts = await ExerciseStorageManager.getAccumulatedConcepts(courseId, pageId);
+            }
+
             const evaluation = await evaluationAssistant.evaluateSolution(
                 exerciseName,
                 exerciseStatement,
                 studentSolution,
                 exercise_context,
-                concepts,
+                accumulatedConcepts,
                 learning_objectives
             );
 

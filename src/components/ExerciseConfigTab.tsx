@@ -17,18 +17,9 @@ interface ExerciseConfigTabProps {
     pageId: string;
     onConfigUpdate?: () => void;
     isActive: boolean;
-    isLoadingExercises?: boolean;
-    onIdentifyExercises?: () => void;
 }
 
-const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
-    exercises,
-    pageId,
-    onConfigUpdate,
-    isActive,
-    isLoadingExercises = false,
-    onIdentifyExercises,
-}) => {
+const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId, onConfigUpdate, isActive }) => {
     const [exerciseConfig, setExerciseConfig] = useState<Map<string, ExerciseFlags>>(new Map());
     const [originalConfig, setOriginalConfig] = useState<Map<string, ExerciseFlags>>(new Map());
     const [isSaving, setIsSaving] = useState(false);
@@ -218,36 +209,6 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
                         After saving changes, the system will automatically update the restrictions.
                     </p>
                 </div>
-                {/* Botón para identificar ejercicios */}
-                {onIdentifyExercises && pageId && (
-                    <div className="mb-3">
-                        <button
-                            type="button"
-                            className="btn btn-outline-primary w-100"
-                            onClick={onIdentifyExercises}
-                            disabled={isLoadingExercises}
-                        >
-                            {isLoadingExercises ? (
-                                <>
-                                    <span
-                                        className="spinner-border spinner-border-sm me-2"
-                                        role="status"
-                                        aria-hidden="true"
-                                    ></span>
-                                    Analyzing page...
-                                </>
-                            ) : (
-                                <>
-                                    <i className="bi bi-arrow-clockwise me-2"></i>
-                                    Identify page exercises
-                                </>
-                            )}
-                        </button>
-                        <small className="text-muted d-block mt-1">
-                            Press the button to analyze the page and detect available exercises.
-                        </small>
-                    </div>
-                )}
                 <div className="alert alert-info" role="alert">
                     <strong>No exercises available</strong>
                     <p className="mb-0 mt-2 small">
@@ -283,39 +244,6 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({
                     After saving changes, the system will automatically update the restrictions.
                 </p>
             </div>
-
-            {/* Botón para re-identificar ejercicios */}
-            {onIdentifyExercises && pageId && (
-                <div className="mb-3">
-                    <button
-                        type="button"
-                        className="btn btn-outline-primary w-100"
-                        onClick={onIdentifyExercises}
-                        disabled={isLoadingExercises}
-                    >
-                        {isLoadingExercises ? (
-                            <>
-                                <span
-                                    className="spinner-border spinner-border-sm me-2"
-                                    role="status"
-                                    aria-hidden="true"
-                                ></span>
-                                Analyzing page...
-                            </>
-                        ) : (
-                            <>
-                                <i className="bi bi-arrow-clockwise me-2"></i>
-                                {exercises.length > 0 ? "Reset lab exercises" : "Identify page exercises"}
-                            </>
-                        )}
-                    </button>
-                    {exercises.length > 0 && (
-                        <small className="text-muted d-block mt-1">
-                            This will re-analyze the page to detect new or modified exercises.
-                        </small>
-                    )}
-                </div>
-            )}
 
             <div className="table-responsive">
                 <table className="table table-sm table-hover">

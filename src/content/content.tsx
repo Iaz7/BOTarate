@@ -459,7 +459,6 @@ const ExtensionContent: React.FC = () => {
                     onEvaluationGenerated={handleEvaluationGenerated}
                     isAnyModalOpen={isModalOpen || isSolutionModalOpen || isEvaluationListModalOpen}
                     hasExercisesLoaded={exercises.length > 0}
-                    onIdentifyExercises={handleIdentifyExercises}
                     key={`${reloadExplanationsKey}-${reloadEvaluationsKey}-${reloadSidebarKey}`} // Re-renderizar cuando cambie cualquier trigger
                 />
             )}
@@ -487,6 +486,7 @@ const ExtensionContent: React.FC = () => {
                     isOpen={isSolutionModalOpen}
                     onClose={handleCloseSolutionModal}
                     pageId={currentPageId || undefined}
+                    courseId={courseId || undefined}
                     onEvaluationGenerated={handleEvaluationGenerated}
                 />
             )}

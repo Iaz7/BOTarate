@@ -1,4 +1,5 @@
 import { BaseStorageManager } from "./BaseStorageManager";
+import { Lab, LabStorageManager } from "./LabStorageManager";
 
 /**
  * Exercise data structure for a page
@@ -137,5 +138,74 @@ export class ExerciseStorageManager extends BaseStorageManager {
             data.concepts,
             data.learningObjectives
         );
+    }
+
+    /**
+     * Gets accumulated concepts from current lab and all previous required labs
+     * This combines concepts from all labs up to and including the specified pageId,
+     * removing duplicates while preserving the order of first occurrence.
+     * 
+     * @param courseId Course ID
+     * @param pageId Current page/lab ID
+     * @returns Array of unique concepts from current and previous labs
+     */
+    static async getAccumulatedConcepts(courseId: string, pageId: string): Promise<string[]> {
+        const labData = await LabStorageManager.getLabData(courseId);
+        if (!labData) {
+            // If no lab data, just return concepts from current page
+            const currentData = await this.getExerciseData(pageId);
+            return currentData?.concepts || [];
+        }
+
+        const allLabs = labData.labs;
+
+        // Filter only required labs (labs with context that are marked as required)
+        const requiredLabs = allLabs.filter((lab: Lab) => lab.required);
+
+        // Find index of current lab in required labs
+        const currentLabIndex = requiredLabs.findIndex((lab: Lab) => lab.id === pageId);
+
+        // Get labs up to and including the current one
+        // If current lab is not in required labs, we include all required labs before it by order
+        let labsToInclude: Lab[];
+        if (currentLabIndex >= 0) {
+            labsToInclude = requiredLabs.slice(0, currentLabIndex + 1);
+        } else {
+            // Current lab is not required - include all required labs that come before it in allLabs
+            const currentIndexInAll = allLabs.findIndex((lab: Lab) => lab.id === pageId);
+            labsToInclude = requiredLabs.filter((_, idx) => {
+                const labInAll = allLabs.findIndex((l: Lab) => l.id === requiredLabs[idx].id);
+                return labInAll < currentIndexInAll;
+            });
+        }
+
+        // Collect concepts from all previous labs, maintaining order
+        const conceptsSet = new Set<string>();
+        const orderedConcepts: string[] = [];
+
+        for (const lab of labsToInclude) {
+            const exerciseData = await this.getExerciseData(lab.id);
+            if (exerciseData?.concepts) {
+                for (const concept of exerciseData.concepts) {
+                    if (!conceptsSet.has(concept)) {
+                        conceptsSet.add(concept);
+                        orderedConcepts.push(concept);
+                    }
+                }
+            }
+        }
+
+        // Also add concepts from the current page if not already included
+        const currentData = await this.getExerciseData(pageId);
+        if (currentData?.concepts) {
+            for (const concept of currentData.concepts) {
+                if (!conceptsSet.has(concept)) {
+                    conceptsSet.add(concept);
+                    orderedConcepts.push(concept);
+                }
+            }
+        }
+
+        return orderedConcepts;
     }
 }

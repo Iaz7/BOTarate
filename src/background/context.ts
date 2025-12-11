@@ -4,6 +4,7 @@ import { EvaluationAssistant } from "../util/ai/EvaluationAssistant";
 import { ExerciseAssistant } from "../util/ai/ExerciseAssistant";
 import { ExplanationAssistant } from "../util/ai/ExplanationAssistant";
 import { AssistantConfigStorageManager } from "../util/storage/AssistantConfigStorageManager";
+import { getCachedCourse } from "./handlers/dataHandlers";
 
 let isConfigLoaded = false;
 let assistantsConfig: AssistantConfig;
@@ -61,4 +62,27 @@ export function resetConfigLoaded(): void {
 
 export function isConfigReady(): boolean {
     return isConfigLoaded;
+}
+
+/**
+ * Creates a new ExerciseAssistant instance for parallel context generation
+ * Each instance has its own OpenAIService to allow parallel API calls
+ */
+export function createExerciseAssistant(): ExerciseAssistant {
+    if (!assistantsConfig) {
+        throw new Error("Assistant config not loaded");
+    }
+    const assistant = new ExerciseAssistant(assistantsConfig);
+    let cachedCourse = getCachedCourse();
+    if (cachedCourse) {
+        assistant.setCourse(cachedCourse);
+    }
+    return assistant;
+}
+
+export function getAssistantsConfig(): AssistantConfig {
+    if (!assistantsConfig) {
+        throw new Error("Assistant config not loaded");
+    }
+    return assistantsConfig;
 }
