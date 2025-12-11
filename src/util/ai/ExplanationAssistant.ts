@@ -71,7 +71,7 @@ class ExplanationAssistant extends BaseAssistant {
         const assistantConfig = this.config.explanationAssistant;
         const pedagogicalContext = this.buildPedagogicalContext(concepts, learningObjectives, progressSummary);
 
-        const systemPromptTemplate = `You are a {role}.
+        const systemPromptTemplate = `You are an expert tutor that solves exercises for students. Specifically: {role}.
 Your task is {taskDescription}
 
 METHODOLOGY:

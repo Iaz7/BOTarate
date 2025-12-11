@@ -71,7 +71,6 @@ class CourseAssistant extends BaseAssistant {
      */
     private buildSystemPrompt(exercises?: any[]): string {
         const courseContext = JSON.stringify(this.course);
-        const assistantConfig = this.config.courseAssistant;
 
         let exerciseContext = '';
         if (exercises && exercises.length > 0) {
@@ -147,9 +146,15 @@ AVAILABLE ACTIONS:
 {toolsDescription}
 
 IMPORTANT INSTRUCTIONS:
-{instructions}
+- Cuando el usuario mencione una sección por su título/nombre, busca su ID en la lista de sections anterior. El usuario no conoce los IDs, solo los títulos, así que NUNCA debes preguntarle el ID, sino buscarlo en la lista de secciones que se te proporciona al inicio. Si no sabes donde buscar, mira en todas las secciones hasta encontrar lo que buscas. Debes preguntarte "¿dónde es más probable que esté esta información?" y buscar en consecuencia. Nunca decirle al usuario que no sabes el ID o que no tienes acceso a esa información.
+- Para obtener el contenido detallado de una sección, usa la herramienta getSectionContent con el ID de la sección
+- Los IDs de las secciones son los valores del campo "id" (por ejemplo: "1378079")
+- Si el usuario pide información sobre "la sección 2" o "tema 2", busca la sección con sectionNumber: 2 y usa su ID
+- Responde de forma directa, útil y concisa
+- Si necesitas información sobre una sección específica, llama a getSectionContent para obtenerla antes de responder
+- Recuerda que NUNCA debes pedirle al usuario que te proporcione IDs, sino buscarlos tú mismo en la estructura del curso. El usuario no tiene esos IDs ni va a saber dártelos. La información que tienes es suficiente para encontrar los IDs necesarios.
+
 {exerciseContext}
-{additionalRules}
 
 RESPONSE FORMAT:
 In the following cases, respond as follows:
@@ -164,11 +169,9 @@ Below is the complete course structure with all available sections. Each section
 
         // Variables to substitute in the template
         const variables = {
-            role: assistantConfig.role,
-            toolsDescription: assistantConfig.toolsDescription,
-            instructions: assistantConfig.instructions,
+            role: 'Asistente basado en chat para ayudar a los estudiantes con el contenido y ejercicios de su curso en línea',
+            toolsDescription: 'Tienes acceso a las herramientas getSectionContent, getPageContent, getResourceContent, explainExercise y solveExercise para consultar material del curso y trabajar con ejercicios.',
             exerciseContext: exerciseContext,
-            additionalRules: assistantConfig.additionalRules || '',
             courseContext: courseContext
         };
 

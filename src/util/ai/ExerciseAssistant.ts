@@ -46,7 +46,7 @@ class ExerciseAssistant extends BaseAssistant {
             // 2. Build system prompt using configuration
             const assistantConfig = this.config.exerciseAssistant;
 
-            const systemPromptTemplate = `You are an expert assistant in {role}.
+            const systemPromptTemplate = `You are a tool to extract context from labs in educational pages.
 
 Your task is to analyze the content of an educational page, identify exercises, and extract relevant information.
 

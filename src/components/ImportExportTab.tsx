@@ -1,7 +1,11 @@
 import React, { useRef, useState } from "react";
 import { ImportExportManager } from "../util/storage/ImportExportManager";
 
-export const ImportExportTab: React.FC = () => {
+interface ImportExportTabProps {
+    onDataChange?: () => void;
+}
+
+export const ImportExportTab: React.FC<ImportExportTabProps> = ({ onDataChange }) => {
     const [message, setMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,6 +47,9 @@ export const ImportExportTab: React.FC = () => {
                 text: result.message,
                 type: result.success ? "success" : "error",
             });
+            if (result.success && onDataChange) {
+                onDataChange();
+            }
         } catch (error) {
             console.error("Error importing configuration:", error);
             setMessage({
@@ -81,6 +88,9 @@ export const ImportExportTab: React.FC = () => {
                 text: result.message,
                 type: result.success ? "info" : "error",
             });
+            if (result.success && onDataChange) {
+                onDataChange();
+            }
         } catch (error) {
             console.error("Error clearing data:", error);
             setMessage({

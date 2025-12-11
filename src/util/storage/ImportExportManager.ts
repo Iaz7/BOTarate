@@ -125,7 +125,7 @@ export class ImportExportManager {
 
             return {
                 success: true,
-                message: `Configuración exportada correctamente: ${filename}`,
+                message: `Configuration exported successfully: ${filename}`,
             };
         } catch (error) {
             console.error("[ImportExportManager] Error al exportar configuración:", error);
@@ -202,7 +202,7 @@ export class ImportExportManager {
 
             return {
                 success: true,
-                message: `Configuración importada correctamente. ${importedCount} elementos restaurados.`,
+                message: `Configuration imported successfully. ${importedCount} elements restored.`,
                 itemsProcessed: importedCount,
             };
         } catch (error) {
@@ -255,6 +255,7 @@ export class ImportExportManager {
     static async getStorageStats(): Promise<{
         exerciseCount: number;
         labCount: number;
+        progressConfigCount: number;
         hasAssistantConfig: boolean;
     }> {
         const allData = await chrome.storage.local.get(null);

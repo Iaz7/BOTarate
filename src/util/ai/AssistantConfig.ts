@@ -3,15 +3,6 @@
  * Defines variables to be substituted in prompt templates
  */
 export interface AssistantConfig {
-    /**
-     * Variables for course assistant (general chat)
-     */
-    courseAssistant: {
-        role: string;
-        instructions: string;
-        toolsDescription: string;
-        additionalRules?: string;
-    };
 
     /**
      * Variables for exercise identification assistant

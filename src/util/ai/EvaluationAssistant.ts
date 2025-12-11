@@ -49,7 +49,7 @@ class EvaluationAssistant extends BaseAssistant {
             : '';
 
         // Generic system prompt template
-        const systemPromptTemplate = `You are a {role}.
+        const systemPromptTemplate = `You are an expert tutor that evaluates exercise solutions provided by students. Specifically: {role}.
 
 Your task is {taskDescription}
 

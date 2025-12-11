@@ -10,7 +10,7 @@ import { AppMode, ModeManager } from "../util/config/ModeManager";
 import { AssistantConfigStorageManager } from "../util/storage/AssistantConfigStorageManager";
 
 type TabType = "llm" | "assistants" | "progress" | "import-export";
-type AssistantSection = "general" | "course" | "exercise" | "evaluation" | "explanation";
+type AssistantSection = "general" | "exercise" | "evaluation" | "explanation";
 
 // Componentes reutilizables para campos de configuración
 interface ConfigFieldProps {
@@ -125,14 +125,18 @@ const Options: React.FC = () => {
             validateAndLoadModels(providerIndex, savedModel, currentProvider.key);
 
             // Cargar configuración de asistentes
-            const config = await AssistantConfigStorageManager.loadConfig();
-            setAssistantConfig(config);
+            await loadAssistantConfig();
 
             setIsConfigLoaded(true);
         };
 
         loadConfiguration();
     }, []);
+
+    const loadAssistantConfig = async () => {
+        const config = await AssistantConfigStorageManager.loadConfig();
+        setAssistantConfig(config);
+    };
 
     const handleProviderChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const providerIndex = Number.parseInt(event.target.value);
@@ -208,15 +212,6 @@ const Options: React.FC = () => {
         }
     };
 
-    const handleResetAssistantConfig = async () => {
-        if (confirm("Are you sure you want to restore default settings?")) {
-            await AssistantConfigStorageManager.resetToDefault();
-            const config = await AssistantConfigStorageManager.loadConfig();
-            setAssistantConfig(config);
-            setAssistantSaveMessage("Configuration restored to default values");
-        }
-    };
-
     const updateAssistantField = (section: keyof AssistantConfig, field: string, value: string) => {
         if (!assistantConfig) return;
 
@@ -254,91 +249,43 @@ const Options: React.FC = () => {
             case "general":
                 return (
                     <div>
-                        <h5 className="mb-3">General configuration</h5>
+                        <h5 className="mb-3">Environment configuration</h5>
                         <ConfigTextField
-                            label="Subject Name"
+                            label="Subject name"
                             value={assistantConfig.common.subjectName}
                             onChange={value => updateAssistantField("common", "subjectName", value)}
                             description="Name of the subject for which assistants are configured"
                         />
                         <ConfigTextField
-                            label="Platform Name"
+                            label="LMS platform"
                             value={assistantConfig.common.platformName}
                             onChange={value => updateAssistantField("common", "platformName", value)}
                             description="Name of the educational platform (e.g., Moodle, Canvas, Egela)"
                         />
                         <ConfigTextField
-                            label="Institution Name"
+                            label="University"
                             value={assistantConfig.common.institutionName}
                             onChange={value => updateAssistantField("common", "institutionName", value)}
-                            description="Name of the university or educational institution"
-                        />
-                    </div>
-                );
-            case "course":
-                return (
-                    <div>
-                        <h5 className="mb-3">Course Assistant (General Chat)</h5>
-                        <ConfigTextArea
-                            label="Assistant Role"
-                            value={assistantConfig.courseAssistant.role}
-                            onChange={value => updateAssistantField("courseAssistant", "role", value)}
-                            description="Defines the main purpose of the course assistant"
-                            rows={2}
-                        />
-                        <ConfigTextArea
-                            label="Tools Description"
-                            value={assistantConfig.courseAssistant.toolsDescription}
-                            onChange={value => updateAssistantField("courseAssistant", "toolsDescription", value)}
-                            description="Describes the tools available to the assistant"
-                            rows={2}
-                        />
-                        <ConfigTextArea
-                            label="Instructions"
-                            value={assistantConfig.courseAssistant.instructions}
-                            onChange={value => updateAssistantField("courseAssistant", "instructions", value)}
-                            description="Specific assistant behavior instructions"
-                            rows={8}
-                        />
-                        <ConfigTextArea
-                            label="Additional Rules"
-                            value={assistantConfig.courseAssistant.additionalRules || ""}
-                            onChange={value => updateAssistantField("courseAssistant", "additionalRules", value)}
-                            description="Optional additional rules"
-                            rows={3}
+                            description="Name of the university"
                         />
                     </div>
                 );
             case "exercise":
                 return (
                     <div>
-                        <h5 className="mb-3">Exercise identification assistant</h5>
+                        <h5 className="mb-3">Lab context extraction configuration</h5>
                         <ConfigTextArea
-                            label="Assistant role"
-                            value={assistantConfig.exerciseAssistant.role}
-                            onChange={value => updateAssistantField("exerciseAssistant", "role", value)}
-                            description="Defines the purpose of the identification assistant"
-                            rows={2}
-                        />
-                        <ConfigTextArea
-                            label="Context description"
+                            label="Lab material"
                             value={assistantConfig.exerciseAssistant.contextDescription}
                             onChange={value => updateAssistantField("exerciseAssistant", "contextDescription", value)}
-                            description="Describes what type of context is expected for exercises"
+                            description="Describes what context should be extracted from lab materials"
                             rows={2}
                         />
                         <ConfigTextArea
-                            label="Concept examples"
-                            value={assistantConfig.exerciseAssistant.conceptsExamples}
-                            onChange={value => updateAssistantField("exerciseAssistant", "conceptsExamples", value)}
-                            description="Examples of concepts worked on in exercises"
-                            rows={2}
-                        />
-                        <ConfigTextArea
-                            label="Criteria for identifying exercises"
+                            label="Exercise identification"
                             value={assistantConfig.exerciseAssistant.exerciseCriteria}
                             onChange={value => updateAssistantField("exerciseAssistant", "exerciseCriteria", value)}
-                            description="Criteria for identifying what constitutes an exercise"
+                            description="Criteria for identifying what constitutes an exercise and how it should be extracted"
                             rows={6}
                         />
                     </div>
@@ -346,20 +293,13 @@ const Options: React.FC = () => {
             case "evaluation":
                 return (
                     <div>
-                        <h5 className="mb-3">Evaluation assistant</h5>
+                        <h5 className="mb-3">Solution evaluator configuration</h5>
                         <ConfigTextArea
-                            label="Assistant role"
+                            label="Role"
                             value={assistantConfig.evaluationAssistant.role}
                             onChange={value => updateAssistantField("evaluationAssistant", "role", value)}
-                            description="Defines the purpose of the evaluation assistant"
+                            description="Defines the role of the evaluator in the context of the coursev"
                             rows={2}
-                        />
-                        <ConfigTextArea
-                            label="Task description"
-                            value={assistantConfig.evaluationAssistant.taskDescription}
-                            onChange={value => updateAssistantField("evaluationAssistant", "taskDescription", value)}
-                            description="Describes the main task of the evaluator"
-                            rows={3}
                         />
                         <ConfigTextArea
                             label="Evaluation criteria"
@@ -376,10 +316,10 @@ const Options: React.FC = () => {
                             rows={5}
                         />
                         <ConfigTextArea
-                            label="Feedback format"
+                            label="Feedback giving"
                             value={assistantConfig.evaluationAssistant.feedbackFormat}
                             onChange={value => updateAssistantField("evaluationAssistant", "feedbackFormat", value)}
-                            description="Instructions on how to format feedback"
+                            description="Instructions on how to structure and format feedback"
                             rows={6}
                         />
                     </div>
@@ -387,33 +327,26 @@ const Options: React.FC = () => {
             case "explanation":
                 return (
                     <div>
-                        <h5 className="mb-3">Explanation assistant</h5>
+                        <h5 className="mb-3">Exercise solver configuration</h5>
                         <ConfigTextArea
-                            label="Assistant role"
+                            label="Role"
                             value={assistantConfig.explanationAssistant.role}
                             onChange={value => updateAssistantField("explanationAssistant", "role", value)}
-                            description="Defines the purpose of the tutorial assistant"
+                            description="Defines the purpose of the exercise solver in the context of the course"
                             rows={2}
                         />
                         <ConfigTextArea
-                            label="Task description"
-                            value={assistantConfig.explanationAssistant.taskDescription}
-                            onChange={value => updateAssistantField("explanationAssistant", "taskDescription", value)}
-                            description="Describes the main task of the tutor"
-                            rows={2}
-                        />
-                        <ConfigTextArea
-                            label="Methodology"
+                            label="Process methodology"
                             value={assistantConfig.explanationAssistant.methodology}
                             onChange={value => updateAssistantField("explanationAssistant", "methodology", value)}
                             description="Pedagogical methodology for generating explanations"
                             rows={15}
                         />
                         <ConfigTextArea
-                            label="Output format"
+                            label="Feedback giving"
                             value={assistantConfig.explanationAssistant.outputFormat}
                             onChange={value => updateAssistantField("explanationAssistant", "outputFormat", value)}
-                            description="Expected format of explanations"
+                            description="Instructions on how to structure and format feedback"
                             rows={6}
                         />
                     </div>
@@ -451,7 +384,7 @@ const Options: React.FC = () => {
                                 className={`nav-link ${activeTab === "llm" ? "active" : ""}`}
                                 onClick={() => setActiveTab("llm")}
                             >
-                                LLM configuration
+                                LLM providers
                             </button>
                         </li>
                         {isUserTeacher && (
@@ -460,7 +393,7 @@ const Options: React.FC = () => {
                                     className={`nav-link ${activeTab === "assistants" ? "active" : ""}`}
                                     onClick={() => setActiveTab("assistants")}
                                 >
-                                    Assistants configuration
+                                    Prompts
                                 </button>
                             </li>
                         )}
@@ -470,7 +403,7 @@ const Options: React.FC = () => {
                                     className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
                                     onClick={() => setActiveTab("progress")}
                                 >
-                                    Configure progress
+                                    Gamification
                                 </button>
                             </li>
                         )}
@@ -613,15 +546,7 @@ const Options: React.FC = () => {
                                         className={`nav-link ${activeAssistantSection === "general" ? "active" : ""}`}
                                         onClick={() => setActiveAssistantSection("general")}
                                     >
-                                        General
-                                    </button>
-                                </li>
-                                <li className="nav-item">
-                                    <button
-                                        className={`nav-link ${activeAssistantSection === "course" ? "active" : ""}`}
-                                        onClick={() => setActiveAssistantSection("course")}
-                                    >
-                                        Course assistant
+                                        Environment
                                     </button>
                                 </li>
                                 <li className="nav-item">
@@ -629,7 +554,7 @@ const Options: React.FC = () => {
                                         className={`nav-link ${activeAssistantSection === "exercise" ? "active" : ""}`}
                                         onClick={() => setActiveAssistantSection("exercise")}
                                     >
-                                        Identification
+                                        Context extraction
                                     </button>
                                 </li>
                                 <li className="nav-item">
@@ -639,7 +564,7 @@ const Options: React.FC = () => {
                                         }`}
                                         onClick={() => setActiveAssistantSection("evaluation")}
                                     >
-                                        Evaluation
+                                        Evaluator
                                     </button>
                                 </li>
                                 <li className="nav-item">
@@ -649,7 +574,7 @@ const Options: React.FC = () => {
                                         }`}
                                         onClick={() => setActiveAssistantSection("explanation")}
                                     >
-                                        Explanation
+                                        Solver
                                     </button>
                                 </li>
                             </ul>
@@ -657,7 +582,6 @@ const Options: React.FC = () => {
                             <div className="card">
                                 <div className="card-body">
                                     {renderAssistantSection()}
-
                                     <div className="mt-4">
                                         <button
                                             type="button"
@@ -665,13 +589,6 @@ const Options: React.FC = () => {
                                             onClick={handleSaveAssistantConfig}
                                         >
                                             Save configuration
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-secondary"
-                                            onClick={handleResetAssistantConfig}
-                                        >
-                                            Restore default values
                                         </button>
                                     </div>
                                 </div>
@@ -682,7 +599,7 @@ const Options: React.FC = () => {
                     {activeTab === "progress" && renderProgressTab()}
 
                     {/* Contenido de Importar/Exportar */}
-                    {activeTab === "import-export" && <ImportExportTab />}
+                    {activeTab === "import-export" && <ImportExportTab onDataChange={loadAssistantConfig} />}
                 </div>
             </div>
         </div>

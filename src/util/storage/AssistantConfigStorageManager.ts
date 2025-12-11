@@ -1,5 +1,4 @@
 import { AssistantConfig } from '../ai/AssistantConfig';
-import { SqlAssistantsConfig } from '../ai/SqlAssistantsConfig';
 import { BaseStorageManager } from './BaseStorageManager';
 
 export { AssistantConfigStorageManager };
@@ -11,7 +10,37 @@ export { AssistantConfigStorageManager };
 class AssistantConfigStorageManager extends BaseStorageManager {
     private static readonly STORAGE_KEY_PREFIX = 'assistant_config_';
     private static readonly CONFIG_KEY = 'main';
-    private static readonly defaultConfig: AssistantConfig = new SqlAssistantsConfig();
+    private static readonly defaultConfig: AssistantConfig = {
+        exerciseAssistant: {
+            role: "",
+            contextDescription: "",
+            conceptsFieldDescription: "",
+            conceptsExamples: "",
+            exerciseCriteria: "",
+            learningObjectivesGuidance: ""
+        },
+        evaluationAssistant: {
+            role: "",
+            taskDescription: "",
+            evaluationCriteria: "",
+            scoringScale: "",
+            feedbackFormat: "",
+            importantNotes: ""
+        },
+        explanationAssistant: {
+            role: "",
+            taskDescription: "",
+            methodology: "",
+            outputFormat: "",
+            additionalRules: "",
+            importantNotes: ""
+        },
+        common: {
+            subjectName: "",
+            platformName: "",
+            institutionName: ""
+        }
+    };
     private static cachedConfig: AssistantConfig | null = null;
 
     /**
@@ -45,14 +74,6 @@ class AssistantConfigStorageManager extends BaseStorageManager {
     static async saveConfig(config: AssistantConfig): Promise<void> {
         await this.saveData(this.STORAGE_KEY_PREFIX, this.CONFIG_KEY, config);
         this.cachedConfig = config;
-    }
-
-    /**
-     * Restores default configuration (SQL)
-     */
-    static async resetToDefault(): Promise<void> {
-        await this.saveConfig(this.defaultConfig);
-        console.log("[AssistantConfigStorageManager] Configuration restored to default values");
     }
 
     /**
