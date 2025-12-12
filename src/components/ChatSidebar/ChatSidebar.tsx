@@ -35,6 +35,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
         reloadKey,
         messagesEndRef,
         isChatDisabled,
+        inputRef,
         handleConfigLoaded,
         handleModeToggle,
         handleExplanationClick,
@@ -212,6 +213,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                         onInputChange={setInputValue}
                         onKeyDown={handleKeyDown}
                         messagesEndRef={messagesEndRef}
+                        inputRef={inputRef}
                     />
                 ) : activeTab === "exercises" ? (
                     <ExercisesTab

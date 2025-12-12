@@ -74,6 +74,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
     const [isCheckingConfig, setIsCheckingConfig] = useState<boolean>(true);
     const [reloadKey, setReloadKey] = useState<number>(0);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
     const isChatDisabled =
         isAnyModalOpen || isGenerating || isLoadingExercises || isLabBlocked || (!!pageId && !hasExercisesLoaded) || (isTeacherMode && !!pageId);
@@ -431,6 +432,10 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
             setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsGenerating(false);
+            // Mantener el foco en el input después de enviar el mensaje
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 0);
         }
     };
 
@@ -479,6 +484,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
         reloadKey,
         messagesEndRef,
         isChatDisabled,
+        inputRef,
         // Handlers
         handleConfigLoaded,
         handleModeToggle,

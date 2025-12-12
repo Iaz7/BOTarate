@@ -40,7 +40,10 @@ interface ChatTabProps {
     onInputChange: (value: string) => void;
     onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
     messagesEndRef: React.RefObject<HTMLDivElement | null>;
+    inputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }
+
+import { useEffect } from "react";
 
 const ChatTab: React.FC<ChatTabProps> = ({
     messages,
@@ -60,7 +63,16 @@ const ChatTab: React.FC<ChatTabProps> = ({
     onInputChange,
     onKeyDown,
     messagesEndRef,
+    inputRef,
 }) => {
+    // Efecto: enfocar el input cuando deja de estar deshabilitado
+    useEffect(() => {
+        if (!isChatDisabled) {
+            setTimeout(() => {
+                inputRef?.current?.focus();
+            }, 0);
+        }
+    }, [isChatDisabled, inputRef]);
     const getChatPlaceholder = () => {
         if (isAnyModalOpen) return "Chat disabled (modal open)...";
         if (isTeacherMode && pageId) return "Switch to student mode to work on the lab...";
@@ -239,6 +251,7 @@ const ChatTab: React.FC<ChatTabProps> = ({
                         disabled={isChatDisabled}
                         rows={4}
                         style={{ resize: "none", overflow: "auto", flex: 1 }}
+                        ref={inputRef}
                     />
                     <button
                         className="btn btn-primary"
