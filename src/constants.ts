@@ -4,11 +4,11 @@
 
 export const APP_CONFIG = {
     /** Extension Name */
-    NAME: 'Moodlia',
+    NAME: 'BOTarate',
 
     /** Extension Version */
     VERSION: '1.0.0',
 
     /** Descripción de la extensión */
-    DESCRIPTION: 'Una extensión de Chrome para eGela',
+    DESCRIPTION: 'AI powered extensión for teaching and learning assistance',
 } as const;

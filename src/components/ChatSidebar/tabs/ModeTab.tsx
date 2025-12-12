@@ -1,4 +1,5 @@
 import React from "react";
+import { APP_CONFIG } from "../../../constants";
 
 interface ModeTabProps {
     isUserTeacher: boolean;
@@ -14,7 +15,7 @@ const ModeTab: React.FC<ModeTabProps> = ({ isUserTeacher, isTeacherMode, onModeT
                     <i className="bi bi-info-circle me-2"></i>
                     Student Mode
                 </h5>
-                <p>You are currently using Moodlia in student mode. Only teachers can switch modes.</p>
+                <p>You are currently using {APP_CONFIG.NAME} in student mode. Only teachers can switch modes.</p>
             </div>
         );
     }

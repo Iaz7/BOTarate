@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { APP_CONFIG } from "../constants";
 
 interface BaseModalProps {
     isOpen: boolean;
@@ -50,7 +51,7 @@ const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, children 
                         <h5 className="modal-title mb-0 d-flex align-items-center">
                             <img
                                 src={chrome.runtime.getURL("icons/icon128.png")}
-                                alt="Moodlia"
+                                alt={APP_CONFIG.NAME}
                                 style={{ width: "32px", height: "32px", marginRight: "16px", marginLeft: "24px" }}
                             />
                             {title}

@@ -67,7 +67,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                     <div className="d-flex align-items-center">
                         <img
                             src={chrome.runtime.getURL("icons/icon128.png")}
-                            alt="Moodlia Icon"
+                            alt={APP_CONFIG.NAME + " icon"}
                             className="header-icon"
                         />
                         <h2 className="h2 mb-0">{APP_CONFIG.NAME}</h2>

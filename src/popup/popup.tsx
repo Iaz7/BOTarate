@@ -27,11 +27,11 @@ const Popup: React.FC = () => {
     return (
         <div className="p-3" style={{ width: "300px" }}>
             <div className="d-flex align-items-center justify-content-center mb-3">
-                <h5 className="mb-0">Moodlia</h5>
+                <h5 className="mb-0">{APP_CONFIG.NAME}</h5>
             </div>
 
             <div className="alert alert-info small mb-3" role="alert">
-                Welcome to Moodlia. Configure the extension to start using it.
+                Welcome to {APP_CONFIG.NAME}. Configure the extension to start using it.
             </div>
 
             <div className="d-grid gap-2">
