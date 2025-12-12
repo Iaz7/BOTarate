@@ -219,6 +219,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                     <ExercisesTab
                         isLoadingExplanations={isLoadingExplanations}
                         isLoadingEvaluations={isLoadingEvaluations}
+                        exercises={exercises}
                         exercisesWithExplanations={exercisesWithExplanations}
                         exercisesWithEvaluations={exercisesWithEvaluations}
                         onExplanationClick={handleExplanationClick}
