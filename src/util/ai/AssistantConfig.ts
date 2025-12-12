@@ -48,5 +48,9 @@ export interface AssistantConfig {
         subjectName: string;
         platformName: string;
         institutionName: string;
+        /** Teacher's name for personalized references */
+        teacherName: string;
+        /** Common expressions/tics the teacher uses (e.g., "¿Sí con esto?", "¿Entendido?") */
+        teacherTics: string;
     };
 }

@@ -38,7 +38,9 @@ class AssistantConfigStorageManager extends BaseStorageManager {
         common: {
             subjectName: "",
             platformName: "",
-            institutionName: ""
+            institutionName: "",
+            teacherName: "",
+            teacherTics: ""
         }
     };
     private static cachedConfig: AssistantConfig | null = null;

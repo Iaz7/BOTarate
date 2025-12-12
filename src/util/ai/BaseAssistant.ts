@@ -44,6 +44,29 @@ abstract class BaseAssistant {
     }
 
     /**
+     * Builds the teacher personalization section for prompts.
+     * Includes teacher name and verbal tics to make feedback more familiar.
+     * @returns Formatted personalization section or empty string if not configured
+     */
+    protected buildTeacherPersonalization(): string {
+        const teacherName = this.config.common.teacherName;
+        const teacherTics = this.config.common.teacherTics;
+
+        if (!teacherName && !teacherTics) {
+            return '';
+        }
+
+        let personalization = 'TEACHER PERSONALIZATION:';
+        if (teacherName) {
+            personalization += `\n- When suggesting the student to ask the teacher for help, use the name "${teacherName}" instead of generic terms like "the teacher" or "your instructor". For example: "You could ask ${teacherName} for more exercises to practise...".`;
+        }
+        if (teacherTics) {
+            personalization += `\n- To make your feedback feel more familiar and natural, occasionally integrate some of the teacher's common expressions (verbal tics): ${teacherTics}. Use them sparingly and naturally - don't overuse them.`;
+        }
+        return personalization;
+    }
+
+    /**
      * Tool executor shared by all assistants
      * Provides access to getSectionContent, getPageContent, getResourceContent, explainExercise, solveExercise, and getFilteredFileContent
      */

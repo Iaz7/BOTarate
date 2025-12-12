@@ -69,6 +69,8 @@ PEDAGOGICAL CONTEXT:
 {objectivesContext}
 {considerObjectives}
 
+{teacherPersonalization}
+
 IMPORTANT:
 {importantNotes}`;
 
@@ -82,6 +84,7 @@ IMPORTANT:
             pedagogicalContext: pedagogicalContext,
             objectivesContext: objectivesContext,
             considerObjectives: considerObjectives,
+            teacherPersonalization: this.buildTeacherPersonalization(),
             importantNotes: assistantConfig.importantNotes || ''
         };
 

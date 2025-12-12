@@ -249,7 +249,7 @@ const Options: React.FC = () => {
             case "general":
                 return (
                     <div>
-                        <h5 className="mb-3">Environment configuration</h5>
+                        <h5 className="mb-3">General configuration</h5>
                         <ConfigTextField
                             label="Subject name"
                             value={assistantConfig.common.subjectName}
@@ -267,6 +267,22 @@ const Options: React.FC = () => {
                             value={assistantConfig.common.institutionName}
                             onChange={value => updateAssistantField("common", "institutionName", value)}
                             description="Name of the university"
+                        />
+
+                        <hr className="my-4" />
+                        <h5 className="mb-3">Teacher personalization</h5>
+                        <ConfigTextField
+                            label="Teacher's name"
+                            value={assistantConfig.common.teacherName}
+                            onChange={value => updateAssistantField("common", "teacherName", value)}
+                            description="Name of the teacher"
+                        />
+                        <ConfigTextArea
+                            label="Teacher's tics"
+                            value={assistantConfig.common.teacherTics}
+                            onChange={value => updateAssistantField("common", "teacherTics", value)}
+                            description="Common expressions/phrases the teacher uses"
+                            rows={3}
                         />
                     </div>
                 );
