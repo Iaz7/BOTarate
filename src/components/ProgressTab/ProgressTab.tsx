@@ -1,76 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { LabProgress, ProgressManager, ProgressRequirements, SavedEvaluation } from "../util/progress/ProgressManager";
+import React from "react";
+import { useProgressData } from "./hooks";
+import {
+    getBestScore,
+    getLabBackgroundColor,
+    getRequiredChallengesLabel,
+    getScoreBadgeClass,
+    isLabCompleted,
+} from "./utils";
 
 interface ProgressTabProps {
     courseId: string;
 }
 
 const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
-    const [labProgress, setLabProgress] = useState<LabProgress[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [requirements, setRequirements] = useState<ProgressRequirements | null>(null);
-
-    useEffect(() => {
-        loadProgressData();
-    }, [courseId]);
-
-    const loadProgressData = async () => {
-        setIsLoading(true);
-        try {
-            const progressData = await ProgressManager.loadProgressData(courseId);
-            setLabProgress(progressData.labs);
-            setRequirements(progressData.requirements);
-        } catch (error) {
-            console.error("[ProgressTab] Error loading progress data:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const isLabCompleted = (progress: LabProgress): boolean => {
-        return ProgressManager.isLabCompleted(progress, requirements || undefined);
-    };
-
-    const getLabBackgroundColor = (progress: LabProgress): string => {
-        if (!progress.isUnlocked) {
-            return "list-group-item-danger"; // Red for locked
-        }
-
-        if (isLabCompleted(progress)) {
-            return "list-group-item-success"; // Green for completed
-        }
-
-        return "list-group-item-warning"; // Yellow for in progress
-    };
-
-    const getBestScore = (evaluations: SavedEvaluation[] | undefined): number | null => {
-        if (!evaluations || evaluations.length === 0) return null;
-        return Math.max(...evaluations.map(e => e.score));
-    };
-
-    const getScoreBadgeClass = (score: number | null): string => {
-        if (score === null) return "bg-secondary";
-        const minScore = requirements?.minScoreToPass ?? 5;
-        if (score >= minScore) return "bg-success";
-        return "bg-danger";
-    };
-
-    const getRequiredChallengesLabel = (progress: LabProgress): string | null => {
-        if (!requirements || progress.challengeExercises.length === 0) {
-            return null;
-        }
-
-        const required = Math.min(
-            progress.challengeExercises.length,
-            Math.ceil((requirements.minChallengesPercentage / 100) * progress.challengeExercises.length)
-        );
-
-        if (required === 0) {
-            return null;
-        }
-
-        return `You need to pass ${required} of ${progress.challengeExercises.length} challenges.`;
-    };
+    const { labProgress, isLoading, requirements } = useProgressData(courseId);
 
     if (isLoading) {
         return (
@@ -137,11 +80,14 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
             {/* Lista de laboratorios */}
             <div className="list-group">
                 {labProgress.map((progress, index) => (
-                    <div key={progress.lab.id} className={`list-group-item ${getLabBackgroundColor(progress)}`}>
+                    <div
+                        key={progress.lab.id}
+                        className={`list-group-item ${getLabBackgroundColor(progress, requirements || undefined)}`}
+                    >
                         <div className="d-flex w-100 justify-content-between align-items-start mb-2">
                             <h6 className="mb-1">
                                 {!progress.isUnlocked && <i className="bi bi-lock-fill me-2"></i>}
-                                {progress.isUnlocked && isLabCompleted(progress) && (
+                                {progress.isUnlocked && isLabCompleted(progress, requirements || undefined) && (
                                     <i className="bi bi-check-circle-fill me-2"></i>
                                 )}
                                 Lab {index + 1}: {progress.lab.name}
@@ -169,7 +115,10 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                             <strong>Challenge exercises:</strong>
                                         </small>
                                         {(() => {
-                                            const requiredLabel = getRequiredChallengesLabel(progress);
+                                            const requiredLabel = getRequiredChallengesLabel(
+                                                progress,
+                                                requirements || undefined
+                                            );
                                             return requiredLabel ? (
                                                 <small className="text-muted d-block mb-2">{requiredLabel}</small>
                                             ) : null;
@@ -178,7 +127,10 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                             {progress.challengeExercises.map(exercise => {
                                                 const evaluations = progress.challengeEvaluations.get(exercise.name);
                                                 const bestScore = getBestScore(evaluations);
-                                                const badgeClass = getScoreBadgeClass(bestScore);
+                                                const badgeClass = getScoreBadgeClass(
+                                                    bestScore,
+                                                    requirements?.minScoreToPass ?? 5
+                                                );
 
                                                 return (
                                                     <div

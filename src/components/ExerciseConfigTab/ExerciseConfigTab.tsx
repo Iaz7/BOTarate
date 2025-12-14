@@ -1,189 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useExerciseConfig } from "./hooks";
+import { ExerciseConfigTabProps } from "./types";
+import { getDefaultFlags } from "./utils";
 
-interface Exercise {
-    name: string;
-    statement: string;
-    allowed?: boolean;
-    isTiquismiqui?: boolean;
-}
+const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
+    const {
+        exerciseConfig,
+        isSaving,
+        hasUnsavedChanges,
+        handleToggleChallenge,
+        handleToggleTiquismiqui,
+        handleSaveChanges,
+    } = useExerciseConfig(props);
 
-interface ExerciseFlags {
-    allowed: boolean;
-    isTiquismiqui: boolean;
-}
-
-interface ExerciseConfigTabProps {
-    exercises: Exercise[];
-    pageId: string;
-    onConfigUpdate?: () => void;
-    isActive: boolean;
-}
-
-const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId, onConfigUpdate, isActive }) => {
-    const [exerciseConfig, setExerciseConfig] = useState<Map<string, ExerciseFlags>>(new Map());
-    const [originalConfig, setOriginalConfig] = useState<Map<string, ExerciseFlags>>(new Map());
-    const [isSaving, setIsSaving] = useState(false);
-    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-    const getDefaultFlags = (): ExerciseFlags => ({ allowed: true, isTiquismiqui: false });
-
-    const createFlagsFromExercise = (exercise: Exercise): ExerciseFlags => ({
-        allowed: exercise.allowed ?? true,
-        isTiquismiqui: exercise.isTiquismiqui ?? false,
-    });
-
-    const buildConfigMap = (list: Exercise[]): Map<string, ExerciseFlags> => {
-        const config = new Map<string, ExerciseFlags>();
-        for (const exercise of list) {
-            config.set(exercise.name, createFlagsFromExercise(exercise));
-        }
-        return config;
-    };
-
-    const configsAreEqual = (a: Map<string, ExerciseFlags>, b: Map<string, ExerciseFlags>): boolean => {
-        if (a.size !== b.size) return false;
-        for (const [name, flags] of a) {
-            const reference = b.get(name);
-            if (!reference) return false;
-            if (flags.allowed !== reference.allowed || flags.isTiquismiqui !== reference.isTiquismiqui) {
-                return false;
-            }
-        }
-        return true;
-    };
-
-    React.useEffect(() => {
-        setHasUnsavedChanges(!configsAreEqual(exerciseConfig, originalConfig));
-    }, [exerciseConfig, originalConfig]);
-
-    // Cargar configuración inicial desde el storage cuando se activa la pestaña
-    useEffect(() => {
-        if (isActive && pageId) {
-            loadConfigFromStorage();
-        }
-    }, [isActive, pageId]);
-
-    const loadConfigFromStorage = async () => {
-        try {
-            // Obtener datos actualizados del storage
-            const response = await chrome.runtime.sendMessage({
-                action: "getExerciseData",
-                pageId: pageId,
-            });
-
-            if (response.success && response.data) {
-                const config = buildConfigMap(response.data.exercises);
-                setExerciseConfig(config);
-                setOriginalConfig(new Map(config));
-                setHasUnsavedChanges(false);
-            }
-        } catch (error) {
-            console.error("Error loading config from storage:", error);
-            // Si falla, usar los ejercicios proporcionados
-            loadConfigFromProps();
-        }
-    };
-
-    const loadConfigFromProps = () => {
-        const config = buildConfigMap(exercises);
-        setExerciseConfig(config);
-        setOriginalConfig(new Map(config));
-        setHasUnsavedChanges(false);
-    };
-
-    const updateExerciseFlags = (exerciseName: string, updater: (flags: ExerciseFlags) => ExerciseFlags) => {
-        setExerciseConfig(prev => {
-            const current = prev.get(exerciseName) ?? getDefaultFlags();
-            const updated = updater(current);
-            const newConfig = new Map(prev);
-            newConfig.set(exerciseName, updated);
-            return newConfig;
-        });
-    };
-
-    const handleToggleChallenge = (exerciseName: string) => {
-        updateExerciseFlags(exerciseName, flags => ({ ...flags, allowed: !flags.allowed }));
-    };
-
-    const handleToggleTiquismiqui = (exerciseName: string) => {
-        updateExerciseFlags(exerciseName, flags => ({ ...flags, isTiquismiqui: !flags.isTiquismiqui }));
-    };
-
-    const computePendingChanges = () => {
-        const changes: Array<{ name: string; allowed?: boolean; isTiquismiqui?: boolean }> = [];
-        for (const [name, flags] of exerciseConfig.entries()) {
-            const originalFlags = originalConfig.get(name) ?? getDefaultFlags();
-            const change: { name: string; allowed?: boolean; isTiquismiqui?: boolean } = { name };
-
-            if (flags.allowed !== originalFlags.allowed) {
-                change.allowed = flags.allowed;
-            }
-            if (flags.isTiquismiqui !== originalFlags.isTiquismiqui) {
-                change.isTiquismiqui = flags.isTiquismiqui;
-            }
-
-            if (change.allowed !== undefined || change.isTiquismiqui !== undefined) {
-                changes.push(change);
-            }
-        }
-        return changes;
-    };
-
-    const handleSaveChanges = async () => {
-        const changes = computePendingChanges();
-        if (changes.length === 0) return;
-
-        setIsSaving(true);
-        try {
-            // Guardar todos los cambios
-            for (const change of changes) {
-                if (change.allowed !== undefined) {
-                    await chrome.runtime.sendMessage({
-                        action: "updateExerciseAllowed",
-                        pageId: pageId,
-                        exerciseName: change.name,
-                        allowed: change.allowed,
-                    });
-                }
-
-                if (change.isTiquismiqui !== undefined) {
-                    await chrome.runtime.sendMessage({
-                        action: "updateExerciseTiquismiqui",
-                        pageId: pageId,
-                        exerciseName: change.name,
-                        isTiquismiqui: change.isTiquismiqui,
-                    });
-                }
-            }
-
-            const challengeExercises = changes.filter(change => change.allowed === false).map(change => change.name);
-
-            if (challengeExercises.length > 0) {
-                await chrome.runtime.sendMessage({
-                    action: "removeChallengeExercisesExplanations",
-                    pageId: pageId,
-                    exerciseNames: challengeExercises,
-                });
-            }
-
-            setOriginalConfig(new Map(exerciseConfig));
-            setHasUnsavedChanges(false);
-
-            // Notificar al padre para regenerar el chat
-            if (onConfigUpdate) {
-                onConfigUpdate();
-            }
-
-            alert("Configuration saved successfully. The assistant has been updated with the new configuration.");
-        } catch (error) {
-            console.error("Error saving exercise config:", error);
-            alert("Error saving configuration. Please try again.");
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    if (exercises.length === 0) {
+    if (props.exercises.length === 0) {
         return (
             <div>
                 {/* Explicación del sistema */}
@@ -261,7 +91,7 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = ({ exercises, pageId
                         </tr>
                     </thead>
                     <tbody>
-                        {exercises.map(exercise => {
+                        {props.exercises.map(exercise => {
                             const flags = exerciseConfig.get(exercise.name) ?? getDefaultFlags();
                             const isChallenge = !flags.allowed;
                             const isTiquismiqui = flags.isTiquismiqui;

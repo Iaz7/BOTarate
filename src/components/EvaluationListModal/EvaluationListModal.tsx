@@ -1,84 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import BaseModal from "./BaseModal";
-
-interface SavedEvaluation {
-    exerciseName: string;
-    solution: string;
-    score: number;
-    feedback: string;
-    timestamp: number;
-}
-
-interface EvaluationListModalProps {
-    exerciseName: string;
-    isOpen: boolean;
-    onClose: () => void;
-    pageId?: string;
-}
+import BaseModal from "../BaseModal";
+import { useEvaluations } from "./hooks";
+import { EvaluationListModalProps } from "./types";
+import { formatDate, formatScore, getScoreColor, getScoreLabel } from "./utils";
 
 const EvaluationListModal: React.FC<EvaluationListModalProps> = ({ exerciseName, isOpen, onClose, pageId }) => {
-    const [evaluations, setEvaluations] = useState<SavedEvaluation[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [selectedEvaluation, setSelectedEvaluation] = useState<SavedEvaluation | null>(null);
-
-    useEffect(() => {
-        if (isOpen) {
-            loadEvaluations();
-        }
-    }, [isOpen, exerciseName]);
-
-    const loadEvaluations = async () => {
-        setIsLoading(true);
-        try {
-            const response = await chrome.runtime.sendMessage({
-                action: "getEvaluations",
-                exerciseName: exerciseName,
-                pageId: pageId,
-            });
-
-            if (response.success && response.evaluations) {
-                setEvaluations(response.evaluations);
-                // Seleccionar la evaluación más reciente por defecto
-                if (response.evaluations.length > 0) {
-                    setSelectedEvaluation(response.evaluations[0]);
-                }
-            }
-        } catch (error) {
-            console.error("[EvaluationListModal] Error loading evaluations:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const formatDate = (timestamp: number) => {
-        return new Date(timestamp).toLocaleString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
-
-    const getScoreColor = (score: number) => {
-        if (score >= 9) return "success";
-        if (score >= 7) return "primary";
-        if (score >= 5) return "warning";
-        return "danger";
-    };
-
-    const getScoreLabel = (score: number) => {
-        if (score >= 9) return "Excellent";
-        if (score >= 7) return "Good";
-        if (score >= 5) return "Sufficient";
-        return "Insufficient";
-    };
-
-    const formatScore = (score: number) => {
-        return score % 1 === 0 ? score.toString() : score.toFixed(1);
-    };
+    const { evaluations, isLoading, selectedEvaluation, setSelectedEvaluation } = useEvaluations(
+        isOpen,
+        exerciseName,
+        pageId
+    );
 
     return (
         <BaseModal isOpen={isOpen} onClose={onClose} title={`Evaluations for ${exerciseName}`}>

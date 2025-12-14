@@ -1,16 +1,6 @@
+import type { ExerciseDataForStorage, Lab } from "../../types/shared";
 import { BaseStorageManager } from "./BaseStorageManager";
-import { Lab, LabStorageManager } from "./LabStorageManager";
-
-/**
- * Exercise data structure for a page
- */
-export interface ExerciseData {
-    pageId: string;
-    exercises: Array<{ name: string; statement: string; allowed?: boolean; isTiquismiqui?: boolean }>;
-    exerciseContext?: string;
-    concepts?: string[];
-    learningObjectives?: string;
-}
+import { LabStorageManager } from "./LabStorageManager";
 
 /**
  * Storage manager for exercise lists
@@ -29,12 +19,12 @@ export class ExerciseStorageManager extends BaseStorageManager {
      */
     static async saveExerciseData(
         pageId: string,
-        exercises: Array<{ name: string; statement: string; allowed?: boolean; isTiquismiqui?: boolean }>,
+        exercises: Array<{ name: string; statement: string; allowed?: boolean; isTiquismiqui?: boolean }> | import("../../types/shared").Exercise[],
         exerciseContext?: string,
         concepts?: string[],
         learningObjectives?: string
     ): Promise<void> {
-        const data: ExerciseData = {
+        const data: ExerciseDataForStorage = {
             pageId,
             exercises,
             exerciseContext,
@@ -50,8 +40,8 @@ export class ExerciseStorageManager extends BaseStorageManager {
      * @param pageId Page ID
      * @returns Exercise data or null if not exists
      */
-    static async getExerciseData(pageId: string): Promise<(ExerciseData & { timestamp: number }) | null> {
-        return await this.getData<ExerciseData>(this.STORAGE_KEY_PREFIX, pageId);
+    static async getExerciseData(pageId: string): Promise<(ExerciseDataForStorage & { timestamp: number }) | null> {
+        return await this.getData<ExerciseDataForStorage>(this.STORAGE_KEY_PREFIX, pageId);
     }
 
     /**

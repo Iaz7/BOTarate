@@ -1,29 +1,10 @@
+export { default } from './ChatSidebar.tsx';
 import { useEffect, useRef, useState } from "react";
 import { AppMode, ModeManager } from "../../util/config/ModeManager";
 import { ProgressManager } from "../../util/progress/ProgressManager";
 import { SidebarStateStorageManager } from "../../util/storage/SidebarStateStorageManager";
 
-export interface Exercise {
-    name: string;
-    statement: string;
-    allowed?: boolean;
-    isTiquismiqui?: boolean;
-}
-
-export interface ChatMessage {
-    role: "user" | "assistant" | "tool";
-    content: string | null;
-    id: string;
-    tool_calls?: Array<{
-        function: {
-            name: string;
-            arguments: string;
-        };
-        id: string;
-        type: string;
-    }>;
-    name?: string;
-}
+import type { ChatMessage, Exercise } from "../../types/shared";
 
 export interface ChatSidebarProps {
     onClose: () => void;

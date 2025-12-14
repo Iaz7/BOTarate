@@ -1,30 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import BaseModal from "./BaseModal";
-
-interface Exercise {
-    name: string;
-    statement: string;
-    isTiquismiqui?: boolean;
-}
-
-interface Evaluation {
-    score: number;
-    feedback: string;
-}
-
-interface SolutionModalProps {
-    exercise: Exercise;
-    isOpen: boolean;
-    onClose: () => void;
-    exerciseContext?: string | null;
-    concepts?: string[];
-    learningObjectives?: string;
-    pageId?: string;
-    courseId?: string;
-    onEvaluationGenerated?: () => void;
-}
+import BaseModal from "../BaseModal";
+import { useSolutionModal } from "./hooks";
+import { SolutionModalProps } from "./types";
+import { getScoreColor, getScoreLabel } from "./utils";
 
 const SolutionModal: React.FC<SolutionModalProps> = ({
     exercise,
@@ -37,82 +17,23 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
     courseId,
     onEvaluationGenerated,
 }) => {
-    const [solution, setSolution] = useState<string>("");
-    const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
-    const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
-    const [evaluationError, setEvaluationError] = useState<string | null>(null);
-
-    // Resetear el estado al abrir el modal
-    React.useEffect(() => {
-        if (isOpen) {
-            setSolution("");
-            setEvaluation(null);
-            setEvaluationError(null);
-        }
-    }, [isOpen, exercise.name]);
+    const { solution, setSolution, evaluation, isEvaluating, evaluationError, handleSubmit } = useSolutionModal(
+        isOpen,
+        exercise.name,
+        onEvaluationGenerated
+    );
 
     if (!isOpen) return null;
 
-    const handleSubmit = async () => {
-        if (!solution.trim()) {
-            setEvaluationError("Please enter a solution before submitting");
-            return;
-        }
-
-        setIsEvaluating(true);
-        setEvaluationError(null);
-        setEvaluation(null);
-
-        try {
-            const response = await chrome.runtime.sendMessage({
-                action: "evaluateSolution",
-                exerciseName: exercise.name,
-                exerciseStatement: exercise.statement,
-                studentSolution: solution,
-                exercise_context: exerciseContext || undefined,
-                learning_objectives: learningObjectives || undefined,
-                pageId: pageId || undefined,
-                courseId: courseId || undefined,
-            });
-
-            if (response.success) {
-                setEvaluation(response.evaluation);
-                console.log("Solution evaluated successfully");
-                // Notificar que se generó una nueva evaluación
-                if (onEvaluationGenerated) {
-                    onEvaluationGenerated();
-                }
-            } else {
-                const errorMessage = response.error || "Unknown error evaluating solution";
-                console.error("Error evaluating solution:", errorMessage);
-                setEvaluationError(errorMessage);
-            }
-        } catch (error) {
-            console.error("Error evaluating solution:", error);
-            const errorMessage =
-                error instanceof Error
-                    ? `Communication error: ${error.message}`
-                    : "Communication error with AI assistant";
-            setEvaluationError(errorMessage);
-        } finally {
-            setIsEvaluating(false);
-        }
-    };
-
-    const getScoreColor = (score: number): string => {
-        if (score >= 9) return "success";
-        if (score >= 7) return "primary";
-        if (score >= 5) return "warning";
-        return "danger";
-    };
-
-    const getScoreLabel = (score: number): string => {
-        if (score >= 9) return "Excellent";
-        if (score >= 7) return "Good";
-        if (score >= 5) return "Acceptable";
-        if (score >= 3) return "Insufficient";
-        return "Very poor";
-    };
+    const onSubmit = () =>
+        handleSubmit(
+            exercise.name,
+            exercise.statement,
+            exerciseContext || undefined,
+            learningObjectives || undefined,
+            pageId || undefined,
+            courseId || undefined
+        );
 
     return (
         <BaseModal isOpen={isOpen} onClose={onClose} title={`Solve exercise: ${exercise.name}`}>
@@ -204,11 +125,7 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
                     <button className="btn btn-secondary" onClick={onClose} disabled={isEvaluating}>
                         Cancel
                     </button>
-                    <button
-                        className="btn btn-primary"
-                        onClick={handleSubmit}
-                        disabled={isEvaluating || !solution.trim()}
-                    >
+                    <button className="btn btn-primary" onClick={onSubmit} disabled={isEvaluating || !solution.trim()}>
                         {isEvaluating ? (
                             <>
                                 <output className="spinner-border spinner-border-sm me-2">

@@ -1,13 +1,11 @@
 import OpenAI from "openai";
 import type { ResponseFormatJSONSchema } from "openai/resources/shared";
 
+import type { ReasoningEffort, VerbosityLevel } from "../../types/shared";
 import { AIProvider, ConfigManager } from "../config/ConfigManager";
 import { getReasoningInstruction, getVerbosityInstruction, supportsReasoning, supportsVerbosity } from "./ModelList";
 import type { ToolCall } from "./Tools";
 import { TOOLS } from "./Tools";
-
-export type VerbosityLevel = "low" | "medium" | "high";
-export type ReasoningEffort = "minimal" | "low" | "medium" | "high";
 
 export interface ResponseOptions {
     verbosity?: VerbosityLevel;

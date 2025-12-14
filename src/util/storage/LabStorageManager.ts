@@ -1,25 +1,5 @@
+import type { Lab, ReasoningEffort, VerbosityLevel } from "../../types/shared";
 import { BaseStorageManager } from "./BaseStorageManager";
-
-/**
- * Verbosity levels for assistant responses
- */
-export type VerbosityLevel = "low" | "medium" | "high";
-
-/**
- * Reasoning effort levels for the model
- */
-export type ReasoningEffort = "minimal" | "low" | "medium" | "high";
-
-/**
- * Lab data structure
- */
-export interface Lab {
-    id: string;
-    name: string;
-    required: boolean;
-    verbosity?: VerbosityLevel;
-    reasoningEffort?: ReasoningEffort;
-}
 
 /**
  * Lab data structure for the course

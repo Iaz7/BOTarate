@@ -1,0 +1,11 @@
+import React from "react";
+
+export const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    onSend: () => void
+) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        onSend();
+    }
+};

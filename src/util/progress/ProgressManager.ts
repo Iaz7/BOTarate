@@ -1,24 +1,11 @@
-import { Lab } from "../storage/LabStorageManager";
-
-export interface SavedEvaluation {
-    exerciseName: string;
-    solution: string;
-    score: number;
-    feedback: string;
-    timestamp: number;
-}
-
-export interface ExerciseData {
-    name: string;
-    allowed: boolean;
-    isTiquismiqui?: boolean;
-}
+import type { Exercise, Lab, SavedEvaluation } from "../../types/shared";
+export type { SavedEvaluation } from "../../types/shared";
 
 export interface LabProgress {
     lab: Lab;
     isUnlocked: boolean;
-    allExercises: ExerciseData[];
-    challengeExercises: ExerciseData[];
+    allExercises: Exercise[];
+    challengeExercises: Exercise[];
     challengeEvaluations: Map<string, SavedEvaluation[]>;
     stats: {
         totalExercises: number;

@@ -1,0 +1,28 @@
+import type { ReasoningEffort, VerbosityLevel } from "../../types/shared";
+export type { Lab, ReasoningEffort, VerbosityLevel } from "../../types/shared";
+
+export type ContextGenerationStatus = "idle" | "generating" | "completed" | "error";
+
+export interface LabConfigTabProps {
+    courseId: string;
+    onConfigUpdate?: () => void;
+    isActive: boolean;
+}
+
+export interface PendingChanges {
+    required?: boolean;
+    verbosity?: VerbosityLevel;
+    reasoningEffort?: ReasoningEffort;
+}
+
+export interface LabContextState {
+    hasContext: boolean;
+    generateContext: boolean; // Current checkbox state
+    originalGenerateContext: boolean; // Original state to detect changes
+}
+
+export interface LabConfig {
+    required: boolean;
+    verbosity: VerbosityLevel;
+    reasoningEffort: ReasoningEffort;
+}

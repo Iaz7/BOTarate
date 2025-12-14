@@ -1,7 +1,8 @@
+import { Lab } from "../../types/shared";
 import { EvaluationStorageManager } from "../../util/storage/EvaluationStorageManager";
 import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManager";
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
-import { Lab, LabStorageManager } from "../../util/storage/LabStorageManager";
+import { LabStorageManager } from "../../util/storage/LabStorageManager";
 import { getCourseAssistant, getEvaluationAssistant, getExplanationAssistant } from "../context";
 
 async function buildProgressSummary(courseId?: string): Promise<string | undefined> {

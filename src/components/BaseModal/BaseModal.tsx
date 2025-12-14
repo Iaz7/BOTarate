@@ -1,5 +1,7 @@
-import React, { useEffect } from "react";
-import { APP_CONFIG } from "../constants";
+import React from "react";
+import { APP_CONFIG } from "../../constants";
+import { handleOverlayClick } from "./modalUtils";
+import { useModalKeyboard } from "./useModal";
 
 interface BaseModalProps {
     isOpen: boolean;
@@ -9,29 +11,9 @@ interface BaseModalProps {
 }
 
 const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, children }) => {
+    useModalKeyboard(isOpen, onClose);
+
     if (!isOpen) return null;
-
-    const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (e.target === e.currentTarget) {
-            onClose();
-        }
-    };
-
-    useEffect(() => {
-        if (!isOpen) return;
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-                onClose();
-            }
-        };
-
-        document.addEventListener("keydown", handleKeyDown);
-
-        return () => {
-            document.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [isOpen, onClose]);
 
     return (
         <div
@@ -39,7 +21,7 @@ const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, children 
             style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10003 }}
             tabIndex={-1}
             role="dialog"
-            onClick={handleOverlayClick}
+            onClick={e => handleOverlayClick(e, onClose)}
         >
             <div
                 className="modal-dialog modal-xl modal-dialog-scrollable"
