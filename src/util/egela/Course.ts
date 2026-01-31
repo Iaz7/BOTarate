@@ -70,13 +70,12 @@ class Course {
             console.log('[Course.fromHrefAndStorage] Detected courseId:', courseId);
 
             // Search for course data in sessionStorage
-            const courseKey = `-716233041/course/${courseId}/staticState`;
-            const courseDataStr = sessionStorageData[courseKey];
-
-            if (!courseDataStr) {
+            const courseKey = Object.keys(sessionStorageData).find(key => key.endsWith(`/course/${courseId}/staticState`));
+            if (!courseKey) {
                 console.error('[Course.fromHrefAndStorage] No course data found in sessionStorage');
                 return null;
             }
+            const courseDataStr = sessionStorageData[courseKey];
 
             try {
                 const courseData = JSON.parse(courseDataStr);
@@ -97,7 +96,7 @@ class Course {
 
             // Search in all courses in sessionStorage
             for (const [key, value] of Object.entries(sessionStorageData)) {
-                if (!key.includes('-716233041/course/') || !key.endsWith('/staticState')) continue;
+                if (!key.includes('/course/') || !key.endsWith('/staticState')) continue;
 
                 try {
                     const courseData = JSON.parse(value);
