@@ -32,7 +32,7 @@ export { OpenAIService };
 class OpenAIService {
 
     // Static configuration shared across all instances
-    private static openai: OpenAI = new OpenAI({
+    private static readonly openai: OpenAI = new OpenAI({
         apiKey: ConfigManager.getSelectedProvider().key,
         baseURL: ConfigManager.getSelectedProvider().baseUrl,
         dangerouslyAllowBrowser: true
@@ -78,10 +78,11 @@ class OpenAIService {
     }
 
     async processResponseWithTools(
-        toolExecutor: (name: string, args: any) => Promise<string | { type: 'file'; data: any }>,
+        toolExecutor: (name: string, args: any) => Promise<string>,
         userMessage?: string,
         systemPrompt?: string,
-        tools?: any[]
+        tools?: any[],
+        onToolCalls?: (calls: ToolCall[]) => void
     ): Promise<string> {
         const result = await this.generateResponseWithTools(userMessage, systemPrompt, tools);
 
@@ -93,6 +94,11 @@ class OpenAIService {
         // LLM wants to call tools
         console.log(`LLM requests ${result.calls.length} tool call(s)`);
 
+        // Notify about tool calls if callback is provided
+        if (onToolCalls) {
+            onToolCalls(result.calls);
+        }
+
         // Execute all tool calls
         for (const call of result.calls) {
             await this.executeToolCall(call, toolExecutor);
@@ -101,7 +107,7 @@ class OpenAIService {
         // Recursively call to get final response
         // Important: pass the same list of tools to avoid the next iteration
         // using the full `TOOLS` set by default.
-        return this.processResponseWithTools(toolExecutor, undefined, undefined, tools);
+        return this.processResponseWithTools(toolExecutor, undefined, undefined, tools, onToolCalls);
     }
 
     private async generateResponseWithTools(
@@ -176,25 +182,20 @@ class OpenAIService {
         };
     }
 
-    async executeToolCall(toolCall: ToolCall, toolExecutor: (name: string, args: any) => Promise<string | { type: 'file'; data: any }>): Promise<void> {
+    async executeToolCall(toolCall: ToolCall, toolExecutor: (name: string, args: any) => Promise<string>): Promise<void> {
         console.log(`Executing tool: ${toolCall.function.name}`);
 
         try {
             const args = JSON.parse(toolCall.function.arguments);
             const toolResult = await toolExecutor(toolCall.function.name, args);
 
-            console.log(`Result of ${toolCall.function.name}:`,
-                typeof toolResult === 'string' ? toolResult : '[File]');
+            console.log(`Result of ${toolCall.function.name}:`, toolResult.substring(0, 200) + '...');
 
-            if (typeof toolResult === 'object' && toolResult.type === 'file') {
-                this.handleToolFileResult(toolCall, toolResult.data);
-            } else {
-                this.addToolResult(
-                    toolCall.id,
-                    toolCall.function.name,
-                    typeof toolResult === 'string' ? toolResult : String(toolResult)
-                );
-            }
+            this.addToolResult(
+                toolCall.id,
+                toolCall.function.name,
+                toolResult
+            );
         } catch (error) {
             console.error(`Error executing ${toolCall.function.name}:`, error);
             this.addToolResult(
@@ -322,38 +323,16 @@ class OpenAIService {
 
     /**
      * Adds a file to history as a user message.
-     * If dataUrl is provided it is sent as image_url; if textContent is provided
-     * it is sent as text (useful for SQL/Markdown/text files).
+     * If textContent is provided it is sent as text.
+     * Images are not currently processed.
      */
-    private addFileMessage(filename: string, dataUrl?: string, mimeType?: string, textContent?: string): void {
-        const isImage = this.isImageMimeType(mimeType);
-
+    private addFileMessage(filename: string, _dataUrl?: string, mimeType?: string, textContent?: string): void {
         if (textContent) {
             this.conversationHistory.push({
                 role: 'user',
                 content: `Attached file: ${filename} (${mimeType || 'unknown'}).\n\nCONTENT:\n${textContent}`
             });
-            return;
-        }
-        else if (dataUrl && isImage) {
-            this.conversationHistory.push({
-                role: 'user',
-                content: [
-                    {
-                        type: 'text',
-                        text: `Attached file: ${filename} (${mimeType || 'unknown'}).`
-                    },
-                    {
-                        type: 'image_url',
-                        image_url: {
-                            url: dataUrl,
-                            detail: 'high'
-                        }
-                    }
-                ]
-            });
-        }
-        else {
+        } else {
             this.conversationHistory.push({
                 role: 'user',
                 content: `Attached file: ${filename} (${mimeType || 'unknown'}). The file is available but its content has not been included.`
@@ -361,58 +340,4 @@ class OpenAIService {
         }
     }
 
-    private handleToolFileResult(toolCall: ToolCall, fileData: {
-        filename: string;
-        mimeType?: string;
-        size?: number;
-        dataUrl?: string;
-        text?: string;
-    }): void {
-        const description = `Attached file: ${fileData.filename} (${fileData.mimeType || 'unknown'}${fileData.size ? `, ${(fileData.size / 1024).toFixed(2)} KB` : ''})`;
-
-        if (fileData.text) {
-            this.addToolResult(
-                toolCall.id,
-                toolCall.function.name,
-                `${description}.\n\nCONTENT:\n${fileData.text}`
-            );
-            return;
-        }
-
-        if (fileData.dataUrl && this.isImageMimeType(fileData.mimeType)) {
-            this.addToolMessageWithContent(toolCall.id, toolCall.function.name, [
-                {
-                    type: 'text',
-                    text: description
-                },
-                {
-                    type: 'image_url',
-                    image_url: {
-                        url: fileData.dataUrl,
-                        detail: 'high'
-                    }
-                }
-            ]);
-            return;
-        }
-
-        this.addToolResult(
-            toolCall.id,
-            toolCall.function.name,
-            `${description}. The OpenAI provider only supports attaching images in this flow, so the file was omitted.`
-        );
-    }
-
-    private addToolMessageWithContent(toolCallId: string, toolName: string, content: Exclude<Message['content'], string | null>): void {
-        this.conversationHistory.push({
-            role: 'tool',
-            tool_call_id: toolCallId,
-            name: toolName,
-            content
-        });
-    }
-
-    private isImageMimeType(mimeType?: string): boolean {
-        return typeof mimeType === 'string' && mimeType.startsWith('image/');
-    }
 }

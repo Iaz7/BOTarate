@@ -7,18 +7,29 @@ interface Exercise {
     isTiquismiqui?: boolean;
 }
 
+// Formato de tool call del historial (viene de OpenAI)
+interface ToolCallFromHistory {
+    function: {
+        name: string;
+        arguments: string;
+    };
+    id: string;
+    type: string;
+}
+
+// Formato simplificado que enviamos desde el backend
+interface ToolCallSimple {
+    name: string;
+    arguments: string;
+}
+
+type ToolCall = ToolCallFromHistory | ToolCallSimple;
+
 interface ChatMessage {
     role: "user" | "assistant" | "tool";
     content: string | null;
     id: string;
-    tool_calls?: Array<{
-        function: {
-            name: string;
-            arguments: string;
-        };
-        id: string;
-        type: string;
-    }>;
+    tool_calls?: ToolCall[];
     name?: string;
 }
 
@@ -44,6 +55,60 @@ interface ChatTabProps {
 }
 
 import { useEffect } from "react";
+
+/**
+ * Helper para obtener nombre y argumentos de un ToolCall (soporta ambos formatos)
+ */
+const getToolCallInfo = (toolCall: ToolCall): { name: string; args: any; displayName?: string } | null => {
+    try {
+        // Formato del historial de OpenAI: { function: { name, arguments } }
+        if ("function" in toolCall && toolCall.function) {
+            return {
+                name: toolCall.function.name,
+                args: JSON.parse(toolCall.function.arguments),
+                displayName: (toolCall as any).displayName,
+            };
+        }
+        // Formato simplificado del backend: { name, arguments, displayName }
+        if ("name" in toolCall) {
+            return {
+                name: toolCall.name,
+                args: JSON.parse(toolCall.arguments),
+                displayName: (toolCall as any).displayName,
+            };
+        }
+        return null;
+    } catch {
+        return null;
+    }
+};
+
+/**
+ * Convierte una llamada a herramienta en un mensaje amigable para el usuario
+ */
+const getToolFriendlyMessage = (toolCall: ToolCall): string | null => {
+    const info = getToolCallInfo(toolCall);
+    if (!info) return null;
+
+    const { name, args, displayName } = info;
+
+    switch (name) {
+        case "getSectionContent":
+            return displayName ? `📂 Consultando sección "${displayName}"...` : `📂 Consultando sección...`;
+        case "getPageContent":
+            return displayName ? `📄 Leyendo página "${displayName}"...` : `📄 Leyendo página...`;
+        case "getResourceContent":
+            return displayName ? `📎 Leyendo "${displayName}"...` : `📎 Leyendo recurso...`;
+        case "explainExercise":
+            return `💡 Generando explicación del ejercicio ${args.exerciseIndex}...`;
+        case "solveExercise":
+            return `✏️ Abriendo formulario del ejercicio ${args.exerciseIndex}...`;
+        case "getFilteredFileContent":
+            return `🔍 Buscando en archivo...`;
+        default:
+            return null;
+    }
+};
 
 const ChatTab: React.FC<ChatTabProps> = ({
     messages,
@@ -197,12 +262,44 @@ const ChatTab: React.FC<ChatTabProps> = ({
                     </>
                 ) : (
                     messages.map(message => {
+                        // Filtrar mensajes de herramientas (resultados)
                         if (message.role === "tool") {
                             return null;
                         }
 
+                        // Renderizar indicadores de herramientas cuando el asistente usa tools
                         if (message.role === "assistant" && message.tool_calls && message.tool_calls.length > 0) {
-                            return null;
+                            const toolMessages = message.tool_calls
+                                .map(tc => getToolFriendlyMessage(tc))
+                                .filter(Boolean);
+
+                            if (toolMessages.length === 0) {
+                                return null;
+                            }
+
+                            return (
+                                <div
+                                    key={message.id}
+                                    className="tool-indicator"
+                                    style={{
+                                        padding: "8px 12px",
+                                        borderLeft: "3px solid #6c757d",
+                                        backgroundColor: "#f8f9fa",
+                                        borderRadius: "4px",
+                                        fontSize: "0.875rem",
+                                        color: "#495057",
+                                    }}
+                                >
+                                    {toolMessages.map((msg, idx) => (
+                                        <div
+                                            key={idx}
+                                            style={{ marginBottom: idx < toolMessages.length - 1 ? "4px" : 0 }}
+                                        >
+                                            {msg}
+                                        </div>
+                                    ))}
+                                </div>
+                            );
                         }
 
                         if (!message.content || message.content.trim() === "") {

@@ -67,6 +67,41 @@ class CourseAssistant extends BaseAssistant {
     }
 
     /**
+     * Gets a user-friendly display name for a tool call based on its arguments.
+     * Looks up section/resource/page names in the course structure.
+     */
+    private getDisplayNameForToolCall(toolName: string, args: Record<string, any>): string | undefined {
+        if (!this.course) return undefined;
+
+        switch (toolName) {
+            case 'getSectionContent': {
+                const sectionId = args.sectionId;
+                const section = this.course.sections.find(s => s.id === sectionId);
+                return section?.title;
+            }
+            case 'getPageContent': {
+                // Pages are resources of type 'page' within sections
+                const pageId = args.pageId;
+                for (const section of this.course.sections) {
+                    const page = section.resources.find(r => r.id === pageId);
+                    if (page) return page.name;
+                }
+                return undefined;
+            }
+            case 'getResourceContent': {
+                const resourceId = args.resourceId;
+                for (const section of this.course.sections) {
+                    const resource = section.resources.find(r => r.id === resourceId);
+                    if (resource) return resource.name;
+                }
+                return undefined;
+            }
+            default:
+                return undefined;
+        }
+    }
+
+    /**
      * Builds the full system prompt with course information
      */
     private buildSystemPrompt(exercises?: any[]): string {
@@ -194,11 +229,35 @@ Below is the complete course structure with all available sections. Each section
         // This ensures context is updated even if the page changes
         const systemPrompt = this.buildSystemPrompt(exercises);
 
+        // Callback to notify frontend about tool calls
+        const notifyToolCalls = async (calls: any[]) => {
+            try {
+                const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (tabs.length > 0 && tabs[0].id) {
+                    await chrome.tabs.sendMessage(tabs[0].id, {
+                        action: 'toolCallsUpdate',
+                        toolCalls: calls.map(c => {
+                            const toolName = c.function.name;
+                            const args = JSON.parse(c.function.arguments || '{}');
+                            return {
+                                name: toolName,
+                                arguments: c.function.arguments,
+                                displayName: this.getDisplayNameForToolCall(toolName, args)
+                            };
+                        })
+                    });
+                }
+            } catch (error) {
+                console.error('[CourseAssistant] Error notifying tool calls:', error);
+            }
+        };
+
         const response = await this.openAIService.processResponseWithTools(
             (name: string, args: any) => this.executeToolCall(name, args),
             userMessage,
             systemPrompt,
-            this.allowedTools.map(tool => TOOLS.find((t: any) => t.function.name === tool)).filter(Boolean)
+            this.allowedTools.map(tool => TOOLS.find((t: any) => t.function.name === tool)).filter(Boolean),
+            notifyToolCalls
         );
 
         // Save history after each interaction

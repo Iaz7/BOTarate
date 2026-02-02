@@ -7,6 +7,7 @@ import ExerciseModal from "../components/ExerciseModal";
 import SolutionModal from "../components/SolutionModal";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
+import { extractPdfTextFromBase64 } from "../util/pdf/PdfExtractor";
 // @ts-ignore: allow importing CSS as a side-effect in this content script
 import "./bootstrap.css";
 
@@ -175,20 +176,42 @@ const ExtensionContent: React.FC = () => {
             }
         };
 
-        // Listener para mensajes del background (para abrir el modal)
-        const messageListener = (message: any) => {
+        // Listener para mensajes del background (para abrir el modal y extraer PDFs)
+        const messageListener = (
+            message: any,
+            _sender: chrome.runtime.MessageSender,
+            sendResponse: (response?: any) => void,
+        ) => {
             if (message.action === "openExerciseModal") {
                 console.log("[content] Received message to open exercise modal:", message.exerciseIndex);
                 handleOpenExerciseModal(message.exerciseIndex).catch(err => {
                     console.error("[content] Error opening exercise modal:", err);
                 });
+                return false;
             }
             if (message.action === "openSolutionModal") {
                 console.log("[content] Received message to open solution modal:", message.exerciseIndex);
                 handleOpenSolutionModal(message.exerciseIndex).catch(err => {
                     console.error("[content] Error opening solution modal:", err);
                 });
+                return false;
             }
+            if (message.action === "extractPdfText") {
+                console.log("[content] Received message to extract PDF text:", message.filename);
+                extractPdfTextFromBase64(message.pdfBase64, message.filename, message.resourceName, message.size)
+                    .then(result => {
+                        sendResponse(result);
+                    })
+                    .catch(err => {
+                        sendResponse({ success: false, error: err.message });
+                    });
+                return true; // Indica que sendResponse se llamará de forma asíncrona
+            }
+            if (message.action === "toolCallsUpdate") {
+                // Este mensaje se maneja en ChatSidebar, no aquí
+                return false;
+            }
+            return false;
         };
 
         chrome.runtime.onMessage.addListener(messageListener);
@@ -330,7 +353,7 @@ const ExtensionContent: React.FC = () => {
                     ...exercise,
                     allowed: exercise.allowed ?? true,
                     isTiquismiqui: exercise.isTiquismiqui ?? false,
-                }))
+                })),
             );
         }
         setExerciseContext(data.exercise_context);

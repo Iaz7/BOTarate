@@ -73,7 +73,7 @@ abstract class BaseAssistant {
     protected async executeToolCall(
         name: string,
         args: any
-    ): Promise<string | { type: 'file'; data: any }> {
+    ): Promise<string> {
         if (!this.allowedTools.includes(name)) {
             throw new Error(`The assistant does not have access to the tool: ${name}`);
         }
@@ -91,7 +91,6 @@ abstract class BaseAssistant {
             case 'getFilteredFileContent':
                 return ToolFunctions.getFilteredFileContent(args);
             case 'postExercises':
-                // return ToolFunctions.postExercises(args);
                 throw new Error('postExercises must be handled directly by the assistant');
             default:
                 throw new Error(`Unknown tool: ${name}`);

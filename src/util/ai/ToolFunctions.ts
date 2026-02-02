@@ -3,120 +3,133 @@ import { FileManager } from "../egela/FileManager";
 
 export class ToolFunctions {
     /**
-     * Obtiene el contenido de una sección del curso
+     * Gets the content of a course section
      */
     static async getSectionContent(course: Course, args: { sectionId: string }): Promise<string> {
         return await course.getSectionContent(args.sectionId);
     }
 
     /**
-     * Obtiene el contenido de una página del curso
+     * Gets the content of a course page
      */
     static async getPageContent(course: Course, args: { pageId: string }): Promise<string> {
         return (await course.getPageContent(args.pageId)).markdown;
     }
 
     /**
-     * Obtiene el contenido de un recurso del curso
-     * Soporta imágenes, PDFs, texto y HTML
+     * Gets the content of a course resource
+     * - PDFs: converted to text to save tokens
+     * - Images: not processed for now (returns metadata only)
+     * - Text/HTML: content extracted directly
      */
     static async getResourceContent(
         course: Course,
         args: { resourceId: string }
-    ): Promise<string | { type: 'file'; data: any }> {
+    ): Promise<string> {
         const fileData = await course.getResourceFile(args.resourceId);
+        const mimeType = fileData.mimeType.toLowerCase();
 
-        // Determinar si el archivo es compatible con la API
-        const supportedMimeTypes = [
-            'application/pdf',
-            'image/png',
-            'image/jpeg',
-            'image/jpg',
-            'image/gif',
-            'image/webp',
+        // PDFs: convert to text
+        if (mimeType === 'application/pdf') {
+            return await this.extractPdfText(fileData);
+        }
+
+        // Images: return metadata only for now
+        if (mimeType.startsWith('image/')) {
+            return this.getImageMetadata(fileData);
+        }
+
+        // Plain text, HTML, markdown, etc.
+        const textMimeTypes = [
             'text/html',
             'text/plain',
-            'text/markdown'
+            'text/markdown',
+            'application/json',
+            'text/csv'
         ];
 
-        const isSupported = supportedMimeTypes.some(type =>
-            fileData.mimeType.toLowerCase().includes(type.toLowerCase())
-        );
-
-        if (isSupported && (fileData.mimeType.startsWith('image/') || fileData.mimeType === 'application/pdf')) {
-            // Para imágenes y PDFs, convertir a base64 y enviar como parte del mensaje
-            return await this.convertFileToBase64(fileData);
-        } else if (isSupported) {
-            // Para texto/HTML, extraer contenido
+        if (textMimeTypes.some(type => mimeType.includes(type))) {
             return await this.extractTextContent(fileData);
-        } else {
-            // Formato no soportado, solo metadatos
-            return this.getMetadataOnly(fileData);
         }
+
+        // Unsupported formats
+        return this.getMetadataOnly(fileData);
     }
 
     /**
-     * Convierte un archivo (imagen o PDF) a base64
+     * Extracts text from a PDF by delegating to the content script
+     * (Background/service worker doesn't have access to window, required for pdf.js)
      */
-    private static async convertFileToBase64(fileData: any): Promise<{ type: 'file'; data: any }> {
-        const arrayBuffer = await fileData.blob.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-
-        // Convertir a base64 en chunks para evitar stack overflow
-        let binary = '';
-        const chunkSize = 8192;
-        for (let i = 0; i < uint8Array.length; i += chunkSize) {
-            const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
-            binary += String.fromCharCode(...chunk);
-        }
-        const base64 = btoa(binary);
-        const dataUrl = `data:${fileData.mimeType};base64,${base64}`;
-
-        console.log(`[getResourceContent] PDF/Imagen convertido a base64, tamaño: ${base64.length} caracteres`);
-
-        return {
-            type: 'file',
-            data: {
-                resourceName: fileData.resourceName,
-                filename: fileData.filename,
-                mimeType: fileData.mimeType,
-                size: fileData.size,
-                dataUrl: dataUrl
+    private static async extractPdfText(fileData: any): Promise<string> {
+        try {
+            // Convert blob to base64 to send to content script
+            const arrayBuffer = await fileData.blob.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+            let binary = '';
+            const chunkSize = 8192;
+            for (let i = 0; i < uint8Array.length; i += chunkSize) {
+                const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+                binary += String.fromCharCode(...chunk);
             }
-        };
+            const base64 = btoa(binary);
+
+            // Get active tab to send the PDF
+            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (!tabs.length || !tabs[0].id) {
+                throw new Error('No active tab available to process the PDF');
+            }
+
+            // Send to content script for text extraction
+            const response = await chrome.tabs.sendMessage(tabs[0].id, {
+                action: 'extractPdfText',
+                pdfBase64: base64,
+                filename: fileData.filename,
+                resourceName: fileData.resourceName,
+                size: fileData.size
+            });
+
+            if (!response?.success) {
+                throw new Error(response?.error || 'Unknown error extracting PDF text');
+            }
+
+            return response.text;
+        } catch (error) {
+            console.error('[getResourceContent] Error extracting PDF text:', error);
+            return `File: ${fileData.resourceName} (${fileData.filename})\nType: PDF\nSize: ${(fileData.size / 1024).toFixed(2)} KB\n\nError: Could not extract PDF text. ${error instanceof Error ? error.message : 'Unknown error'}`;
+        }
     }
 
     /**
-     * Extrae el contenido de texto de un archivo
+     * Returns metadata for an image (without processing visual content)
+     */
+    private static getImageMetadata(fileData: any): string {
+        return `File: ${fileData.resourceName} (${fileData.filename})\nType: ${fileData.mimeType}\nSize: ${(fileData.size / 1024).toFixed(2)} KB\n\nNote: Images are not processed currently. Only file metadata is provided.`;
+    }
+
+    /**
+     * Extracts text content from a file
      */
     private static async extractTextContent(fileData: any): Promise<string> {
         const text = await fileData.blob.text();
-        return `Archivo: ${fileData.resourceName} (${fileData.filename})\nTipo: ${fileData.mimeType}\nTamaño: ${(fileData.size / 1024).toFixed(2)} KB\n\nCONTENIDO:\n${text}`;
+        return `File: ${fileData.resourceName} (${fileData.filename})\nType: ${fileData.mimeType}\nSize: ${(fileData.size / 1024).toFixed(2)} KB\n\nCONTENT:\n${text}`;
     }
 
     /**
-     * Retorna solo los metadatos para archivos no soportados
+     * Returns metadata only for unsupported file types
      */
     private static getMetadataOnly(fileData: any): string {
-        return JSON.stringify({
-            type: 'metadata_only',
-            resourceName: fileData.resourceName,
-            filename: fileData.filename,
-            mimeType: fileData.mimeType,
-            size: fileData.size,
-            message: `Archivo de tipo ${fileData.mimeType} - No se puede procesar el contenido directamente. Tamaño: ${(fileData.size / 1024 / 1024).toFixed(2)} MB`
-        });
+        return `File: ${fileData.resourceName} (${fileData.filename})\nType: ${fileData.mimeType}\nSize: ${(fileData.size / 1024).toFixed(2)} KB\n\nNote: This file type is not supported for content extraction.`;
     }
 
     /**
-     * Solicita la explicación de un ejercicio específico
-     * Esta función enviará un mensaje al content script para abrir el modal de explicación
+     * Requests an explanation for a specific exercise
+     * Sends a message to the content script to open the explanation modal
      */
     static async explainExercise(args: { exerciseIndex: number }): Promise<string> {
-        // El LLM envía índices basados en 1 (1, 2, 3...), pero los arrays usan índices basados en 0
+        // LLM sends 1-based indices (1, 2, 3...), but arrays use 0-based indices
         const arrayIndex = args.exerciseIndex - 1;
 
-        // Enviar mensaje a todos los tabs activos para abrir el modal
+        // Send message to active tab to open the modal
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
 
         if (tabs.length > 0 && tabs[0].id) {
@@ -126,25 +139,25 @@ export class ToolFunctions {
                     exerciseIndex: arrayIndex
                 });
 
-                return `Abriendo el modal con la explicación del ejercicio #${args.exerciseIndex}...`;
+                return `Opening the explanation modal for exercise #${args.exerciseIndex}...`;
             } catch (error) {
-                console.error('[explainExercise] Error enviando mensaje al content script:', error);
-                return `Error al abrir el modal del ejercicio #${args.exerciseIndex}`;
+                console.error('[explainExercise] Error sending message to content script:', error);
+                return `Error opening modal for exercise #${args.exerciseIndex}`;
             }
         }
 
-        return `No se pudo abrir el modal. Asegúrate de estar en la página correcta.`;
+        return `Could not open modal. Make sure you are on the correct page.`;
     }
 
     /**
-     * Solicita la resolución de un ejercicio específico por parte del estudiante
-     * Esta función enviará un mensaje al content script para abrir el modal de resolución
+     * Requests student solution submission for a specific exercise
+     * Sends a message to the content script to open the solution modal
      */
     static async solveExercise(args: { exerciseIndex: number }): Promise<string> {
-        // El LLM envía índices basados en 1 (1, 2, 3...), pero los arrays usan índices basados en 0
+        // LLM sends 1-based indices (1, 2, 3...), but arrays use 0-based indices
         const arrayIndex = args.exerciseIndex - 1;
 
-        // Enviar mensaje a todos los tabs activos para abrir el modal
+        // Send message to active tab to open the modal
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
 
         if (tabs.length > 0 && tabs[0].id) {
@@ -154,20 +167,20 @@ export class ToolFunctions {
                     exerciseIndex: arrayIndex
                 });
 
-                return `Abriendo el formulario para que introduzcas tu solución del ejercicio #${args.exerciseIndex}...`;
+                return `Opening the solution form for exercise #${args.exerciseIndex}...`;
             } catch (error) {
-                console.error('[solveExercise] Error enviando mensaje al content script:', error);
-                return `Error al abrir el formulario del ejercicio #${args.exerciseIndex}`;
+                console.error('[solveExercise] Error sending message to content script:', error);
+                return `Error opening form for exercise #${args.exerciseIndex}`;
             }
         }
 
-        return `No se pudo abrir el formulario. Asegúrate de estar en la página correcta.`;
+        return `Could not open form. Make sure you are on the correct page.`;
     }
 
     /**
-     * Obtiene el contenido de un archivo de texto filtrado por una expresión regular
-     * @param args Argumentos con pageId, fileId y regexPattern
-     * @returns Contenido filtrado del archivo
+     * Gets the content of a text file filtered by a regular expression
+     * @param args Arguments with pageId, fileId and regexPattern
+     * @returns Filtered file content
      */
     static getFilteredFileContent(args: { pageId: string; fileId: string; regexPattern: string }): string {
         return FileManager.getFilteredTextContent(args.pageId, args.fileId, args.regexPattern);

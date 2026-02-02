@@ -73,7 +73,7 @@ const TOOLS = [
         type: 'function',
         function: {
             name: 'getResourceContent',
-            description: 'Obtiene el contenido de un recurso descargable del curso (PDF, imagen, documento HTML, page, etc.). El archivo se procesará según su formato: PDFs e imágenes se envían directamente a la API para análisis, otros formatos devuelven solo metadatos.',
+            description: 'Obtiene el contenido de un recurso descargable del curso (PDF, documento HTML, texto, etc.). Los PDFs se convierten automáticamente a texto para facilitar su lectura. Las imágenes no se procesan actualmente (solo se devuelven metadatos).',
             parameters: {
                 type: 'object',
                 properties: {

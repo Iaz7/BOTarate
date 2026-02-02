@@ -106,7 +106,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
         checkModeAndConfiguration();
     }, [reloadKey]);
 
-    // Effect: Escuchar mensajes de recarga
+    // Effect: Escuchar mensajes de recarga y tool calls
     useEffect(() => {
         const messageListener = (
             message: any,
@@ -115,6 +115,19 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
         ) => {
             if (message.action === "reloadSidebar") {
                 setReloadKey(prev => prev + 1);
+                sendResponse({ success: true });
+                return true;
+            }
+
+            // Manejar notificaciones de tool calls en tiempo real
+            if (message.action === "toolCallsUpdate" && message.toolCalls) {
+                const toolCallMessage: ChatMessage = {
+                    role: "assistant",
+                    content: null,
+                    id: `tool-${Date.now()}`,
+                    tool_calls: message.toolCalls
+                };
+                setMessages(prev => [...prev, toolCallMessage]);
                 sendResponse({ success: true });
                 return true;
             }

@@ -30,6 +30,11 @@ export const MODEL_LIST: ModelConfig[] = [
         name: "openai/gpt-oss-20b",
         supportsVerbosity: false,
         supportsReasoning: false
+    },
+    {
+        name: "moonshotai/kimi-k2-instruct-0905",
+        supportsVerbosity: false,
+        supportsReasoning: false
     }
 ];
 

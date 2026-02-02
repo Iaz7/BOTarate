@@ -44,10 +44,17 @@ export interface ExerciseDataForStorage {
     learningObjectives?: string;
 }
 
+export interface ToolCallInfo {
+    name: string;
+    arguments: string;
+    displayName?: string; // User-friendly name for the resource/section being accessed
+}
+
 export interface ChatMessage {
     role: 'user' | 'assistant' | 'system' | 'tool';
     content: string | null;
     id?: string;
+    tool_calls?: ToolCallInfo[];
 }
 
 export { };
