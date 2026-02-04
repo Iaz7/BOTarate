@@ -1,4 +1,4 @@
-import { MODEL_LIST } from "../ai/ModelList";
+import { getTextModels, getVisionModels, MODEL_LIST } from "../ai/ModelList";
 
 export interface AIProvider {
     name: string;
@@ -9,7 +9,8 @@ export interface AIProvider {
 interface StorageConfig {
     providerKeys: string[];
     selectedProvider: number;
-    selectedModel?: string;
+    selectedModel?: string;        // Main text model
+    selectedVisionModel?: string;  // Model for image analysis
 }
 
 export class ConfigManager {
@@ -22,8 +23,12 @@ export class ConfigManager {
     ];
 
     static readonly COMPATIBLE_MODELS: string[] = MODEL_LIST.map(model => model.name);
+    static readonly TEXT_MODELS: string[] = getTextModels();
+    static readonly VISION_MODELS: string[] = getVisionModels();
+
     private static selectedProvider: number = 0;
-    private static selectedModel: string;
+    private static selectedModel: string = '';
+    private static selectedVisionModel: string = '';
 
     static async loadConfig(): Promise<void> {
         try {
@@ -44,6 +49,9 @@ export class ConfigManager {
                 if (config.selectedModel !== undefined) {
                     this.selectedModel = config.selectedModel;
                 }
+                if (config.selectedVisionModel !== undefined) {
+                    this.selectedVisionModel = config.selectedVisionModel;
+                }
             }
         } catch (error) {
             console.error('Error loading config from storage:', error);
@@ -55,7 +63,8 @@ export class ConfigManager {
             const config: StorageConfig = {
                 providerKeys: this.providers.map(p => p.key),
                 selectedProvider: this.selectedProvider,
-                selectedModel: this.selectedModel
+                selectedModel: this.selectedModel,
+                selectedVisionModel: this.selectedVisionModel
             };
             await chrome.storage.local.set({ [this.STORAGE_KEY]: config });
         } catch (error) {
@@ -92,5 +101,14 @@ export class ConfigManager {
 
     static getSelectedModel(): string {
         return this.selectedModel;
+    }
+
+    static selectVisionModel(model: string) {
+        this.selectedVisionModel = model;
+        this.saveConfig();
+    }
+
+    static getSelectedVisionModel(): string {
+        return this.selectedVisionModel;
     }
 }

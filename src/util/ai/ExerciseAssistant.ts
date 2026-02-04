@@ -15,6 +15,7 @@ class ExerciseAssistant extends BaseAssistant {
 
     private static readonly TOOLS = [
         'getFilteredFileContent',
+        'analyzeImage',
         'postExercises'
     ];
 
@@ -56,17 +57,26 @@ AVAILABLE TOOLS:
 1. getFilteredFileContent: To extract specific content from text files using regular expressions.
    - Use this tool when you see markers like [FILE1:TEXT:name.sql]
    - Example to get CREATE TABLEs: use the pattern "CREATE\\s+TABLE[\\s\\S]+?;"
+
+2. analyzeImage: To analyze images in the page content.
+   - Images are marked as [IMAGE#] or [IMAGE#: description] where # is the image number (e.g., IMAGE1, IMAGE2)
+   - The description (if present) gives you a hint about the image content (from alt text)
+   - ALWAYS use this tool when you see image markers, especially for database schemas, ER diagrams, or any diagrams that might contain table structures
+   - Use the image description to INFER and CREATE a logical SQL script that represents the database schema
+   - Example: If the description says "BIDAIAK DB eskema", infer a complete SQL script with CREATE TABLE statements for trips, hotels, customers, etc. based on common database design patterns and the exercise context
+   - Your goal is to generate a reasonable SQL schema that would make sense for the exercises, not to extract existing code
    
-2. postExercises: MANDATORY - You must use this tool exactly once at the end to submit the identified exercises.
+3. postExercises: MANDATORY - You must use this tool exactly once at the end to submit the identified exercises.
    - This tool is your way of "responding" with the analysis results
    - You must always call it, even if there are no exercises (send an empty array)
    - If you receive "Exercises received correctly" as a response, it means your call was successful and you should not call it again. Simply end the conversation by saying "OK", as whatever you say after the post will be ignored.
 
 WORKFLOW:
 1. Analyze page content
-2. If there are text files (markers [FILEn:TEXT:name]), use getFilteredFileContent to extract relevant information (only from text files)
-3. Identify all exercises on the page
-4. MANDATORY: Call postExercises with all collected information.
+2. ALWAYS analyze images when present (markers [IMAGE#]) - use the image description to create an inferred SQL schema for the exercise context
+3. If there are text files (markers [FILEn:TEXT:name]), use getFilteredFileContent to extract relevant information
+4. Identify all exercises on the page
+5. MANDATORY: Call postExercises with all collected information.
 
 CRITERIA FOR IDENTIFYING EXERCISES:
 {exerciseCriteria}
@@ -85,6 +95,20 @@ CONCEPTS:
 
 LEARNING OBJECTIVES:
 - {learningObjectivesGuidance}
+
+DATABASE SCHEMA ANALYSIS:
+When you encounter exercises that reference database tables, schemas, or relationships (like trips, hotels, customers, etc.), you MUST analyze any available images that might contain the database schema. Use the image description (alt text) to CREATE a logical SQL script that represents a reasonable database schema for the exercises. Do not try to extract existing code - instead, INFER and BUILD a complete SQL schema based on:
+
+1. The image description (e.g., "BIDAIAK DB eskema" suggests tables for trips/bookings)
+2. The exercise content and referenced table names
+3. Common database design patterns for the domain
+
+Example: For an image described as "BIDAIAK DB eskema", create SQL CREATE TABLE statements for logical tables like:
+- Customers (with ID, name, etc.)
+- Hotels (with ID, name, city, etc.) 
+- Trips/Bookings (with dates, customer references, hotel references, etc.)
+
+Include this inferred SQL script in the "exercise_context" field to help understand the database structure.
 
 IMPORTANT: You must call postExercises exactly once at the end of the analysis.
 `;

@@ -105,6 +105,8 @@ const getToolFriendlyMessage = (toolCall: ToolCall): string | null => {
             return `✏️ Abriendo formulario del ejercicio ${args.exerciseIndex}...`;
         case "getFilteredFileContent":
             return `🔍 Buscando en archivo...`;
+        case "analyzeImage":
+            return displayName ? `🖼️ Analizando imagen "${displayName}"...` : `🖼️ Analizando imagen...`;
         default:
             return null;
     }

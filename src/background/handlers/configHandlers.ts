@@ -3,7 +3,7 @@ import { ConfigManager } from "../../util/config/ConfigManager";
 import { initializeAssistants } from "../context";
 
 function updateConfigFromRequest(config: any): void {
-    const { providerKeys, selectedProvider, selectedModel } = config;
+    const { providerKeys, selectedProvider, selectedModel, selectedVisionModel } = config;
 
     if (providerKeys) {
         for (let index = 0; index < providerKeys.length; index++) {
@@ -17,6 +17,10 @@ function updateConfigFromRequest(config: any): void {
 
     if (selectedModel !== undefined) {
         ConfigManager.selectModel(selectedModel);
+    }
+
+    if (selectedVisionModel !== undefined) {
+        ConfigManager.selectVisionModel(selectedVisionModel);
     }
 }
 

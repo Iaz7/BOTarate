@@ -322,6 +322,55 @@ class OpenAIService {
     }
 
     /**
+     * Analyzes an image using the vision model.
+     * This is a standalone call that doesn't affect the main conversation history.
+     * @param imageDataUrl The image data URL (data:image/...;base64,...)
+     * @param prompt The prompt describing what information to extract from the image
+     * @returns The vision model's analysis of the image
+     */
+    static async analyzeImage(imageDataUrl: string, prompt: string): Promise<string> {
+        const visionModel = ConfigManager.getSelectedVisionModel();
+
+        if (!visionModel) {
+            throw new Error('No vision model configured. Please select a vision model in settings.');
+        }
+
+        console.log(`[OpenAIService] Analyzing image with vision model: ${visionModel}`);
+
+        const response = await this.openai.chat.completions.create({
+            model: visionModel,
+            messages: [
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'text',
+                            text: prompt
+                        },
+                        {
+                            type: 'image_url',
+                            image_url: {
+                                url: imageDataUrl,
+                                detail: 'high'
+                            }
+                        }
+                    ]
+                }
+            ],
+            max_tokens: 1024
+        });
+
+        const content = response.choices[0]?.message?.content;
+
+        if (!content) {
+            throw new Error('No response received from vision model');
+        }
+
+        console.log(`[OpenAIService] Vision analysis complete, response length: ${content.length}`);
+        return content;
+    }
+
+    /**
      * Adds a file to history as a user message.
      * If textContent is provided it is sent as text.
      * Images are not currently processed.

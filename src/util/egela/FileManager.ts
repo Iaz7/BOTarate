@@ -11,10 +11,10 @@ export interface FileData {
 }
 
 /**
- * Text file cache per page
+ * File cache per page (text files and images)
  * Structure: { pageId: { fileId: FileData } }
  */
-const textFileCache: Map<string, Map<string, FileData>> = new Map();
+const fileCache: Map<string, Map<string, FileData>> = new Map();
 
 /**
  * Class responsible for file management, download and conversion
@@ -166,21 +166,21 @@ class FileManager {
     }
 
     /**
-     * Almacena un archivo de texto en el cache para una página
+     * Almacena un archivo (texto o imagen) en el cache para una página
      */
-    static cacheTextFile(pageId: string, fileData: FileData): void {
-        if (!textFileCache.has(pageId)) {
-            textFileCache.set(pageId, new Map());
+    static cacheFile(pageId: string, fileData: FileData): void {
+        if (!fileCache.has(pageId)) {
+            fileCache.set(pageId, new Map());
         }
-        textFileCache.get(pageId)!.set(fileData.id, fileData);
+        fileCache.get(pageId)!.set(fileData.id, fileData);
         console.log(`[FileManager] Archivo ${fileData.id} cacheado para página ${pageId}`);
     }
 
     /**
-     * Obtiene un archivo de texto del cache
+     * Obtiene un archivo (texto o imagen) del cache
      */
-    static getCachedTextFile(pageId: string, fileId: string): FileData | undefined {
-        return textFileCache.get(pageId)?.get(fileId);
+    static getCachedFile(pageId: string, fileId: string): FileData | undefined {
+        return fileCache.get(pageId)?.get(fileId);
     }
 
     /**
@@ -191,7 +191,7 @@ class FileManager {
      * @returns Las coincidencias encontradas o un mensaje de error
      */
     static getFilteredTextContent(pageId: string, fileId: string, regexPattern: string): string {
-        const fileData = this.getCachedTextFile(pageId, fileId);
+        const fileData = this.getCachedFile(pageId, fileId);
 
         if (!fileData) {
             return `Error: No se encontró el archivo ${fileId} en la página ${pageId}`;
@@ -226,10 +226,10 @@ class FileManager {
     }
 
     /**
-     * Limpia el cache de archivos de texto para una página
+     * Limpia el cache de archivos (texto e imágenes) para una página
      */
     static clearPageCache(pageId: string): void {
-        textFileCache.delete(pageId);
+        fileCache.delete(pageId);
     }
 
     /**

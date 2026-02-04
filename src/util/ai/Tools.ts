@@ -4,7 +4,7 @@ export type { ToolCall, ToolName, ToolResult };
 /**
  * Nombres de las herramientas disponibles para el LLM
  */
-type ToolName = 'getSectionContent' | 'getPageContent' | 'getResourceContent' | 'explainExercise' | 'solveExercise' | 'getFilteredFileContent' | 'postExercises';
+type ToolName = 'getSectionContent' | 'getPageContent' | 'getResourceContent' | 'explainExercise' | 'solveExercise' | 'getFilteredFileContent' | 'postExercises' | 'analyzeImage';
 
 /**
  * Estructura de una llamada a herramienta del LLM
@@ -152,6 +152,32 @@ const TOOLS = [
     {
         type: 'function',
         function: {
+            name: 'analyzeImage',
+            description: 'Analiza una imagen del curso usando un modelo de visión. Usa esta herramienta cuando necesites extraer información específica de una imagen (diagramas ER, esquemas de bases de datos, capturas de pantalla, etc.). El texto alternativo de la imagen puede darte una pista de su contenido. Proporciona un prompt claro indicando qué información necesitas de la imagen.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    pageId: {
+                        type: 'string',
+                        description: 'El ID de la página donde está la imagen'
+                    },
+                    imageId: {
+                        type: 'string',
+                        description: 'El ID de la imagen (por ejemplo: "IMAGE1", "IMAGE2"). Encontrarás estos IDs en el contenido de la página con formato [IMAGE#] o [IMAGE#: descripción].'
+                    },
+                    prompt: {
+                        type: 'string',
+                        description: 'Instrucción específica sobre qué información extraer de la imagen. Por ejemplo: "Describe el diagrama entidad-relación mostrando todas las tablas, sus campos y las relaciones entre ellas" o "Extrae el código SQL que se muestra en la captura de pantalla".'
+                    }
+                },
+                required: ['pageId', 'imageId', 'prompt'],
+                additionalProperties: false
+            }
+        }
+    },
+    {
+        type: 'function',
+        function: {
             name: 'postExercises',
             description: 'OBLIGATORIO para identificación de ejercicios: Usa esta herramienta para enviar los ejercicios identificados y toda la información recopilada. Debes llamar a esta herramienta exactamente una vez al final del análisis.',
             parameters: {
@@ -226,6 +252,32 @@ const EXERCISE_ASSISTANT_TOOLS = [
                     }
                 },
                 required: ['pageId', 'fileId', 'regexPattern'],
+                additionalProperties: false
+            }
+        }
+    },
+    {
+        type: 'function',
+        function: {
+            name: 'analyzeImage',
+            description: 'Analiza una imagen del curso usando un modelo de visión. Usa esta herramienta cuando necesites extraer información específica de una imagen (diagramas ER, esquemas de bases de datos, capturas de pantalla, etc.). El texto alternativo de la imagen puede darte una pista de su contenido. Proporciona un prompt claro indicando qué información necesitas de la imagen.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    pageId: {
+                        type: 'string',
+                        description: 'El ID de la página donde está la imagen'
+                    },
+                    imageId: {
+                        type: 'string',
+                        description: 'El ID de la imagen (por ejemplo: "IMAGE1", "IMAGE2"). Encontrarás estos IDs en el contenido de la página con formato [IMAGE#] o [IMAGE#: descripción].'
+                    },
+                    prompt: {
+                        type: 'string',
+                        description: 'Instrucción específica sobre qué información extraer de la imagen. Por ejemplo: "Describe el diagrama entidad-relación mostrando todas las tablas, sus campos y las relaciones entre ellas" o "Extrae el código SQL que se muestra en la captura de pantalla".'
+                    }
+                },
+                required: ['pageId', 'imageId', 'prompt'],
                 additionalProperties: false
             }
         }

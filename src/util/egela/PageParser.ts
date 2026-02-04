@@ -93,7 +93,8 @@ class PageParser extends HtmlParserBase {
     }
 
     /**
-     * Processes an image, downloading it and adding a marker
+     * Processes an image, downloading it and adding a marker with alt text hint
+     * Images are marked as [IMAGE#: alt_text] to differentiate from other files
      */
     private async processImage(node: any): Promise<void> {
         const src = node.getAttribute('src') || node.dataset?.src;
@@ -104,12 +105,25 @@ class PageParser extends HtmlParserBase {
             console.warn('[PageParser] Se omitió la descarga de una imagen externa:', absoluteUrl);
             return;
         }
-        const fileId = `FILE${this.files.length + 1}`;
+
+        // Get alt text as a hint about the image content
+        const altText = node.getAttribute('alt') || '';
+        const imageIndex = this.files.length + 1;
+        const fileId = `IMAGE${imageIndex}`;
 
         try {
             const fileData = await FileManager.fetchAndConvertFile(absoluteUrl, fileId);
             this.files.push(fileData);
-            this.lines.push(`[${fileId}]`);
+
+            // Cache the image for later retrieval by analyzeImage
+            FileManager.cacheFile(this.pageId, fileData);
+
+            // Include alt text hint if available
+            if (altText.trim()) {
+                this.lines.push(`[${fileId}: ${altText.trim()}]`);
+            } else {
+                this.lines.push(`[${fileId}]`);
+            }
         } catch (error) {
             console.warn('[PageParser] Error descargando imagen:', error);
             this.lines.push(`[IMAGE MISSING]`);
@@ -188,7 +202,7 @@ class PageParser extends HtmlParserBase {
         fileData.id = fileId;
 
         // Guardar el archivo en cache para consulta posterior
-        FileManager.cacheTextFile(this.pageId, fileData);
+        FileManager.cacheFile(this.pageId, fileData);
 
         // Insertar marcador descriptivo en lugar del contenido completo
         const extension = fileData.filename?.split('.').pop()?.toLowerCase() || 'txt';

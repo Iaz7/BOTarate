@@ -68,7 +68,7 @@ abstract class BaseAssistant {
 
     /**
      * Tool executor shared by all assistants
-     * Provides access to getSectionContent, getPageContent, getResourceContent, explainExercise, solveExercise, and getFilteredFileContent
+     * Provides access to getSectionContent, getPageContent, getResourceContent, explainExercise, solveExercise, getFilteredFileContent, and analyzeImage
      */
     protected async executeToolCall(
         name: string,
@@ -90,6 +90,8 @@ abstract class BaseAssistant {
                 return await ToolFunctions.solveExercise(args);
             case 'getFilteredFileContent':
                 return ToolFunctions.getFilteredFileContent(args);
+            case 'analyzeImage':
+                return await ToolFunctions.analyzeImage(args);
             case 'postExercises':
                 throw new Error('postExercises must be handled directly by the assistant');
             default:

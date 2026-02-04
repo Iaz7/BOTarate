@@ -1,5 +1,6 @@
 import { Course } from "../egela/Course";
 import { FileManager } from "../egela/FileManager";
+import { OpenAIService } from "./OpenAIService";
 
 export class ToolFunctions {
     /**
@@ -184,5 +185,42 @@ export class ToolFunctions {
      */
     static getFilteredFileContent(args: { pageId: string; fileId: string; regexPattern: string }): string {
         return FileManager.getFilteredTextContent(args.pageId, args.fileId, args.regexPattern);
+    }
+
+    /**
+     * Analyzes an image using the vision model.
+     * Retrieves the image from the cache and sends it to the vision model with the given prompt.
+     * @param args Arguments with pageId, imageId and prompt
+     * @returns The vision model's analysis of the image
+     */
+    static async analyzeImage(args: { pageId: string; imageId: string; prompt: string }): Promise<string> {
+        const { pageId, imageId, prompt } = args;
+
+        // Get the image from cache
+        const imageData = FileManager.getCachedFile(pageId, imageId);
+
+        if (!imageData) {
+            return `Error: Image ${imageId} not found on page ${pageId}. Make sure the image ID is correct (e.g., IMAGE1, IMAGE2).`;
+        }
+
+        if (!imageData.dataUrl) {
+            return `Error: Image ${imageId} does not have valid image data. The image may have failed to download.`;
+        }
+
+        // Verify it's actually an image
+        if (!imageData.mimeType?.startsWith('image/')) {
+            return `Error: ${imageId} is not an image (type: ${imageData.mimeType}). Use getFilteredFileContent for text files.`;
+        }
+
+        try {
+            console.log(`[ToolFunctions.analyzeImage] Analyzing ${imageId} with prompt: ${prompt.substring(0, 100)}...`);
+
+            const analysis = await OpenAIService.analyzeImage(imageData.dataUrl, prompt);
+
+            return `Analysis of ${imageId} (${imageData.filename}):\n\n${analysis}`;
+        } catch (error) {
+            console.error('[ToolFunctions.analyzeImage] Error:', error);
+            return `Error analyzing image ${imageId}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        }
     }
 }

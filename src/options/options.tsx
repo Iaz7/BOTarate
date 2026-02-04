@@ -46,6 +46,7 @@ const Options: React.FC = () => {
     const [modelList, setModelList] = useState<string[]>([]);
     const [modelListEnabled, setModelListEnabled] = useState<boolean>(false);
     const [selectedModel, setSelectedModel] = useState<string>("");
+    const [selectedVisionModel, setSelectedVisionModel] = useState<string>("");
     const [apiKey, setApiKey] = useState<string>("");
     const [saveMessage, setSaveMessage] = useState<string>("");
     const [isConfigLoaded, setIsConfigLoaded] = useState<boolean>(false);
@@ -63,7 +64,12 @@ const Options: React.FC = () => {
     const [isUserTeacher, setIsUserTeacher] = useState<boolean>(false);
 
     // Validación y carga de modelos/API key
-    const validateAndLoadModels = (providerIndex: number, modelToPreselect?: string, apiKeyValue?: string) => {
+    const validateAndLoadModels = (
+        providerIndex: number,
+        modelToPreselect?: string,
+        visionModelToPreselect?: string,
+        apiKeyValue?: string,
+    ) => {
         setModelList([]);
         setModelListEnabled(false);
         setApiKeyError("");
@@ -74,13 +80,25 @@ const Options: React.FC = () => {
             .then(list => {
                 const cleanList = list.map(m => m.replace("models/", ""));
                 setModelList(cleanList);
+
+                // Select text model
                 const cleanModelToPreselect = modelToPreselect?.replace("models/", "") || "";
-                const compatibleModels = cleanList.filter(m => ConfigManager.COMPATIBLE_MODELS.includes(m));
+                const textModels = cleanList.filter(m => ConfigManager.TEXT_MODELS.includes(m));
                 const modelToSelect =
-                    cleanModelToPreselect && compatibleModels.includes(cleanModelToPreselect)
+                    cleanModelToPreselect && textModels.includes(cleanModelToPreselect)
                         ? cleanModelToPreselect
-                        : compatibleModels[0] || "";
+                        : textModels[0] || "";
                 setSelectedModel(modelToSelect);
+
+                // Select vision model
+                const cleanVisionModelToPreselect = visionModelToPreselect?.replace("models/", "") || "";
+                const visionModels = cleanList.filter(m => ConfigManager.VISION_MODELS.includes(m));
+                const visionModelToSelect =
+                    cleanVisionModelToPreselect && visionModels.includes(cleanVisionModelToPreselect)
+                        ? cleanVisionModelToPreselect
+                        : visionModels[0] || "";
+                setSelectedVisionModel(visionModelToSelect);
+
                 setModelListEnabled(true);
                 setApiKeyError("");
             })
@@ -117,12 +135,12 @@ const Options: React.FC = () => {
             setSelectedProvider(Math.max(providerIndex, 0));
             setApiKey(currentProvider.key || "");
 
-            // Obtener el modelo seleccionado guardado
+            // Obtener los modelos seleccionados guardados
             const savedModel = ConfigManager.getSelectedModel();
-            console.log("Model saved in ConfigManager:", savedModel);
+            const savedVisionModel = ConfigManager.getSelectedVisionModel();
 
             // Validar y cargar modelos
-            validateAndLoadModels(providerIndex, savedModel, currentProvider.key);
+            validateAndLoadModels(providerIndex, savedModel, savedVisionModel, currentProvider.key);
 
             // Cargar configuración de asistentes
             await loadAssistantConfig();
@@ -143,13 +161,13 @@ const Options: React.FC = () => {
         setSelectedProvider(providerIndex);
         const newApiKey = ConfigManager.getProvider(providerIndex).key || "";
         setApiKey(newApiKey);
-        validateAndLoadModels(providerIndex, undefined, newApiKey);
+        validateAndLoadModels(providerIndex, undefined, undefined, newApiKey);
     };
 
     // Validar la API key cada vez que cambia
     useEffect(() => {
         if (!isConfigLoaded) return;
-        validateAndLoadModels(selectedProvider, undefined, apiKey);
+        validateAndLoadModels(selectedProvider, undefined, undefined, apiKey);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [apiKey, selectedProvider]);
 
@@ -163,8 +181,20 @@ const Options: React.FC = () => {
                 ConfigManager.setProviderKey(selectedProvider, apiKey.trim());
             }
 
-            ConfigManager.selectModel(selectedModel);
-            console.log("Selected model" + selectedModel);
+            // Get available models from current provider
+            const availableTextModels = modelList.filter(m => ConfigManager.TEXT_MODELS.includes(m));
+            const availableVisionModels = modelList.filter(m => ConfigManager.VISION_MODELS.includes(m));
+
+            // Use first available model if none selected
+            const modelToSave = selectedModel || availableTextModels[0] || "";
+            const visionModelToSave = selectedVisionModel || availableVisionModels[0] || "";
+
+            ConfigManager.selectModel(modelToSave);
+            ConfigManager.selectVisionModel(visionModelToSave);
+
+            // Update React state to reflect saved values
+            setSelectedModel(modelToSave);
+            setSelectedVisionModel(visionModelToSave);
 
             // Enviar la configuración actualizada al background script
             // El background script se encargará de llamar a OpenAIService.loadProviderConfig()
@@ -173,10 +203,11 @@ const Options: React.FC = () => {
                     action: "updateConfig",
                     config: {
                         providerKeys: ConfigManager.getProviderList().map(
-                            (_, index) => ConfigManager.getProvider(index).key
+                            (_, index) => ConfigManager.getProvider(index).key,
                         ),
                         selectedProvider: selectedProvider,
-                        selectedModel: selectedModel,
+                        selectedModel: modelToSave,
+                        selectedVisionModel: visionModelToSave,
                     },
                 })
                 .catch(error => {
@@ -184,10 +215,10 @@ const Options: React.FC = () => {
                 });
 
             setSaveMessage(
-                "Configuration saved successfully. Provider: " +
-                    ConfigManager.getSelectedProvider().baseUrl +
-                    ". Model: " +
-                    ConfigManager.getSelectedModel()
+                "Configuration saved successfully. Text model: " +
+                    ConfigManager.getSelectedModel() +
+                    ". Vision model: " +
+                    ConfigManager.getSelectedVisionModel(),
             );
         } catch (error) {
             console.error("Error saving configuration:", error);
@@ -476,7 +507,7 @@ const Options: React.FC = () => {
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="col-md-6">
+                                    <div className="col-md-9">
                                         <label htmlFor="apiKey" className="form-label">
                                             API Key
                                         </label>
@@ -491,9 +522,11 @@ const Options: React.FC = () => {
                                         />
                                         {apiKeyError && <div className="invalid-feedback">{apiKeyError}</div>}
                                     </div>
-                                    <div className="col-md-3">
+                                </div>
+                                <div className="row g-3 mt-2">
+                                    <div className="col-md-6">
                                         <label htmlFor="modelSelect" className="form-label">
-                                            Model
+                                            Text Model (main)
                                         </label>
                                         <select
                                             className={`form-select${
@@ -504,14 +537,36 @@ const Options: React.FC = () => {
                                             value={selectedModel}
                                             onChange={e => setSelectedModel(e.target.value)}
                                         >
-                                            {ConfigManager.COMPATIBLE_MODELS.filter(m => modelList.includes(m)).map(
-                                                (model, index) => (
+                                            {ConfigManager.TEXT_MODELS.filter(m => modelList.includes(m)).map(model => (
+                                                <option key={model} value={model}>
+                                                    {model}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="form-text">Used for chat, explanations, and evaluations</div>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label htmlFor="visionModelSelect" className="form-label">
+                                            Vision Model (images)
+                                        </label>
+                                        <select
+                                            className={`form-select${
+                                                !modelListEnabled && apiKeyError ? " is-invalid" : ""
+                                            }`}
+                                            id="visionModelSelect"
+                                            disabled={!modelListEnabled}
+                                            value={selectedVisionModel}
+                                            onChange={e => setSelectedVisionModel(e.target.value)}
+                                        >
+                                            {ConfigManager.VISION_MODELS.filter(m => modelList.includes(m)).map(
+                                                model => (
                                                     <option key={model} value={model}>
                                                         {model}
                                                     </option>
-                                                )
+                                                ),
                                             )}
                                         </select>
+                                        <div className="form-text">Used for analyzing images in course materials</div>
                                         {!modelListEnabled && apiKey.trim() && apiKeyError && (
                                             <div className="invalid-feedback">
                                                 Enter a valid API key to view models.
