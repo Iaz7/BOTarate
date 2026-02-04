@@ -1,5 +1,5 @@
 export const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleString("en-US", {
+    return new Date(timestamp).toLocaleString(undefined, {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -16,10 +16,10 @@ export const getScoreColor = (score: number) => {
 };
 
 export const getScoreLabel = (score: number) => {
-    if (score >= 9) return "Excellent";
-    if (score >= 7) return "Good";
-    if (score >= 5) return "Sufficient";
-    return "Insufficient";
+    if (score >= 9) return "evaluation.scoreLabels.excellent";
+    if (score >= 7) return "evaluation.scoreLabels.good";
+    if (score >= 5) return "evaluation.scoreLabels.acceptable";
+    return "evaluation.scoreLabels.insufficient";
 };
 
 export const formatScore = (score: number) => {

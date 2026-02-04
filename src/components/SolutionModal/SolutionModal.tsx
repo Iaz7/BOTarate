@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import BaseModal from "../BaseModal";
@@ -17,10 +18,11 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
     courseId,
     onEvaluationGenerated,
 }) => {
+    const { t } = useTranslation();
     const { solution, setSolution, evaluation, isEvaluating, evaluationError, handleSubmit } = useSolutionModal(
         isOpen,
         exercise.name,
-        onEvaluationGenerated
+        onEvaluationGenerated,
     );
 
     if (!isOpen) return null;
@@ -32,14 +34,14 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
             exerciseContext || undefined,
             learningObjectives || undefined,
             pageId || undefined,
-            courseId || undefined
+            courseId || undefined,
         );
 
     return (
-        <BaseModal isOpen={isOpen} onClose={onClose} title={`Solve exercise: ${exercise.name}`}>
+        <BaseModal isOpen={isOpen} onClose={onClose} title={t("exercises.solve", { name: exercise.name })}>
             {/* Enunciado del ejercicio */}
             <div className="mb-4">
-                <h6 className="text-primary">Statement:</h6>
+                <h6 className="text-primary">{t("exercises.statement")}:</h6>
                 <div className="border rounded p-3 bg-light">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{exercise.statement}</ReactMarkdown>
                 </div>
@@ -49,7 +51,7 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
             {!evaluation && (
                 <div className="mb-4">
                     <label htmlFor="solution-input" className="form-label">
-                        <strong>Your SQL solution:</strong>
+                        <strong>{t("exercises.yourSolution")}:</strong>
                     </label>
                     <textarea
                         id="solution-input"
@@ -57,7 +59,7 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
                         rows={10}
                         value={solution}
                         onChange={e => setSolution(e.target.value)}
-                        placeholder="Write your SQL query here..."
+                        placeholder={t("exercises.placeholderSQL")}
                         disabled={isEvaluating}
                         style={{ fontSize: "0.9rem" }}
                     />
@@ -73,9 +75,9 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
             {isEvaluating && (
                 <div className="text-center py-4">
                     <output className="spinner-border text-primary mb-3">
-                        <span className="visually-hidden">Evaluating...</span>
+                        <span className="visually-hidden">{t("evaluation.evaluating")}</span>
                     </output>
-                    <p className="text-muted">Evaluating your solution...</p>
+                    <p className="text-muted">{t("evaluation.evaluating")}</p>
                 </div>
             )}
 
@@ -85,13 +87,15 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
                     {/* Puntuación */}
                     <div
                         className={`alert alert-${getScoreColor(
-                            evaluation.score
+                            evaluation.score,
                         )} d-flex align-items-center justify-content-between`}
                     >
                         <div>
                             <h5 className="mb-0">
-                                <strong>Score: {evaluation.score}/10</strong>
-                                <span className="ms-2">({getScoreLabel(evaluation.score)})</span>
+                                <strong>
+                                    {t("evaluation.score")}: {evaluation.score}/10
+                                </strong>
+                                <span className="ms-2">({t(getScoreLabel(evaluation.score))})</span>
                             </h5>
                         </div>
                         <div>
@@ -103,7 +107,7 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
 
                     {/* Feedback */}
                     <div className="mb-3">
-                        <h6 className="text-primary">Feedback:</h6>
+                        <h6 className="text-primary">{t("evaluation.feedback")}:</h6>
                         <div className="border rounded p-3 bg-light">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{evaluation.feedback}</ReactMarkdown>
                         </div>
@@ -111,10 +115,8 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
 
                     {/* Botón para intentar de nuevo */}
                     <div className="alert alert-info" role="alert">
-                        <strong>Do you want to try again?</strong>
-                        <p className="mb-2 mt-1 small">
-                            You can close this modal and request to solve the exercise again to submit a new solution.
-                        </p>
+                        <strong>{t("evaluation.retry.title")}</strong>
+                        <p className="mb-2 mt-1 small">{t("evaluation.retry.desc")}</p>
                     </div>
                 </div>
             )}
@@ -123,18 +125,18 @@ const SolutionModal: React.FC<SolutionModalProps> = ({
             {!evaluation && (
                 <div className="d-flex justify-content-end gap-2 mt-4">
                     <button className="btn btn-secondary" onClick={onClose} disabled={isEvaluating}>
-                        Cancel
+                        {t("common.cancel")}
                     </button>
                     <button className="btn btn-primary" onClick={onSubmit} disabled={isEvaluating || !solution.trim()}>
                         {isEvaluating ? (
                             <>
                                 <output className="spinner-border spinner-border-sm me-2">
-                                    <span className="visually-hidden">Evaluating...</span>
+                                    <span className="visually-hidden">{t("common.loading")}</span>
                                 </output>
-                                Evaluating...
+                                {t("evaluation.evaluating")}
                             </>
                         ) : (
-                            "Submit solution"
+                            t("exercises.submitSolution")
                         )}
                     </button>
                 </div>

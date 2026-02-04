@@ -1,0 +1,490 @@
+{
+    "app": {
+        "name": "BOTarate",
+        "description": "AI powered extension for teaching and learning assistance",
+        "loading": "Loading..."
+    },
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "close": "Close",
+        "delete": "Delete",
+        "edit": "Edit",
+        "confirm": "Confirm",
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success",
+        "warning": "Warning",
+        "info": "Information",
+        "yes": "Yes",
+        "no": "No",
+        "back": "Back",
+        "next": "Next",
+        "submit": "Submit",
+        "reset": "Reset",
+        "search": "Search",
+        "filter": "Filter",
+        "export": "Export",
+        "import": "Import",
+        "download": "Download",
+        "upload": "Upload"
+    },
+    "chatTab": {
+        "placeholder": {
+            "disabledModal": "Chat disabled (modal open)...",
+            "teacherMode": "Switch to student mode to work on the lab...",
+            "labBlocked": "Lab blocked...",
+            "loadingExercises": "Loading exercises...",
+            "notConfigured": "Lab not configured by teacher...",
+            "default": "Type your question..."
+        },
+        "welcome": {
+            "default": "You can ask me about the course content. If you want to work on exercises, open a lab first.",
+            "ready": "The exercises on this page are ready. Ask me for an explanation or tell me if you want to check your solution for any of them. If you want, I can also give you the list of available exercises.",
+            "identifying": "As soon as you identify the exercises, I will be able to help you with them.",
+            "genericHelper": "I am here to help you with the course."
+        },
+        "status": {
+            "checkingAccess": "Checking lab access...",
+            "labBlockedTitle": "Lab blocked",
+            "labBlockedDesc": "This lab is blocked because it is a required lab and you have not yet completed the previous lab.",
+            "unlockTitle": "To unlock this lab:",
+            "unlockList": {
+                "complete": "Complete the required challenge exercises from the previous lab",
+                "criteria": "Meet the criteria defined by your teacher in the extension options or check the details in \"My progress\"",
+                "checkProgress": "Check your progress in the \"My progress\" tab"
+            },
+            "teacherModeTitle": "Teacher mode active",
+            "teacherModeDesc": "You are in teacher mode. To work on this lab's exercises, you must switch to student mode.",
+            "teacherModeAction": "Go to the <strong>\"Mode\"</strong> switch to change your mode.",
+            "loadingExercises": "Loading...",
+            "searchingExercises": "Searching for exercises...",
+            "analyzingContent": "Analyzing page content to identify available exercises.",
+            "notConfiguredTitle": "Lab not configured",
+            "notConfiguredDesc": "The teacher has not configured this lab yet. The chat is disabled until the configuration is available.",
+            "notConfiguredAction": "Please wait for your teacher to configure this lab or contact them for more information.",
+            "generating": "Generating response..."
+        },
+        "roles": {
+            "user": "You",
+            "assistant": "Assistant"
+        },
+        "buttons": {
+            "send": "Send message",
+            "restart": "Restart conversation"
+        }
+    },
+    "tools": {
+        "getSection": {
+            "withName": "📂 Consulting section \"{{name}}\"...",
+            "generic": "📂 Consulting section..."
+        },
+        "getPage": {
+            "withName": "📄 Reading page \"{{name}}\"...",
+            "generic": "📄 Reading page..."
+        },
+        "getResource": {
+            "withName": "📦 Reading resource \"{{name}}\"...",
+            "generic": "📦 Reading resource..."
+        },
+        "explainExercise": "💡 Explaining exercise {{index}}...",
+        "solveExercise": "📝 Opening solution form for exercise {{index}}...",
+        "getFilteredFileContent": "🔍 Searching in file...",
+        "analyzeImage": {
+            "withName": "🖼️ Analyzing image \"{{name}}\"...",
+            "generic": "🖼️ Analyzing image..."
+        },
+        "default": "🔧 Executing tool: {{name}}..."
+    },
+    "popup": {
+        "welcome": "Welcome to {{appName}}. Configure the extension to start using it.",
+        "openSettings": "Open settings"
+    },
+    "sidebar": {
+        "expand": "Expand sidebar",
+        "collapse": "Collapse sidebar",
+        "mode": {
+            "student": "Student",
+            "teacher": "Teacher"
+        },
+        "tabs": {
+            "chat": "Chat",
+            "exercises": "Exercises",
+            "progress": "My progress",
+            "configureCourse": "Configure course",
+            "configureLab": "Configure lab"
+        },
+        "tooltips": {
+            "labBlocked": "Not available while lab is blocked"
+        },
+        "checkingConfig": "Checking configuration..."
+    },
+    "noExercisesMessage": {
+        "title": "No exercises found",
+        "desc": "This page does not seem to contain exercises"
+    },
+    "loadingMessage": {
+        "loading": "Loading...",
+        "title": "Searching for exercises...",
+        "desc": "Analyzing page content"
+    },
+    "floatingButton": {
+        "title_one": "View {{count}} exercise",
+        "title_other": "View {{count}} exercises",
+        "label": "View exercises"
+    },
+    "configurationRequired": {
+        "title": "Configuration required",
+        "requiredBoth": {
+            "text": "Configuration is required to use the extension:",
+            "assistantConfig": "<strong>Assistant configuration:</strong> Import a configuration file provided by your teacher with the course exercises and labs.",
+            "llmConfig": "<strong>LLM configuration:</strong> Configure the API key and AI provider model from the extension options page."
+        },
+        "requiredExercise": "No assistant configuration found. Please import a configuration file provided by your teacher to start using the extension.",
+        "requiredLLM": {
+            "text": "LLM is not configured. To use the extension you need to:",
+            "key": "Configure the AI provider API key (OpenAI, Google, etc.)",
+            "model": "Select a compatible model"
+        },
+        "importButton": " Import Configuration",
+        "importLoading": " Loading...",
+        "llmWarning": "To configure the LLM, go to the extension options page, set your API key and a compatible model, save the configuration and reload this page."
+    },
+    "options": {
+        "tabs": {
+            "llm": "LLM Configuration",
+            "assistants": "Assistants",
+            "progress": "Progress",
+            "importExport": "Import/Export"
+        },
+        "llm": {
+            "title": "Language Model Configuration",
+            "provider": "Provider",
+            "apiKey": "API Key",
+            "apiKeyPlaceholder": "Enter your API key",
+            "apiKeyError": "Invalid API key. Please enter a valid API key to view models.",
+            "textModel": "Text Model (main)",
+            "textModelHelp": "Used for chat, explanations, and evaluations",
+            "visionModel": "Vision Model (images)",
+            "visionModelHelp": "Used for analyzing exercise screenshots",
+            "saveSuccess": "Configuration saved successfully",
+            "saveError": "Error saving configuration"
+        },
+        "assistants": {
+            "title": "Assistants Configuration",
+            "sections": {
+                "general": "General",
+                "exercise": "Exercises",
+                "evaluation": "Evaluation",
+                "explanation": "Explanation"
+            },
+            "fields": {
+                "subject": { "label": "Subject", "desc": "Name of the subject for which assistants are configured" },
+                "platform": {
+                    "label": "LMS Platform",
+                    "desc": "Name of the educational platform (e.g., Moodle, Canvas, Egela)"
+                },
+                "institution": { "label": "University", "desc": "Name of the university" },
+                "teacherName": { "label": "Teacher's name", "desc": "Name of the teacher" },
+                "teacherTics": { "label": "Teacher's tics", "desc": "Common expressions/phrases the teacher uses" },
+                "labMaterial": {
+                    "label": "Lab material",
+                    "desc": "Describes what context should be extracted from lab materials"
+                },
+                "exerciseCriteria": {
+                    "label": "Exercise identification",
+                    "desc": "Criteria for identifying what constitutes an exercise and how it should be extracted"
+                },
+                "role": {
+                    "label": "Role",
+                    "desc": "Defines the role/purpose of the assistant in the context of the course"
+                },
+                "evaluationCriteria": {
+                    "label": "Evaluation criteria",
+                    "desc": "Detailed criteria for evaluating solutions"
+                },
+                "scoringScale": { "label": "Scoring scale", "desc": "Description of the scoring scale" },
+                "feedbackFormat": {
+                    "label": "Feedback format",
+                    "desc": "Instructions on how to structure and format feedback"
+                },
+                "methodology": { "label": "Process methodology", "desc": "Methodology the assistant should follow" }
+            },
+            "headers": {
+                "teacherPersonalization": "Teacher personalization",
+                "labContext": "Lab context extraction configuration",
+                "evaluator": "Solution evaluator configuration",
+                "solver": "Exercise solver configuration"
+            },
+            "buttons": {
+                "save": "Save assistants configuration",
+                "saving": "Saving...",
+                "saved": "Assistants configuration saved successfully",
+                "error": "Error saving configuration"
+            }
+        },
+        "studentMode": {
+            "warning": "<strong>Student mode:</strong> To configure the extension, import the configuration file provided by your teacher."
+        },
+        "language": {
+            "title": "Language",
+            "select": "Select language",
+            "description": "The language affects the interface and assistant responses"
+        },
+        "exerciseConfig": {
+            "infoTitle": "Exercise configuration",
+            "infoDesc": "In this tab you can configure which exercises are <strong>challenge</strong> or <strong>picky</strong>.",
+            "infoList": {
+                "challenge": "<strong>Challenge exercises:</strong> Explanations cannot be requested, but solution evaluations can.",
+                "picky": "<strong>Picky exercises:</strong> A warning is shown when asking for an explanation because they may contain partial answers in the statement."
+            },
+            "infoFooter": "After saving changes, the system will automatically update the restrictions.",
+            "noExercisesTitle": "No exercises available",
+            "noExercisesDesc": "When exercises are detected on the page, you can configure which ones are challenge exercises.",
+            "table": {
+                "headerName": "Exercise name",
+                "headerChallenge": "Is challenge",
+                "headerPicky": "Is picky",
+                "badgeChallenge": "Challenge",
+                "badgePicky": "Picky",
+                "switchChallengeOn": "Is challenge",
+                "switchChallengeOff": "Not challenge",
+                "switchPickyOn": "Is picky",
+                "switchPickyOff": "Not picky"
+            },
+            "unsavedTitle": "⚠️ You have unsaved changes",
+            "unsavedDesc": "Click \"Save changes\" to apply the configuration and regenerate the assistant.",
+            "save": "Save changes",
+            "saving": "Saving changes...",
+            "processing": "Applying configuration and updating restrictions..."
+        },
+        "labConfig": {
+            "loading": "Loading labs...",
+            "noLabsTitle": "No labs available",
+            "noLabsDesc": "No 'page' type resources found in the course that can be configured as labs.",
+            "infoTitle": "Course configuration",
+            "infoDesc": "Configure which labs to include and their <strong>required level</strong>, <strong>verbosity</strong> and <strong>reasoning</strong> options.",
+            "infoList": {
+                "include": "<strong>Include lab:</strong> Enable this to analyze the lab and extract exercises. This is required before other configuration options can be used.",
+                "required": "<strong>Required lab:</strong> Labs marked as required will unlock sequentially when the student completes the challenges of the previous lab.",
+                "verbosity": "<strong>Verbosity level:</strong> Controls the level of detail in the assistant's explanations (low, medium, or high).",
+                "reasoning": "<strong>Reasoning effort:</strong> Configures how much detail the assistant should put into explaining its reasoning (minimal, low, medium, or high)."
+            },
+            "infoFooter": "Click on an included lab to expand its configuration options.",
+            "includeLabel": "Include",
+            "requiredLabel": "Required lab",
+            "explanationConfig": "Explanation assistant configuration:",
+            "goToLab": "Go to lab",
+            "unsavedTitle": "⚠️ You have unsaved changes",
+            "unsavedDesc": "Click \"Save changes\" to apply the configuration.",
+            "unsavedContext": "Context will be generated for newly included labs.",
+            "save": "Save changes",
+            "saving": "Saving changes...",
+            "generatingContext": "Generating context...",
+            "generating": "Generating...",
+            "verbosity": "Verbosity level",
+            "reasoning": "Reasoning effort",
+            "levels": {
+                "low": "Low",
+                "medium": "Medium",
+                "high": "High",
+                "minimal": "Minimal"
+            },
+            "tooltips": {
+                "verbosityLow": "Concise and direct answers",
+                "verbosityMedium": "Balanced detail level",
+                "verbosityHigh": "Detailed and extensive explanations",
+                "reasoningMinimal": "Direct answer without reasoning",
+                "reasoningLow": "Basic reasoning",
+                "reasoningMedium": "Moderate reasoning",
+                "reasoningHigh": "Detailed step-by-step reasoning"
+            }
+        },
+        "progress": {
+            "loading": "Loading progress configuration...",
+            "globalTitle": "Global progress criteria",
+            "info": {
+                "title": "Configure criteria to unlock labs",
+                "desc": "Adjust the minimum score and percentage of passed challenges needed to progress."
+            },
+            "minScore": {
+                "label": "Minimum score to pass a challenge exercise",
+                "help": "Challenges with a score equal to or higher than this value will be considered passed."
+            },
+            "minPercentage": {
+                "label": "Minimum percentage of passed challenges to progress",
+                "help": "Example: with 75%, if a lab has 4 challenges, at least 3 must be passed to unlock the next one."
+            },
+            "save": "Save criteria",
+            "saving": "Saving...",
+            "restore": "Restore default values",
+            "errorLoad": "Could not load configuration. Please try again.",
+            "successSave": "Progress criteria saved successfully.",
+            "errorSave": "Could not save. Check values and try again."
+        },
+        "importExport": {
+            "export": {
+                "title": "Export configuration",
+                "description": "Export all your configuration (assistants, exercises, and labs) to a JSON file. You can use this file to make backups or transfer the configuration to another browser.",
+                "button": "Export configuration",
+                "processing": " Exporting..."
+            },
+            "import": {
+                "title": "Import configuration",
+                "description": "Import a configuration from a previously exported JSON file. This will overwrite existing data with the file's data.",
+                "warningTitle": "⚠️ Attention:",
+                "warningDesc": "Importing will overwrite existing data. It is recommended to export first as a backup."
+            },
+            "dangerZone": {
+                "title": "Danger zone",
+                "description": "Permanently delete all data stored by the extension. This action cannot be undone.",
+                "button": "Delete all data",
+                "processing": " Deleting..."
+            },
+            "messages": {
+                "exportSuccess": "Configuration exported successfully",
+                "importSuccess": "Configuration imported successfully",
+                "clearSuccess": "All data has been deleted successfully",
+                "exportError": "Unexpected error exporting: {{error}}",
+                "importError": "Unexpected error importing: {{error}}",
+                "clearError": "Unexpected error clearing: {{error}}"
+            },
+            "confirmClear": "⚠️ WARNING: This action will delete ALL saved configuration, including:\n\n- Assistant configuration\n- Identified exercise data\n- Configured lab data\n\nThis action CANNOT be undone. Are you sure you want to continue?"
+        }
+    },
+    "sidebar": {
+        "title": "Chat",
+        "placeholder": "Type your message...",
+        "send": "Send",
+        "clearHistory": "Clear history",
+        "newChat": "New conversation"
+    },
+    "exercises": {
+        "title": "Exercises",
+        "loading": "Loading exercises...",
+        "noExercises": "No exercises available",
+        "noExercisesDesc": "When exercises are detected on the page, they will appear here along with any saved explanations and evaluations.",
+        "challenge": "Challenge",
+        "picky": "Picky",
+        "viewExplanation": "View explanation",
+        "viewEvaluations": "View evaluations",
+        "blocked": "This exercise is blocked",
+        "explain": "Explain",
+        "evaluate": "Evaluate",
+        "solution": "Solution",
+        "statement": "Statement",
+        "yourSolution": "Your solution",
+        "submitSolution": "Submit solution",
+        "solve": "Solve exercise: {{name}}",
+        "placeholderSQL": "Write your SQL query here...",
+        "pickyWarning": {
+            "title": "Exercise marked as picky.",
+            "desc": "This explanation might not be completely correct. Review the steps carefully and consult your teacher if you find anything strange."
+        }
+    },
+    "evaluation": {
+        "title": "Evaluation",
+        "score": "Score",
+        "scoreLabels": {
+            "excellent": "Excellent",
+            "good": "Good",
+            "acceptable": "Acceptable",
+            "insufficient": "Insufficient",
+            "veryPoor": "Very poor"
+        },
+        "feedback": "Feedback",
+        "evaluating": "Evaluating your solution...",
+        "strengths": "Strengths",
+        "improvements": "Areas for improvement",
+        "history": "Evaluation history",
+        "noEvaluations": "No previous evaluations",
+        "retry": {
+            "title": "Do you want to try again?",
+            "desc": "You can close this modal and request to solve the exercise again to submit a new solution."
+        },
+        "list": {
+            "title": "Evaluations for {{name}}",
+            "loading": "Loading evaluations...",
+            "emptyTitle": "No evaluations saved",
+            "emptyDesc": "You have not submitted any solutions for evaluation for this exercise yet.",
+            "stats": "Statistics",
+            "bestScore": "Best score",
+            "avgScore": "Average score",
+            "totalAttempts": "Total attempts",
+            "history": "Attempt history ({{count}})",
+            "attempt": "Attempt #{{num}}",
+            "yourSolution": "Your solution",
+            "evaluatorFeedback": "Evaluator feedback",
+            "selectPrompt": "Select an evaluation from the history to view details."
+        }
+    },
+    "explanation": {
+        "title": "Explanation",
+        "generating": "Generating explanation...",
+        "error": "Error generating explanation",
+        "regenerate": "Regenerate explanation",
+        "chat": {
+            "title": "Questions about the explanation",
+            "subtitle": "Ask questions about any step of the explanation",
+            "waiting": "Waiting for explanation to load...",
+            "empty": "Do you have any questions about the explanation? Ask me anything.",
+            "user": "You",
+            "assistant": "Assistant",
+            "generating": "Generating response...",
+            "placeholder": "Type your question...",
+            "send": "Send question"
+        },
+        "steps": "Steps",
+        "askQuestion": "Ask a question",
+        "continueChat": "Continue conversation"
+    },
+    "progress": {
+        "title": "Progress",
+        "completed": "Completed",
+        "pending": "Pending",
+        "labs": "Labs",
+        "exercises": "Exercises",
+        "score": "Score",
+        "loading": "Loading progress...",
+        "noLabsTitle": "No labs configured",
+        "noLabsDesc": "The teacher has not yet configured the lab and progression system for this course.",
+        "infoTitle": "Progression system",
+        "infoDesc": "Labs unlock sequentially. To access a lab, you must complete the <strong>challenge exercises</strong> of the previous lab following the criteria defined by your teacher.",
+        "infoList": {
+            "challenge": "<strong>Challenge exercises:</strong> Cannot be explained by AI, but can be evaluated when you submit your solution.",
+            "score": "<strong>Recorded score:</strong> Your best score for each exercise is saved.",
+            "required": "<strong>Required labs only:</strong> This view shows only the labs marked as required by the teacher, which must be completed in order to advance."
+        },
+        "criteriaTitle": "Current criteria:",
+        "minScore": "Minimum score per challenge: {{score}} / 10",
+        "minPercentage": "Minimum percentage of passed challenges: {{percentage}}% of the total challenges in the lab",
+        "labCard": {
+            "title": "Lab {{index}}: {{name}}",
+            "exercises": "Exercises: {{completed}} / {{total}}",
+            "average": "Average score: {{score}}",
+            "challengesTitle": "Challenge exercises:",
+            "notAttempted": "Not attempted",
+            "noChallenges": "There are no challenge exercises in this lab.",
+            "locked": "Lab locked. Complete the previous lab following the configured criteria."
+        }
+    },
+    "errors": {
+        "generic": "An error has occurred",
+        "network": "Connection error",
+        "apiKey": "Invalid or unconfigured API key",
+        "notFound": "Not found",
+        "exerciseBlocked": "The exercise \"{{exerciseName}}\" is blocked and cannot be explained.",
+        "loadingExercise": "Could not load exercise \"{{exerciseName}}\".",
+        "loadingExplanation": "Explanation not found in storage",
+        "chatHistory": "Error loading chat history",
+        "resetChat": "Error resetting chat history"
+    },
+    "llmPrompts": {
+        "languageInstruction": "Always respond in English.",
+        "progressSummary": {
+            "noProgress": "The student has not completed any labs or exercises yet.",
+            "completedLabs": "Completed labs",
+            "completedExercises": "Completed exercises by lab"
+        }
+    }
+}

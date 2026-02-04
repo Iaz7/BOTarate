@@ -1,5 +1,6 @@
 /// <reference types="chrome"/>
 
+import { initLanguage, setLanguage } from "../i18n/backend";
 import { OpenAIService } from "../util/ai/OpenAIService";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { initializeAssistants, isConfigReady, markConfigLoaded } from "./context";
@@ -41,6 +42,7 @@ import {
 } from "./handlers/storageHandlers";
 
 async function loadConfiguration(): Promise<void> {
+    await initLanguage();
     await ConfigManager.loadConfig();
     await initializeAssistants();
     OpenAIService.loadProviderConfig();
@@ -144,6 +146,11 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleGenerateLabContext(request, sendResponse);
         case "getAccumulatedConcepts":
             return handleGetAccumulatedConcepts(request, sendResponse);
+        case "setLanguage":
+            setLanguage(request.language)
+                .then(() => sendResponse({ success: true }))
+                .catch(error => sendResponse({ success: false, error: error.message }));
+            return true;
         default:
             return false;
     }

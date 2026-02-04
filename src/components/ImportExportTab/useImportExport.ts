@@ -1,8 +1,10 @@
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ImportExportManager } from "../../util/storage/ImportExportManager";
 import { ImportExportTabProps } from "./types";
 
 export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
+    const { t } = useTranslation();
     const [message, setMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -17,13 +19,13 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
         try {
             const result = await ImportExportManager.exportToFile();
             setMessage({
-                text: result.message,
+                text: result.success ? t('options.importExport.messages.exportSuccess', 'Configuration exported successfully') : result.message,
                 type: result.success ? "success" : "error",
             });
         } catch (error) {
             console.error("Error exporting configuration:", error);
             setMessage({
-                text: `Unexpected error exporting: ${error instanceof Error ? error.message : "Unknown error"}`,
+                text: t('options.importExport.messages.exportError', 'Unexpected error exporting: {{error}}', { error: error instanceof Error ? error.message : "Unknown error" }),
                 type: "error",
             });
         } finally {
@@ -41,7 +43,7 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
         try {
             const result = await ImportExportManager.importFromFile(file);
             setMessage({
-                text: result.message,
+                text: result.success ? t('options.importExport.messages.importSuccess', 'Configuration imported successfully') : result.message,
                 type: result.success ? "success" : "error",
             });
             if (result.success && onDataChange) {
@@ -50,7 +52,7 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
         } catch (error) {
             console.error("Error importing configuration:", error);
             setMessage({
-                text: `Unexpected error importing: ${error instanceof Error ? error.message : "Unknown error"}`,
+                text: t('options.importExport.messages.importError', 'Unexpected error importing: {{error}}', { error: error instanceof Error ? error.message : "Unknown error" }),
                 type: "error",
             });
         } finally {
@@ -67,11 +69,7 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
      */
     const handleClearAll = async () => {
         const confirmed = confirm(
-            "⚠️ WARNING: This action will delete ALL saved configuration, including:\n\n" +
-            "- Assistant configuration\n" +
-            "- Identified exercise data\n" +
-            "- Configured lab data\n\n" +
-            "This action CANNOT be undone. Are you sure you want to continue?"
+            t('options.importExport.confirmClear', "⚠️ WARNING: This action will delete ALL saved configuration, including:\n\n- Assistant configuration\n- Identified exercise data\n- Configured lab data\n\nThis action CANNOT be undone. Are you sure you want to continue?")
         );
 
         if (!confirmed) return;
@@ -82,7 +80,7 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
         try {
             const result = await ImportExportManager.clearAllData();
             setMessage({
-                text: result.message,
+                text: result.success ? t('options.importExport.messages.clearSuccess', 'All data has been deleted successfully') : result.message,
                 type: result.success ? "info" : "error",
             });
             if (result.success && onDataChange) {
@@ -91,7 +89,7 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
         } catch (error) {
             console.error("Error clearing data:", error);
             setMessage({
-                text: `Unexpected error clearing: ${error instanceof Error ? error.message : "Unknown error"}`,
+                text: t('options.importExport.messages.clearError', 'Unexpected error clearing: {{error}}', { error: error instanceof Error ? error.message : "Unknown error" }),
                 type: "error",
             });
         } finally {

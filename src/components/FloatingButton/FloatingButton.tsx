@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface FloatingButtonProps {
     onClick: () => void;
@@ -6,6 +7,7 @@ interface FloatingButtonProps {
 }
 
 const FloatingButton: React.FC<FloatingButtonProps> = ({ onClick, exerciseCount }) => {
+    const { t } = useTranslation();
     return (
         <button
             onClick={onClick}
@@ -16,9 +18,9 @@ const FloatingButton: React.FC<FloatingButtonProps> = ({ onClick, exerciseCount 
                 zIndex: 9999,
                 padding: "10px 20px",
             }}
-            title={`View ${exerciseCount} ${exerciseCount === 1 ? "exercise" : "exercises"}`}
+            title={t("floatingButton.title", { count: exerciseCount })}
         >
-            <span>📝 View exercises</span>
+            <span>📝 {t("floatingButton.label")}</span>
             {exerciseCount > 0 && <span className="badge bg-danger">{exerciseCount}</span>}
         </button>
     );

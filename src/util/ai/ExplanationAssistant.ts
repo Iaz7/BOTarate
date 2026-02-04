@@ -99,6 +99,8 @@ PEDAGOGICAL CONTEXT:
 
 {teacherPersonalization}
 
+{languageInstruction}
+
 {importantNotes}`;
 
         const systemPromptVariables = {
@@ -112,6 +114,7 @@ PEDAGOGICAL CONTEXT:
             pageIdNote: pageId ? `Page ID: ${pageId}\n- Use this ID as the value for the 'pageId' parameter when calling getPageContent or getFilteredFileContent.` : '',
             ...pedagogicalContext,
             teacherPersonalization: this.buildTeacherPersonalization(),
+            languageInstruction: this.buildLanguageInstruction(),
             importantNotes: assistantConfig.importantNotes || ''
         };
 

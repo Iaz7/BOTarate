@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useProgressData } from "./hooks";
 import {
     getBestScore,
@@ -13,15 +14,19 @@ interface ProgressTabProps {
 }
 
 const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
+    const { t } = useTranslation();
     const { labProgress, isLoading, requirements } = useProgressData(courseId);
+
+    // Función auxiliar para renderizar HTML seguro
+    const renderHTML = (html: string) => <span dangerouslySetInnerHTML={{ __html: html }} />;
 
     if (isLoading) {
         return (
             <div className="text-center py-5">
                 <div className="spinner-border text-primary">
-                    <span className="visually-hidden">Loading progress...</span>
+                    <span className="visually-hidden">{t("progress.loading")}</span>
                 </div>
-                <p className="mt-3">Loading progress...</p>
+                <p className="mt-3">{t("progress.loading")}</p>
             </div>
         );
     }
@@ -29,10 +34,8 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
     if (labProgress.length === 0) {
         return (
             <div className="alert alert-info" role="alert">
-                <strong>No labs configured</strong>
-                <p className="mb-0 mt-2">
-                    The teacher has not yet configured the lab and progression system for this course.
-                </p>
+                <strong>{t("progress.noLabsTitle")}</strong>
+                <p className="mb-0 mt-2">{t("progress.noLabsDesc")}</p>
             </div>
         );
     }
@@ -42,37 +45,22 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
             {/* Explicación del sistema */}
             <div className="alert alert-primary small mb-3" role="alert">
                 <h6 className="alert-heading">
-                    <i className="bi bi-info-circle"></i> Progression system
+                    <i className="bi bi-info-circle"></i> {t("progress.infoTitle")}
                 </h6>
-                <p className="mb-2">
-                    Labs unlock sequentially. To access a lab, you must complete the{" "}
-                    <strong>challenge exercises</strong> of the previous lab following the criteria defined by your
-                    teacher.
-                </p>
+                <p className="mb-2">{renderHTML(t("progress.infoDesc"))}</p>
                 <ul className="mb-0 small">
-                    <li>
-                        <strong>Challenge exercises:</strong> Cannot be explained by AI, but can be evaluated when you
-                        submit your solution.
-                    </li>
-                    <li>
-                        <strong>Recorded score:</strong> Your best score for each exercise is saved.
-                    </li>
-                    <li>
-                        <strong>Required labs only:</strong> This view shows only the labs marked as required by the
-                        teacher, which must be completed in order to advance.
-                    </li>
+                    <li>{renderHTML(t("progress.infoList.challenge"))}</li>
+                    <li>{renderHTML(t("progress.infoList.score"))}</li>
+                    <li>{renderHTML(t("progress.infoList.required"))}</li>
                 </ul>
             </div>
 
             {requirements && (
                 <div className="alert alert-secondary small mb-3" role="alert">
-                    <strong>Current criteria:</strong>
+                    <strong>{t("progress.criteriaTitle")}</strong>
                     <ul className="mb-0 mt-2">
-                        <li>Minimum score per challenge: {requirements.minScoreToPass.toFixed(1)} / 10</li>
-                        <li>
-                            Minimum percentage of passed challenges: {requirements.minChallengesPercentage}% of the
-                            total challenges in the lab
-                        </li>
+                        <li>{t("progress.minScore", { score: requirements.minScoreToPass.toFixed(1) })}</li>
+                        <li>{t("progress.minPercentage", { percentage: requirements.minChallengesPercentage })}</li>
                     </ul>
                 </div>
             )}
@@ -90,7 +78,7 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                 {progress.isUnlocked && isLabCompleted(progress, requirements || undefined) && (
                                     <i className="bi bi-check-circle-fill me-2"></i>
                                 )}
-                                Lab {index + 1}: {progress.lab.name}
+                                {t("progress.labCard.title", { index: index + 1, name: progress.lab.name })}
                             </h6>
                         </div>
 
@@ -99,11 +87,16 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                 {/* Estadísticas generales */}
                                 <div className="mb-2">
                                     <span className="badge bg-info me-2">
-                                        Exercises: {progress.stats.completedExercises} / {progress.stats.totalExercises}
+                                        {t("progress.labCard.exercises", {
+                                            completed: progress.stats.completedExercises,
+                                            total: progress.stats.totalExercises,
+                                        })}
                                     </span>
                                     {progress.stats.completedExercises > 0 && (
                                         <span className="badge bg-primary">
-                                            Average score: {progress.stats.averageScore.toFixed(1)}
+                                            {t("progress.labCard.average", {
+                                                score: progress.stats.averageScore.toFixed(1),
+                                            })}
                                         </span>
                                     )}
                                 </div>
@@ -112,12 +105,12 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                 {progress.challengeExercises.length > 0 && (
                                     <div className="mt-2">
                                         <small className="text-muted d-block mb-1">
-                                            <strong>Challenge exercises:</strong>
+                                            <strong>{t("progress.labCard.challengesTitle")}</strong>
                                         </small>
                                         {(() => {
                                             const requiredLabel = getRequiredChallengesLabel(
                                                 progress,
-                                                requirements || undefined
+                                                requirements || undefined,
                                             );
                                             return requiredLabel ? (
                                                 <small className="text-muted d-block mb-2">{requiredLabel}</small>
@@ -129,7 +122,7 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                                 const bestScore = getBestScore(evaluations);
                                                 const badgeClass = getScoreBadgeClass(
                                                     bestScore,
-                                                    requirements?.minScoreToPass ?? 5
+                                                    requirements?.minScoreToPass ?? 5,
                                                 );
 
                                                 return (
@@ -141,7 +134,7 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                                         <span className="me-2">{exercise.name}</span>
                                                         <span className={`badge ${badgeClass}`}>
                                                             {bestScore === null
-                                                                ? "Not attempted"
+                                                                ? t("progress.labCard.notAttempted")
                                                                 : bestScore.toFixed(1)}
                                                         </span>
                                                     </div>
@@ -152,13 +145,12 @@ const ProgressTab: React.FC<ProgressTabProps> = ({ courseId }) => {
                                 )}
 
                                 {progress.challengeExercises.length === 0 && (
-                                    <small className="text-muted">There are no challenge exercises in this lab.</small>
+                                    <small className="text-muted">{t("progress.labCard.noChallenges")}</small>
                                 )}
                             </>
                         ) : (
                             <p className="small mb-0">
-                                <i className="bi bi-lock"></i> Lab locked. Complete the previous lab following the
-                                configured criteria.
+                                <i className="bi bi-lock"></i> {t("progress.labCard.locked")}
                             </p>
                         )}
                     </div>

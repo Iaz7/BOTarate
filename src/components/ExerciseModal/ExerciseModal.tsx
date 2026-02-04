@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import BaseModal from "../BaseModal";
@@ -15,6 +16,8 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
     loadFromCache = false,
     onExplanationGenerated,
 }) => {
+    const { t } = useTranslation();
+
     const {
         explanation,
         isLoadingExplanation,
@@ -46,11 +49,8 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                 <div className="p-4" style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #dee2e6" }}>
                     {exercise.isTiquismiqui && (
                         <div className="alert alert-warning" role="alert">
-                            <strong>⚠️ Exercise marked as picky.</strong>
-                            <p className="mb-0 mt-1 small">
-                                This explanation might not be completely correct. Review the steps carefully and consult
-                                your teacher if you find anything strange.
-                            </p>
+                            <strong>⚠️ {t("exercises.pickyWarning.title")}</strong>
+                            <p className="mb-0 mt-1 small">{t("exercises.pickyWarning.desc")}</p>
                         </div>
                     )}
                     {isLoadingExplanation && (
@@ -59,9 +59,9 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                             style={{ minHeight: "200px" }}
                         >
                             <output className="spinner-border text-primary mb-3">
-                                <span className="visually-hidden">Loading...</span>
+                                <span className="visually-hidden">{t("common.loading")}</span>
                             </output>
-                            <p className="text-muted">Generating explanation...</p>
+                            <p className="text-muted">{t("explanation.generating")}</p>
                         </div>
                     )}
 
@@ -71,14 +71,12 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                             style={{ minHeight: "200px" }}
                         >
                             <div className="alert alert-danger w-100" role="alert">
-                                <h5 className="alert-heading d-flex align-items-center">
-                                    Error generating explanation
-                                </h5>
+                                <h5 className="alert-heading d-flex align-items-center">{t("explanation.error")}</h5>
                                 <hr />
                                 <p className="mb-3">{explanationError}</p>
                                 <div className="d-flex gap-2">
                                     <button onClick={handleGenerateExplanation} className="btn btn-danger">
-                                        Retry
+                                        {t("common.retry")}
                                     </button>
                                 </div>
                             </div>
@@ -125,7 +123,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                 </div>
                             ))}
                             <button onClick={handleRegenerateExplanation} className="btn btn-outline-primary">
-                                Regenerate explanation
+                                {t("explanation.regenerate")}
                             </button>
                         </div>
                     )}
@@ -137,8 +135,8 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                     style={{ width: "35%", minWidth: "450px", backgroundColor: "#f8f9fa" }}
                 >
                     <div className="px-3 py-2 border-bottom bg-white">
-                        <h6 className="mb-0">💬 Questions about the explanation</h6>
-                        <small className="text-muted">Ask questions about any step of the explanation</small>
+                        <h6 className="mb-0">💬 {t("explanation.chat.title")}</h6>
+                        <small className="text-muted">{t("explanation.chat.subtitle")}</small>
                     </div>
 
                     {/* Mensajes del chat */}
@@ -156,11 +154,11 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                     >
                         {!isChatInitialized ? (
                             <div className="alert alert-info" role="alert">
-                                <small>Waiting for explanation to load...</small>
+                                <small>{t("explanation.chat.waiting")}</small>
                             </div>
                         ) : chatMessages.length === 0 ? (
                             <div className="alert alert-info" role="alert">
-                                <small>Do you have any questions about the explanation? Ask me anything.</small>
+                                <small>{t("explanation.chat.empty")}</small>
                             </div>
                         ) : (
                             chatMessages.map(message => (
@@ -170,7 +168,11 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                 >
                                     <div className="card-body p-2">
                                         <div className="small mb-1">
-                                            <strong>{message.role === "user" ? "You" : "Assistant"}</strong>
+                                            <strong>
+                                                {message.role === "user"
+                                                    ? t("explanation.chat.user")
+                                                    : t("explanation.chat.assistant")}
+                                            </strong>
                                         </div>
                                         <div style={{ fontSize: "0.9rem" }}>
                                             <ReactMarkdown
@@ -219,11 +221,13 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                     <div className="d-flex align-items-center">
                                         <output
                                             className="spinner-border spinner-border-sm me-2"
-                                            aria-label="Generating response"
+                                            aria-label={t("explanation.generating", "Generating response")}
                                         >
-                                            <span className="visually-hidden">Loading...</span>
+                                            <span className="visually-hidden">{t("common.loading")}</span>
                                         </output>
-                                        <span className="small">Generating response...</span>
+                                        <span className="small">
+                                            {t("explanation.chat.generating", "Generating response...")}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -236,7 +240,9 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                             <textarea
                                 className="form-control"
                                 placeholder={
-                                    !isChatInitialized ? "Waiting for explanation..." : "Type your question..."
+                                    !isChatInitialized
+                                        ? t("explanation.chat.waiting", "Waiting for explanation...")
+                                        : t("explanation.chat.placeholder", "Type your question...")
                                 }
                                 value={chatInput}
                                 onChange={e => setChatInput(e.target.value)}
@@ -250,7 +256,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                 type="button"
                                 onClick={handleSendChatMessage}
                                 disabled={isSendingMessage || !chatInput.trim() || !isChatInitialized}
-                                title="Send question"
+                                title={t("explanation.chat.send", "Send question")}
                                 style={{
                                     padding: "8px 12px",
                                     display: "flex",

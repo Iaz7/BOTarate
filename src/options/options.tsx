@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ImportExportTab } from "../components/ImportExportTab";
 import ProgressConfigTab from "../components/ProgressConfigTab";
 import { APP_CONFIG } from "../constants";
 import "../content/bootstrap.css";
+import { AVAILABLE_LANGUAGES, changeLanguage, type LanguageCode } from "../i18n";
 import { AssistantConfig } from "../util/ai/AssistantConfig";
 import { OpenAIService } from "../util/ai/OpenAIService";
 import { ConfigManager } from "../util/config/ConfigManager";
@@ -41,6 +43,23 @@ const ConfigTextArea: React.FC<ConfigTextAreaProps> = ({ label, value, onChange,
 );
 
 const Options: React.FC = () => {
+    const { t, i18n } = useTranslation();
+
+    // Language - Sync with i18n state
+    const [currentLang, setCurrentLang] = useState<LanguageCode>(
+        (i18n.language?.split("-")[0] as LanguageCode) || "es",
+    );
+
+    useEffect(() => {
+        const handleLanguageChanged = (lng: string) => {
+            setCurrentLang((lng.split("-")[0] as LanguageCode) || "es");
+        };
+        i18n.on("languageChanged", handleLanguageChanged);
+        return () => {
+            i18n.off("languageChanged", handleLanguageChanged);
+        };
+    }, [i18n]);
+
     // LLM Configuration
     const [selectedProvider, setSelectedProvider] = useState<number>(0);
     const [modelList, setModelList] = useState<string[]>([]);
@@ -62,6 +81,12 @@ const Options: React.FC = () => {
 
     // Mode Configuration
     const [isUserTeacher, setIsUserTeacher] = useState<boolean>(false);
+
+    const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newLang = e.target.value as LanguageCode;
+        await changeLanguage(newLang);
+        setCurrentLang(newLang);
+    };
 
     // Validación y carga de modelos/API key
     const validateAndLoadModels = (
@@ -263,9 +288,9 @@ const Options: React.FC = () => {
                     <div className="col-11 col-xl-10">
                         <div className="text-center">
                             <output className="spinner-border">
-                                <span className="visually-hidden">Loading configuration...</span>
+                                <span className="visually-hidden">{t("common.loading")}</span>
                             </output>
-                            <p className="mt-2">Loading configuration...</p>
+                            <p className="mt-2">{t("common.loading")}</p>
                         </div>
                     </div>
                 </div>
@@ -280,39 +305,39 @@ const Options: React.FC = () => {
             case "general":
                 return (
                     <div>
-                        <h5 className="mb-3">General configuration</h5>
+                        <h5 className="mb-3">{t("options.assistants.sections.general")}</h5>
                         <ConfigTextField
-                            label="Subject name"
-                            value={assistantConfig.common.subjectName}
-                            onChange={value => updateAssistantField("common", "subjectName", value)}
-                            description="Name of the subject for which assistants are configured"
+                            label={t("options.assistants.fields.subject.label")}
+                            value={assistantConfig.common.courseName}
+                            onChange={value => updateAssistantField("common", "courseName", value)}
+                            description={t("options.assistants.fields.subject.desc")}
                         />
                         <ConfigTextField
-                            label="LMS platform"
+                            label={t("options.assistants.fields.platform.label")}
                             value={assistantConfig.common.platformName}
                             onChange={value => updateAssistantField("common", "platformName", value)}
-                            description="Name of the educational platform (e.g., Moodle, Canvas, Egela)"
+                            description={t("options.assistants.fields.platform.desc")}
                         />
                         <ConfigTextField
-                            label="University"
+                            label={t("options.assistants.fields.institution.label")}
                             value={assistantConfig.common.institutionName}
                             onChange={value => updateAssistantField("common", "institutionName", value)}
-                            description="Name of the university"
+                            description={t("options.assistants.fields.institution.desc")}
                         />
 
                         <hr className="my-4" />
-                        <h5 className="mb-3">Teacher personalization</h5>
+                        <h5 className="mb-3">{t("options.assistants.headers.teacherPersonalization")}</h5>
                         <ConfigTextField
-                            label="Teacher's name"
+                            label={t("options.assistants.fields.teacherName.label")}
                             value={assistantConfig.common.teacherName}
                             onChange={value => updateAssistantField("common", "teacherName", value)}
-                            description="Name of the teacher"
+                            description={t("options.assistants.fields.teacherName.desc")}
                         />
                         <ConfigTextArea
-                            label="Teacher's tics"
+                            label={t("options.assistants.fields.teacherTics.label")}
                             value={assistantConfig.common.teacherTics}
                             onChange={value => updateAssistantField("common", "teacherTics", value)}
-                            description="Common expressions/phrases the teacher uses"
+                            description={t("options.assistants.fields.teacherTics.desc")}
                             rows={3}
                         />
                     </div>
@@ -320,19 +345,19 @@ const Options: React.FC = () => {
             case "exercise":
                 return (
                     <div>
-                        <h5 className="mb-3">Lab context extraction configuration</h5>
+                        <h5 className="mb-3">{t("options.assistants.headers.labContext")}</h5>
                         <ConfigTextArea
-                            label="Lab material"
+                            label={t("options.assistants.fields.labMaterial.label")}
                             value={assistantConfig.exerciseAssistant.contextDescription}
                             onChange={value => updateAssistantField("exerciseAssistant", "contextDescription", value)}
-                            description="Describes what context should be extracted from lab materials"
+                            description={t("options.assistants.fields.labMaterial.desc")}
                             rows={2}
                         />
                         <ConfigTextArea
-                            label="Exercise identification"
+                            label={t("options.assistants.fields.exerciseCriteria.label")}
                             value={assistantConfig.exerciseAssistant.exerciseCriteria}
                             onChange={value => updateAssistantField("exerciseAssistant", "exerciseCriteria", value)}
-                            description="Criteria for identifying what constitutes an exercise and how it should be extracted"
+                            description={t("options.assistants.fields.exerciseCriteria.desc")}
                             rows={6}
                         />
                     </div>
@@ -340,33 +365,33 @@ const Options: React.FC = () => {
             case "evaluation":
                 return (
                     <div>
-                        <h5 className="mb-3">Solution evaluator configuration</h5>
+                        <h5 className="mb-3">{t("options.assistants.headers.evaluator")}</h5>
                         <ConfigTextArea
-                            label="Role"
+                            label={t("options.assistants.fields.role.label")}
                             value={assistantConfig.evaluationAssistant.role}
                             onChange={value => updateAssistantField("evaluationAssistant", "role", value)}
-                            description="Defines the role of the evaluator in the context of the coursev"
+                            description={t("options.assistants.fields.role.desc")}
                             rows={2}
                         />
                         <ConfigTextArea
-                            label="Evaluation criteria"
+                            label={t("options.assistants.fields.evaluationCriteria.label")}
                             value={assistantConfig.evaluationAssistant.evaluationCriteria}
                             onChange={value => updateAssistantField("evaluationAssistant", "evaluationCriteria", value)}
-                            description="Detailed criteria for evaluating solutions"
+                            description={t("options.assistants.fields.evaluationCriteria.desc")}
                             rows={10}
                         />
                         <ConfigTextArea
-                            label="Scoring scale"
+                            label={t("options.assistants.fields.scoringScale.label")}
                             value={assistantConfig.evaluationAssistant.scoringScale}
                             onChange={value => updateAssistantField("evaluationAssistant", "scoringScale", value)}
-                            description="Description of the scoring scale"
+                            description={t("options.assistants.fields.scoringScale.desc")}
                             rows={5}
                         />
                         <ConfigTextArea
-                            label="Feedback giving"
+                            label={t("options.assistants.fields.feedbackFormat.label")}
                             value={assistantConfig.evaluationAssistant.feedbackFormat}
                             onChange={value => updateAssistantField("evaluationAssistant", "feedbackFormat", value)}
-                            description="Instructions on how to structure and format feedback"
+                            description={t("options.assistants.fields.feedbackFormat.desc")}
                             rows={6}
                         />
                     </div>
@@ -374,26 +399,26 @@ const Options: React.FC = () => {
             case "explanation":
                 return (
                     <div>
-                        <h5 className="mb-3">Exercise solver configuration</h5>
+                        <h5 className="mb-3">{t("options.assistants.headers.solver")}</h5>
                         <ConfigTextArea
-                            label="Role"
+                            label={t("options.assistants.fields.role.label")}
                             value={assistantConfig.explanationAssistant.role}
                             onChange={value => updateAssistantField("explanationAssistant", "role", value)}
-                            description="Defines the purpose of the exercise solver in the context of the course"
+                            description={t("options.assistants.fields.role.desc")}
                             rows={2}
                         />
                         <ConfigTextArea
-                            label="Process methodology"
+                            label={t("options.assistants.fields.methodology.label")}
                             value={assistantConfig.explanationAssistant.methodology}
                             onChange={value => updateAssistantField("explanationAssistant", "methodology", value)}
-                            description="Pedagogical methodology for generating explanations"
+                            description={t("options.assistants.fields.methodology.desc")}
                             rows={15}
                         />
                         <ConfigTextArea
-                            label="Feedback giving"
+                            label={t("options.assistants.fields.feedbackFormat.label")}
                             value={assistantConfig.explanationAssistant.outputFormat}
                             onChange={value => updateAssistantField("explanationAssistant", "outputFormat", value)}
-                            description="Instructions on how to structure and format feedback"
+                            description={t("options.assistants.fields.feedbackFormat.desc")}
                             rows={6}
                         />
                     </div>
@@ -409,7 +434,7 @@ const Options: React.FC = () => {
         return (
             <div className="card mb-4">
                 <div className="card-header">
-                    <h5 className="card-title mb-0">Global progress criteria</h5>
+                    <h5 className="card-title mb-0">{t("options.progress.globalTitle")}</h5>
                 </div>
                 <div className="card-body">
                     <ProgressConfigTab isActive={activeTab === "progress"} />
@@ -422,7 +447,28 @@ const Options: React.FC = () => {
         <div className="container-fluid py-4">
             <div className="row justify-content-center">
                 <div className="col-11 col-xl-10">
-                    <h1 className="h2 mb-4">{APP_CONFIG.NAME} - Configuration</h1>
+                    <div className="d-flex justify-content-between align-items-center mb-4">
+                        <h1 className="h2 mb-0">
+                            {APP_CONFIG.NAME} - {t("options.tabs.llm").split(" ")[0]}
+                        </h1>
+
+                        {/* Selector de idioma */}
+                        <div className="d-flex align-items-center gap-2">
+                            <label className="form-label mb-0 small text-muted">{t("options.language.title")}:</label>
+                            <select
+                                className="form-select form-select-sm"
+                                style={{ width: "auto" }}
+                                value={currentLang}
+                                onChange={handleLanguageChange}
+                            >
+                                {AVAILABLE_LANGUAGES.map(lang => (
+                                    <option key={lang.code} value={lang.code}>
+                                        {lang.nativeName}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
 
                     {/* Tabs de navegación principal */}
                     <ul className="nav nav-pills mb-4">
@@ -431,7 +477,7 @@ const Options: React.FC = () => {
                                 className={`nav-link ${activeTab === "llm" ? "active" : ""}`}
                                 onClick={() => setActiveTab("llm")}
                             >
-                                LLM providers
+                                {t("options.tabs.llm")}
                             </button>
                         </li>
                         {isUserTeacher && (
@@ -440,7 +486,7 @@ const Options: React.FC = () => {
                                     className={`nav-link ${activeTab === "assistants" ? "active" : ""}`}
                                     onClick={() => setActiveTab("assistants")}
                                 >
-                                    Prompts
+                                    {t("options.tabs.assistants")}
                                 </button>
                             </li>
                         )}
@@ -450,7 +496,7 @@ const Options: React.FC = () => {
                                     className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
                                     onClick={() => setActiveTab("progress")}
                                 >
-                                    Gamification
+                                    {t("options.tabs.progress")}
                                 </button>
                             </li>
                         )}
@@ -459,7 +505,7 @@ const Options: React.FC = () => {
                                 className={`nav-link ${activeTab === "import-export" ? "active" : ""}`}
                                 onClick={() => setActiveTab("import-export")}
                             >
-                                Import/Export
+                                {t("options.tabs.importExport")}
                             </button>
                         </li>
                     </ul>
@@ -467,8 +513,7 @@ const Options: React.FC = () => {
                     {/* Mensaje informativo para alumnos */}
                     {!isUserTeacher && (
                         <div className="alert alert-info mb-4">
-                            <strong>Student mode:</strong> To configure the extension, import the configuration file
-                            provided by your teacher.
+                            <span dangerouslySetInnerHTML={{ __html: t("options.studentMode.warning") }} />
                         </div>
                     )}
 
@@ -476,7 +521,7 @@ const Options: React.FC = () => {
                     {activeTab === "llm" && (
                         <div className="card mb-4">
                             <div className="card-header">
-                                <h5 className="card-title mb-0">LLM providers</h5>
+                                <h5 className="card-title mb-0">{t("options.llm.title")}</h5>
                             </div>
                             <div className="card-body">
                                 {saveMessage && (
@@ -492,7 +537,7 @@ const Options: React.FC = () => {
                                 <div className="row g-3">
                                     <div className="col-md-3">
                                         <label htmlFor="providerSelect" className="form-label">
-                                            Provider
+                                            {t("options.llm.provider")}
                                         </label>
                                         <select
                                             className="form-select"
@@ -509,24 +554,26 @@ const Options: React.FC = () => {
                                     </div>
                                     <div className="col-md-9">
                                         <label htmlFor="apiKey" className="form-label">
-                                            API Key
+                                            {t("options.llm.apiKey")}
                                         </label>
                                         <input
                                             type="password"
                                             className={`form-control${apiKeyError ? " is-invalid" : ""}`}
                                             id="apiKey"
-                                            placeholder="Enter your API Key"
+                                            placeholder={t("options.llm.apiKeyPlaceholder")}
                                             autoComplete="off"
                                             value={apiKey}
                                             onChange={e => setApiKey(e.target.value)}
                                         />
-                                        {apiKeyError && <div className="invalid-feedback">{apiKeyError}</div>}
+                                        {apiKeyError && (
+                                            <div className="invalid-feedback">{t("options.llm.apiKeyError")}</div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="row g-3 mt-2">
                                     <div className="col-md-6">
                                         <label htmlFor="modelSelect" className="form-label">
-                                            Text Model (main)
+                                            {t("options.llm.textModel")}
                                         </label>
                                         <select
                                             className={`form-select${
@@ -543,11 +590,11 @@ const Options: React.FC = () => {
                                                 </option>
                                             ))}
                                         </select>
-                                        <div className="form-text">Used for chat, explanations, and evaluations</div>
+                                        <div className="form-text">{t("options.llm.textModelHelp")}</div>
                                     </div>
                                     <div className="col-md-6">
                                         <label htmlFor="visionModelSelect" className="form-label">
-                                            Vision Model (images)
+                                            {t("options.llm.visionModel")}
                                         </label>
                                         <select
                                             className={`form-select${
@@ -566,11 +613,9 @@ const Options: React.FC = () => {
                                                 ),
                                             )}
                                         </select>
-                                        <div className="form-text">Used for analyzing images in course materials</div>
+                                        <div className="form-text">{t("options.llm.visionModelHelp")}</div>
                                         {!modelListEnabled && apiKey.trim() && apiKeyError && (
-                                            <div className="invalid-feedback">
-                                                Enter a valid API key to view models.
-                                            </div>
+                                            <div className="invalid-feedback">{t("options.llm.apiKeyError")}</div>
                                         )}
                                     </div>
                                 </div>
@@ -582,7 +627,7 @@ const Options: React.FC = () => {
                                             onClick={handleSaveConfiguration}
                                             disabled={!!apiKeyError || !modelListEnabled}
                                         >
-                                            Save configuration
+                                            {t("options.llm.save")}
                                         </button>
                                     </div>
                                 </div>

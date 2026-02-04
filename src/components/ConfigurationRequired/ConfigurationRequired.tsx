@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useConfigurationImport } from "./useConfigurationImport";
 
 interface ConfigurationRequiredProps {
@@ -12,9 +13,12 @@ export const ConfigurationRequired: React.FC<ConfigurationRequiredProps> = ({
     missingExerciseConfig = true,
     missingLLMConfig = false,
 }) => {
+    const { t } = useTranslation();
     const { fileInputRef, isLoading, error, handleFileSelect, handleButtonClick } = useConfigurationImport({
         onConfigLoaded,
     });
+
+    const renderHTML = (html: string) => <span dangerouslySetInnerHTML={{ __html: html }} />;
 
     return (
         <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "400px" }}>
@@ -37,33 +41,26 @@ export const ConfigurationRequired: React.FC<ConfigurationRequiredProps> = ({
                     </svg>
                 </div>
 
-                <h4 className="mb-3">Configuration required</h4>
+                <h4 className="mb-3">{t("configurationRequired.title")}</h4>
 
                 {missingExerciseConfig && missingLLMConfig ? (
                     <div className="text-muted mb-4">
-                        <p className="mb-2">Configuration is required to use the extension:</p>
+                        <p className="mb-2">{t("configurationRequired.requiredBoth.text")}</p>
                         <ul className="text-start" style={{ display: "inline-block" }}>
                             <li className="mb-2">
-                                <strong>Assistant configuration:</strong> Import a configuration file provided by your
-                                teacher with the course exercises and labs.
+                                {renderHTML(t("configurationRequired.requiredBoth.assistantConfig"))}
                             </li>
-                            <li>
-                                <strong>LLM configuration:</strong> Configure the API key and AI provider model from the
-                                extension options page.
-                            </li>
+                            <li>{renderHTML(t("configurationRequired.requiredBoth.llmConfig"))}</li>
                         </ul>
                     </div>
                 ) : missingExerciseConfig ? (
-                    <p className="text-muted mb-4">
-                        No assistant configuration found. Please import a configuration file provided by your teacher to
-                        start using the extension.
-                    </p>
+                    <p className="text-muted mb-4">{t("configurationRequired.requiredExercise")}</p>
                 ) : missingLLMConfig ? (
                     <div className="text-muted mb-4">
-                        <p className="mb-2">LLM is not configured. To use the extension you need to:</p>
+                        <p className="mb-2">{t("configurationRequired.requiredLLM.text")}</p>
                         <ul className="text-start" style={{ display: "inline-block" }}>
-                            <li>Configure the AI provider API key (OpenAI, Google, etc.)</li>
-                            <li>Select a compatible model</li>
+                            <li>{t("configurationRequired.requiredLLM.key")}</li>
+                            <li>{t("configurationRequired.requiredLLM.model")}</li>
                         </ul>
                     </div>
                 ) : null}
@@ -93,12 +90,12 @@ export const ConfigurationRequired: React.FC<ConfigurationRequiredProps> = ({
                                         role="status"
                                         aria-hidden="true"
                                     />
-                                    {" Loading..."}
+                                    {t("configurationRequired.importLoading")}
                                 </>
                             ) : (
                                 <>
                                     <i className="bi bi-upload me-2" />
-                                    {" Import Configuration"}
+                                    {t("configurationRequired.importButton")}
                                 </>
                             )}
                         </button>
@@ -108,8 +105,7 @@ export const ConfigurationRequired: React.FC<ConfigurationRequiredProps> = ({
                 {missingLLMConfig && (
                     <div className="alert alert-warning mt-3" role="alert">
                         <i className="bi bi-gear me-2" />
-                        To configure the LLM, go to the extension options page, set your API key and a compatible model,
-                        save the configuration and reload this page.
+                        {t("configurationRequired.llmWarning")}
                     </div>
                 )}
             </div>

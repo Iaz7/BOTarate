@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { createHandlers } from "./handlers";
 import { useLabConfigState } from "./hooks";
 import "./LabConfigTab.css";
@@ -7,6 +8,11 @@ import { LabConfigTabProps } from "./types";
 import { handleSaveChanges } from "./utils";
 
 const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, isActive }) => {
+    const { t } = useTranslation();
+
+    // Función auxiliar para renderizar HTML seguro
+    const renderHTML = (html: string) => <span dangerouslySetInnerHTML={{ __html: html }} />;
+
     const {
         labs,
         labConfig,
@@ -47,7 +53,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
         setExpandedLab,
         contentRef,
         courseId,
-        onConfigUpdate
+        onConfigUpdate,
     );
 
     const isAnyGenerating = Array.from(contextGenerationStatus.values()).some(s => s === "generating");
@@ -66,16 +72,16 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
             setHasUnsavedChanges,
             setIsSaving,
             courseId,
-            onConfigUpdate
+            onConfigUpdate,
         );
 
     if (isLoading) {
         return (
             <div className="text-center py-4">
                 <output className="spinner-border">
-                    <span className="visually-hidden">Loading labs...</span>
+                    <span className="visually-hidden">{t("common.loading")}</span>
                 </output>
-                <p className="mt-2 text-muted small">Loading labs...</p>
+                <p className="mt-2 text-muted small">{t("options.labConfig.loading")}</p>
             </div>
         );
     }
@@ -83,10 +89,8 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
     if (labs.length === 0) {
         return (
             <div className="alert alert-info" role="alert">
-                <strong>No labs available</strong>
-                <p className="mb-0 mt-2 small">
-                    No 'page' type resources found in the course that can be configured as labs.
-                </p>
+                <strong>{t("options.labConfig.noLabsTitle")}</strong>
+                <p className="mb-0 mt-2 small">{t("options.labConfig.noLabsDesc")}</p>
             </div>
         );
     }
@@ -96,31 +100,16 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
             {/* Explicación del sistema */}
             <div className="alert alert-primary small mb-3" role="alert">
                 <h6 className="alert-heading">
-                    <i className="bi bi-info-circle"></i> Course configuration
+                    <i className="bi bi-info-circle"></i> {t("options.labConfig.infoTitle")}
                 </h6>
-                <p className="mb-2">
-                    Configure which labs to include and their <strong>required level</strong>,{" "}
-                    <strong>verbosity</strong> and <strong>reasoning</strong> options.
-                </p>
+                <p className="mb-2">{renderHTML(t("options.labConfig.infoDesc"))}</p>
                 <ul className="mb-2 small">
-                    <li>
-                        <strong>Include lab:</strong> Enable this to analyze the lab and extract exercises. This is
-                        required before other configuration options can be used.
-                    </li>
-                    <li>
-                        <strong>Required lab:</strong> Labs marked as required will unlock sequentially when the student
-                        completes the challenges of the previous lab.
-                    </li>
-                    <li>
-                        <strong>Verbosity level:</strong> Controls the level of detail in the assistant's explanations
-                        (low, medium, or high).
-                    </li>
-                    <li>
-                        <strong>Reasoning effort:</strong> Configures how much detail the assistant should put into
-                        explaining its reasoning (minimal, low, medium, or high).
-                    </li>
+                    <li>{renderHTML(t("options.labConfig.infoList.include"))}</li>
+                    <li>{renderHTML(t("options.labConfig.infoList.required"))}</li>
+                    <li>{renderHTML(t("options.labConfig.infoList.verbosity"))}</li>
+                    <li>{renderHTML(t("options.labConfig.infoList.reasoning"))}</li>
                 </ul>
-                <p className="mb-0 small">Click on an included lab to expand its configuration options.</p>
+                <p className="mb-0 small">{t("options.labConfig.infoFooter")}</p>
             </div>
 
             <div className="accordion" id="labAccordion">
@@ -160,7 +149,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                                 <div className="lab-switch-row" onClick={e => e.stopPropagation()}>
                                     {isGenerating ? (
                                         <span className="spinner-border spinner-border-sm text-primary" role="status">
-                                            <span className="visually-hidden">Generating...</span>
+                                            <span className="visually-hidden">{t("options.labConfig.generating")}</span>
                                         </span>
                                     ) : (
                                         <>
@@ -186,10 +175,9 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                                                     minWidth: "52px",
                                                 }}
                                             >
-                                                Include
+                                                {t("options.labConfig.includeLabel")}
                                             </label>
-                                            {/* SVG Tick verde siempre presente, visible solo si está incluido */}
-                                            <span style={{ display: "flex", alignItems: "center", marginLeft: "4px" }}>
+                                            <span style={{ display: "flex", alignItems: "center", marginLeft: "8px" }}>
                                                 <svg
                                                     width="20"
                                                     height="20"
@@ -275,7 +263,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                                             }`}
                                             htmlFor={`switch-lab-${lab.id}`}
                                         >
-                                            Required lab
+                                            {t("options.labConfig.requiredLabel")}
                                         </label>
                                         <div className="form-check form-switch">
                                             <input
@@ -294,7 +282,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                                     <hr className="my-2" />
 
                                     <p className={`small mb-2 ${hasContext ? "text-muted" : "text-muted opacity-50"}`}>
-                                        <strong>Explanation assistant configuration:</strong>
+                                        <strong>{t("options.labConfig.explanationConfig")}</strong>
                                     </p>
 
                                     {/* Selector de Verbosidad */}
@@ -322,7 +310,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                                             className="btn btn-link p-0 ms-2"
                                             style={{ fontSize: "14px" }}
                                         >
-                                            Go to lab
+                                            {t("options.labConfig.goToLab")}
                                         </a>
                                     </div>
                                 </div>
@@ -334,12 +322,12 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
 
             {(hasUnsavedChanges || hasContextChanges) && (
                 <div className="alert alert-warning small mb-3 mt-3" role="alert">
-                    <strong>⚠️ You have unsaved changes</strong>
-                    <p className="mb-0 mt-1">Click "Save changes" to apply the configuration.</p>
+                    <strong>{t("options.labConfig.unsavedTitle")}</strong>
+                    <p className="mb-0 mt-1">{t("options.labConfig.unsavedDesc")}</p>
                     {hasContextChanges && (
                         <p className="mb-0 mt-1 small">
                             <i className="bi bi-info-circle me-1"></i>
-                            Context will be generated for newly included labs.
+                            {t("options.labConfig.unsavedContext")}
                         </p>
                     )}
                 </div>
@@ -354,12 +342,12 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                     {isSaving || isAnyGenerating ? (
                         <>
                             <output className="spinner-border spinner-border-sm me-2">
-                                <span className="visually-hidden">Saving...</span>
+                                <span className="visually-hidden">{t("options.labConfig.saving")}</span>
                             </output>
-                            {isAnyGenerating ? "Generating context..." : "Saving changes..."}
+                            {isAnyGenerating ? t("options.labConfig.generatingContext") : t("options.labConfig.saving")}
                         </>
                     ) : (
-                        "Save changes"
+                        t("options.labConfig.save")
                     )}
                 </button>
             </div>

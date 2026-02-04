@@ -200,14 +200,17 @@ In the following cases, respond as follows:
 COURSE INFORMATION:
 Below is the complete course structure with all available sections. Each section has a unique ID that you must use when you need to get its detailed content.
 
-{courseContext}`;
+{courseContext}
+
+{languageInstruction}`;
 
         // Variables to substitute in the template
         const variables = {
             role: 'Asistente basado en chat para ayudar a los estudiantes con el contenido y ejercicios de su curso en línea',
             toolsDescription: 'Tienes acceso a las herramientas getSectionContent, getPageContent, getResourceContent, explainExercise y solveExercise para consultar material del curso y trabajar con ejercicios.',
             exerciseContext: exerciseContext,
-            courseContext: courseContext
+            courseContext: courseContext,
+            languageInstruction: this.buildLanguageInstruction()
         };
 
         return this.buildPromptFromTemplate(template, variables);

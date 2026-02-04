@@ -5,6 +5,7 @@ import ChatSidebar from "../components/ChatSidebar";
 import EvaluationListModal from "../components/EvaluationListModal";
 import ExerciseModal from "../components/ExerciseModal";
 import SolutionModal from "../components/SolutionModal";
+import "../i18n"; // Inicializar i18n
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
 import { extractPdfTextFromBase64 } from "../util/pdf/PdfExtractor";

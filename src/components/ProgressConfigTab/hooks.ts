@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { DEFAULT_CONFIG } from "./constants";
 import { ProgressConfigForm, StatusMessage } from "./types";
 
 export const useProgressConfig = (isActive: boolean) => {
+    const { t } = useTranslation();
     const [config, setConfig] = useState<ProgressConfigForm>(DEFAULT_CONFIG);
     const [originalConfig, setOriginalConfig] = useState<ProgressConfigForm | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -46,7 +48,7 @@ export const useProgressConfig = (isActive: boolean) => {
                 }
             } catch (error) {
                 console.error("[ProgressConfigTab] Error loading progress configuration:", error);
-                setStatusMessage({ type: "error", text: "Could not load configuration. Please try again." });
+                setStatusMessage({ type: "error", text: t('options.progress.errorLoad', 'Could not load configuration. Please try again.') });
             } finally {
                 setIsLoading(false);
             }
@@ -80,13 +82,13 @@ export const useProgressConfig = (isActive: boolean) => {
             if (response?.success) {
                 setOriginalConfig(payload);
                 setConfig(payload);
-                setStatusMessage({ type: "success", text: "Progress criteria saved successfully." });
+                setStatusMessage({ type: "success", text: t('options.progress.successSave', 'Progress criteria saved successfully.') });
             } else {
                 throw new Error(response?.error || "Error saving configuration");
             }
         } catch (error) {
             console.error("[ProgressConfigTab] Error saving configuration:", error);
-            setStatusMessage({ type: "error", text: "Could not save. Check values and try again." });
+            setStatusMessage({ type: "error", text: t('options.progress.errorSave', 'Could not save. Check values and try again.') });
         } finally {
             setIsSaving(false);
         }

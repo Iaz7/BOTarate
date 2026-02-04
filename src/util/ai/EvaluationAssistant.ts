@@ -71,6 +71,8 @@ PEDAGOGICAL CONTEXT:
 
 {teacherPersonalization}
 
+{languageInstruction}
+
 IMPORTANT:
 {importantNotes}`;
 
@@ -85,6 +87,7 @@ IMPORTANT:
             objectivesContext: objectivesContext,
             considerObjectives: considerObjectives,
             teacherPersonalization: this.buildTeacherPersonalization(),
+            languageInstruction: this.buildLanguageInstruction(),
             importantNotes: assistantConfig.importantNotes || ''
         };
 

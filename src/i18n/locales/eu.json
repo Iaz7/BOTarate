@@ -1,0 +1,493 @@
+{
+    "app": {
+        "name": "BOTarate",
+        "description": "AA bidezko luzapena irakaskuntza eta ikaskuntzarako laguntza emateko",
+        "loading": "Kargatzen..."
+    },
+    "common": {
+        "save": "Gorde",
+        "cancel": "Utzi",
+        "close": "Itxi",
+        "delete": "Ezabatu",
+        "edit": "Editatu",
+        "confirm": "Berretsi",
+        "loading": "Kargatzen...",
+        "error": "Errorea",
+        "success": "Arrakasta",
+        "warning": "Abisua",
+        "info": "Informazioa",
+        "yes": "Bai",
+        "no": "Ez",
+        "back": "Atzera",
+        "next": "Hurrengoa",
+        "submit": "Bidali",
+        "reset": "Berrezarri",
+        "search": "Bilatu",
+        "filter": "Iragazi",
+        "export": "Esportatu",
+        "import": "Inportatu",
+        "download": "Deskargatu",
+        "upload": "Igo"
+    },
+    "chatTab": {
+        "placeholder": {
+            "disabledModal": "Txata desgaituta (modala irekita)...",
+            "teacherMode": "Aldatu ikasle modura laborategian lan egiteko...",
+            "labBlocked": "Laborategia blokeatuta...",
+            "loadingExercises": "Ariketak kargatzen...",
+            "notConfigured": "Laborategia ez du irakasleak konfiguratu...",
+            "default": "Idatzi zure galdera..."
+        },
+        "welcome": {
+            "default": "Ikastaroaren edukiari buruz galdetu diezaidakezu. Ariketetan lan egin nahi baduzu, ireki laborategi bat lehenik.",
+            "ready": "Orri honetako ariketak prest daude. Eskatu azalpen bat edo esan irtenbidea egiaztatu nahi baduzu. Nahi baduzu, eskuragarri dauden ariketen zerrenda eman diezazuket.",
+            "identifying": "Ariketak identifikatu bezain laster, haiekin lagundu ahal izango dizut.",
+            "genericHelper": "Hemen nago ikastaroarekin laguntzeko."
+        },
+        "status": {
+            "checkingAccess": "Laborategiko sarbidea egiaztatzen...",
+            "labBlockedTitle": "Laborategia blokeatuta",
+            "labBlockedDesc": "Laborategi hau blokeatuta dago, derrigorrezkoa delako eta oraindik ez duzulako aurrekoa osatu.",
+            "unlockTitle": "Laborategi hau desblokeatzeko:",
+            "unlockList": {
+                "complete": "Osatu aurreko laborategiko derrigorrezko erronka ariketak",
+                "criteria": "Bete irakasleak luzapenaren aukeretan definitutako irizpideak edo begiratu xehetasunak \"Nire aurrerapena\" atalean",
+                "checkProgress": "Egiaztatu zure aurrerapena \"Nire aurrerapena\" fitxan"
+            },
+            "teacherModeTitle": "Irakasle modua aktibo",
+            "teacherModeDesc": "Irakasle moduan zaude. Laborategi honetako ariketan lan egiteko, ikasle modura aldatu behar duzu.",
+            "teacherModeAction": "Joan <strong>\"Modua\"</strong> etengailura zure modua aldatzeko.",
+            "loadingExercises": "Kargatzen...",
+            "searchingExercises": "Ariketak bilatzen...",
+            "analyzingContent": "Orriaren edukia aztertzen ariketa eskuragarriak identifikatzeko.",
+            "notConfiguredTitle": "Laborategia ez dago konfiguratuta",
+            "notConfiguredDesc": "Irakasleak oraindik ez du laborategi hau konfiguratu. Txata desgaituta dago konfigurazioa eskuragarri egon arte.",
+            "notConfiguredAction": "Mesedez, itxaron zure irakasleak laborategi hau konfiguratu arte edo jarri harremanetan berarekin informazio gehiagorako.",
+            "generating": "Erantzuna sortzen..."
+        },
+        "roles": {
+            "user": "Zu",
+            "assistant": "Laguntzailea"
+        },
+        "buttons": {
+            "send": "Bidali mezua",
+            "restart": "Elkarrizketa berrabiarazi"
+        }
+    },
+    "tools": {
+        "getSection": {
+            "withName": "📂 \"{{name}}\" atala kontsultatzen...",
+            "generic": "📂 Atala kontsultatzen..."
+        },
+        "getPage": {
+            "withName": "📄 \"{{name}}\" orria irakurtzen...",
+            "generic": "📄 Orria irakurtzen..."
+        },
+        "getResource": {
+            "withName": "📦 \"{{name}}\" baliabidea irakurtzen...",
+            "generic": "📦 Baliabidea irakurtzen..."
+        },
+        "explainExercise": "💡 {{index}} ariketa azaltzen...",
+        "solveExercise": "📝 {{index}} ariketaren soluzio formularioa irekitzen...",
+        "getFilteredFileContent": "🔍 Fitxategian bilatzen...",
+        "analyzeImage": {
+            "withName": "🖼️ \"{{name}}\" irudia aztertzen...",
+            "generic": "🖼️ Irudia aztertzen..."
+        },
+        "default": "🔧 Tresna exekutatzen: {{name}}..."
+    },
+    "popup": {
+        "welcome": "Ongi etorri {{appName}}-(e)ra. Konfiguratu luzapena erabiltzen hasteko.",
+        "openSettings": "Ezarpenak ireki"
+    },
+    "sidebar": {
+        "expand": "Sidebarra zabaldu",
+        "collapse": "Sidebarra tolestu",
+        "mode": {
+            "student": "Ikaslea",
+            "teacher": "Irakaslea"
+        },
+        "tabs": {
+            "chat": "Txata",
+            "exercises": "Ariketak",
+            "progress": "Nire aurrerapena",
+            "configureCourse": "Ikastaroa konfiguratu",
+            "configureLab": "Laborategia konfiguratu"
+        },
+        "tooltips": {
+            "labBlocked": "Ez dago erabilgarri laborategia blokeatuta dagoen bitartean"
+        },
+        "checkingConfig": "Konfigurazioa egiaztatzen..."
+    },
+    "noExercisesMessage": {
+        "title": "Ez da ariketarik aurkitu",
+        "desc": "Orri honek ez dirudi ariketarik duenik"
+    },
+    "loadingMessage": {
+        "loading": "Kargatzen...",
+        "title": "Ariketak bilatzen...",
+        "desc": "Orriaren edukia aztertzen"
+    },
+    "floatingButton": {
+        "title_one": "Ikusi ariketa {{count}}",
+        "title_other": "Ikusi {{count}} ariketa",
+        "label": "Ikusi ariketak"
+    },
+    "configurationRequired": {
+        "title": "Konfigurazioa beharrezkoa",
+        "requiredBoth": {
+            "text": "Konfigurazioa beharrezkoa da luzapena erabiltzeko:",
+            "assistantConfig": "<strong>Laguntzailearen konfigurazioa:</strong> Inportatu irakasleak emandako konfigurazio fitxategia ikastaroko ariketa eta laborategiekin.",
+            "llmConfig": "<strong>LLM konfigurazioa:</strong> Konfiguratu API gakoa eta AI hornitzailearen eredua luzapenaren aukeren orrian."
+        },
+        "requiredExercise": "Ez da laguntzailearen konfiguraziorik aurkitu. Mesedez, inportatu irakasleak emandako konfigurazio fitxategia luzapena erabiltzen hasteko.",
+        "requiredLLM": {
+            "text": "LLM ez dago konfiguratuta. Luzapena erabiltzeko beharrezkoa da:",
+            "key": "AI hornitzailearen API gakoa konfiguratu (OpenAI, Google, etab.)",
+            "model": "Eredu bateragarri bat hautatu"
+        },
+        "importButton": " Inportatu konfigurazioa",
+        "importLoading": " Kargatzen...",
+        "llmWarning": "LLM konfiguratzeko, joan luzapenaren aukeren orrira, ezarri zure API gakoa eta eredu bateragarri bat, gorde konfigurazioa eta freskatu orri hau."
+    },
+    "options": {
+        "tabs": {
+            "llm": "LLM Konfigurazioa",
+            "assistants": "Laguntzaileak",
+            "progress": "Aurrerapena",
+            "importExport": "Inportatu/Esportatu"
+        },
+        "llm": {
+            "title": "Hizkuntza Modeloaren Konfigurazioa",
+            "provider": "Hornitzailea",
+            "apiKey": "API Giltza",
+            "apiKeyPlaceholder": "Sartu zure API giltza",
+            "apiKeyError": "API giltza baliogabea. Sartu API giltza baliozkoa modeloak ikusteko.",
+            "textModel": "Testu Eredua (nagusia)",
+            "textModelHelp": "Txaterako, azalpenetarako eta ebaluazioetarako erabilia",
+            "visionModel": "Ikusmen Eredua (irudiak)",
+            "visionModelHelp": "Ariketen pantaila-argazkiak aztertzeko erabilia",
+            "saveSuccess": "Konfigurazioa behar bezala gorde da",
+            "saveError": "Errorea konfigurazioa gordetzean"
+        },
+        "assistants": {
+            "title": "Laguntzaileen Konfigurazioa",
+            "sections": {
+                "general": "Orokorra",
+                "exercise": "Ariketak",
+                "evaluation": "Ebaluazioa",
+                "explanation": "Azalpena"
+            },
+            "fields": {
+                "subject": { "label": "Irakasgaia", "desc": "Laguntzaileak konfiguratzen diren irakasgaiaren izena" },
+                "platform": {
+                    "label": "LMS Plataforma",
+                    "desc": "Hezkuntza plataformaren izena (adib. Moodle, Canvas, Egela)"
+                },
+                "institution": { "label": "Unibertsitatea", "desc": "Unibertsitatearen izena" },
+                "teacherName": { "label": "Irakaslearen izena", "desc": "Irakaslearen izena" },
+                "teacherTics": {
+                    "label": "Irakaslearen esamoldeak",
+                    "desc": "Irakasleak erabili ohi dituen esamoldeak"
+                },
+                "labMaterial": {
+                    "label": "Laborategiko materiala",
+                    "desc": "Laborategiko materialetatik zer testuinguru atera behar den azaltzen du"
+                },
+                "exerciseCriteria": {
+                    "label": "Ariketen identifikazioa",
+                    "desc": "Ariketa bat zer den eta nola atera behar den identifikatzeko irizpideak"
+                },
+                "role": {
+                    "label": "Rola",
+                    "desc": "Ikastaroaren testuinguruan laguntzailearen helburua/rola definitzen du"
+                },
+                "evaluationCriteria": {
+                    "label": "Ebaluazio irizpideak",
+                    "desc": "Konponbideak ebaluatzeko irizpide zehatzak"
+                },
+                "scoringScale": { "label": "Puntuazio eskala", "desc": "Puntuazio eskalaren deskribapena" },
+                "feedbackFormat": {
+                    "label": "Feedback formatua",
+                    "desc": "Feedbacka nola egituratu eta formatu behar den azaltzen duten argibideak"
+                },
+                "methodology": { "label": "Metodologia", "desc": "Laguntzaileak jarraitu behar duen metodologia" }
+            },
+            "headers": {
+                "teacherPersonalization": "Irakaslearen pertsonalizazioa",
+                "labContext": "Laborategiko testuingurua ateratzeko konfigurazioa",
+                "evaluator": "Konponbide ebaluatzailearen konfigurazioa",
+                "solver": "Ariketa ebazlearen konfigurazioa"
+            },
+            "buttons": {
+                "save": "Gorde laguntzaileen konfigurazioa",
+                "saving": "Gordetzen...",
+                "saved": "Laguntzaileen konfigurazioa ondo gorde da",
+                "error": "Errorea konfigurazioa gordetzean"
+            }
+        },
+        "studentMode": {
+            "warning": "<strong>Ikasle modua:</strong> Luzapena konfiguratzeko, inportatu irakasleak emandako konfigurazio fitxategia."
+        },
+        "language": {
+            "title": "Hizkuntza",
+            "select": "Hautatu hizkuntza",
+            "description": "Hizkuntzak interfazean eta laguntzailearen erantzunetan eragina du"
+        },
+        "exerciseConfig": {
+            "infoTitle": "Ariketen konfigurazioa",
+            "infoDesc": "Fitxa honetan <strong>erronka</strong> edo <strong>zorrotz</strong> diren ariketak zein diren konfiguratu dezakezu.",
+            "infoList": {
+                "challenge": "<strong>Ariketa erronka:</strong> Ezin da azalpenik eskatu, baina soluzio-ebaluazioak bai.",
+                "picky": "<strong>Ariketa zorrotzak:</strong> Abisu bat erakusten da azalpen bat eskatzean, enuntziatuan erantzun partzialak izan ditzaketelako."
+            },
+            "infoFooter": "Aldaketak gorde ondoren, sistemak automatikoki eguneratuko ditu murrizketak.",
+            "noExercisesTitle": "Ez dago ariketarik eskuragarri",
+            "noExercisesDesc": "Orrian ariketak detektatzen direnean, zeintzuk diren erronka ariketak konfiguratu ahal izango duzu.",
+            "table": {
+                "headerName": "Ariketaren izena",
+                "headerChallenge": "Erronka da",
+                "headerPicky": "Zorrotza da",
+                "badgeChallenge": "Erronka",
+                "badgePicky": "Zorrotza",
+                "switchChallengeOn": "Erronka da",
+                "switchChallengeOff": "Ez da erronka",
+                "switchPickyOn": "Zorrotza da",
+                "switchPickyOff": "Ez da zorrotza"
+            },
+            "unsavedTitle": "⚠️ Gorde gabeko aldaketak dituzu",
+            "unsavedDesc": "Sakatu \"Gorde aldaketak\" konfigurazioa aplikatzeko eta laguntzailea birsortzeko.",
+            "save": "Gorde aldaketak",
+            "saving": "Aldaketak gordetzen...",
+            "processing": "Konfigurazioa aplikatzen eta murrizketak eguneratzen..."
+        },
+        "labConfig": {
+            "loading": "Laborategiak kargatzen...",
+            "noLabsTitle": "Ez dago laborategirik eskuragarri",
+            "noLabsDesc": "Ez da laborategi gisa konfiguratu daitekeen 'page' motako baliabiderik aurkitu ikastaroan.",
+            "infoTitle": "Ikastaroaren konfigurazioa",
+            "infoDesc": "Konfiguratu zein laborategi sartu eta haien <strong>derrigorrezkotasuna</strong>, <strong>hitzezko maila</strong> eta <strong>arrazoibide</strong> aukerak.",
+            "infoList": {
+                "include": "<strong>Laborategia sartu:</strong> Gaitu hau laborategia analizatzeko eta ariketak ateratzeko. Hau beharrezkoa da beste konfigurazio aukerak erabili aurretik.",
+                "required": "<strong>Derrigorrezko laborategia:</strong> Derrigorrezko gisa markatutako laborategiak sekuentzialki desblokeatuko dira ikasleak aurreko laborategiko erronkak osatzen dituenean.",
+                "verbosity": "<strong>Hitzezko maila:</strong> Laguntzailearen azalpenen xehetasun maila kontrolatzen du (baxua, ertaina edo altua).",
+                "reasoning": "<strong>Arrazoibide ahalegina:</strong> Laguntzaileak bere arrazoibidea azaltzeko zenbat xehetasun eman behar duen konfiguratzen du (minimoa, baxua, ertaina edo altua)."
+            },
+            "infoFooter": "Sakatu sartutako laborategi batean bere konfigurazio aukerak zabaltzeko.",
+            "includeLabel": "Sartu",
+            "requiredLabel": "Derrigorrezko laborategia",
+            "explanationConfig": "Azalpen laguntzailearen konfigurazioa:",
+            "goToLab": "Laborategira joan",
+            "unsavedTitle": "⚠️ Gorde gabeko aldaketak dituzu",
+            "unsavedDesc": "Sakatu \"Gorde aldaketak\" konfigurazioa aplikatzeko.",
+            "unsavedContext": "Testuingurua sortuko da sartu berri diren laborategietarako.",
+            "save": "Gorde aldaketak",
+            "saving": "Aldaketak gordetzen...",
+            "generatingContext": "Testuingurua sortzen...",
+            "generating": "Sortzen...",
+            "verbosity": "Hitzezko maila",
+            "reasoning": "Arrazoibide ahalegina",
+            "levels": {
+                "low": "Baxua",
+                "medium": "Ertaina",
+                "high": "Altua",
+                "minimal": "Minimoa"
+            },
+            "tooltips": {
+                "verbosityLow": "Erantzun zehatzak eta zuzenak",
+                "verbosityMedium": "Xehetasun maila orekatua",
+                "verbosityHigh": "Azalpen zehatzak eta zabalak",
+                "reasoningMinimal": "Erantzun zuzena arrazoibiderik gabe",
+                "reasoningLow": "Oinarrizko arrazoibidea",
+                "reasoningMedium": "Arrazoibide moderatua",
+                "reasoningHigh": "Arrazoibide zehatza pauso-pauso"
+            }
+        },
+        "progress": {
+            "loading": "Aurrerapen konfigurazioa kargatzen...",
+            "globalTitle": "Aurrerapen irizpide globalak",
+            "info": {
+                "title": "Konfiguratu laborategiak desblokeatzeko irizpideak",
+                "desc": "Doitu erronkak gainditzeko gutxieneko puntuazioa eta laborategia gainditzeko ehunekoa."
+            },
+            "minScore": {
+                "label": "Erronka ariketa bat gainditzeko gutxieneko puntuazioa",
+                "help": "Balio hau edo handiagoa duten erronkak gainditutzat hartuko dira."
+            },
+            "minPercentage": {
+                "label": "Aurrera egiteko gainditutako erronken gutxieneko ehunekoa",
+                "help": "Adibidez: %75arekin, laborategi batek 4 erronka baditu, gutxienez 3 gainditu behar dira hurrengoa desblokeatzeko."
+            },
+            "save": "Gorde irizpideak",
+            "saving": "Gordetzen...",
+            "restore": "Berrezarri balio lehenetsiak",
+            "errorLoad": "Ezin izan da konfigurazioa kargatu. Saiatu berriro.",
+            "successSave": "Aurrerapen irizpideak ondo gorde dira.",
+            "errorSave": "Ezin izan da gorde. Egiaztatu balioak eta saiatu berriro."
+        },
+        "importExport": {
+            "export": {
+                "title": "Esportatu konfigurazioa",
+                "description": "Esportatu zure konfigurazio guztia (laguntzaileak, ariketak eta laborategiak) JSON fitxategi batera. Fitxategi hau segurtasun kopiak egiteko edo konfigurazioa beste nabigatzaile batera transferitzeko erabil dezakezu.",
+                "button": "Esportatu konfigurazioa",
+                "processing": " Esportatzen..."
+            },
+            "import": {
+                "title": "Inportatu konfigurazioa",
+                "description": "Inportatu konfigurazioa aurrez esportatutako JSON fitxategi batetik. Honek lehendik dauden datuak gainidatziko ditu.",
+                "warningTitle": "⚠️ Adi:",
+                "warningDesc": "Inportatzeak lehendik dauden datuak gainidatziko ditu. Lehenik segurtasun kopia gisa esportatzea gomendatzen da."
+            },
+            "dangerZone": {
+                "title": "Arrisku eremua",
+                "description": "Ezabatu luzapenak gordetako datu guztiak betirako. Ekintza hau ezin da desegin.",
+                "button": "Ezabatu datu guztiak",
+                "processing": " Ezabatzen..."
+            },
+            "messages": {
+                "exportSuccess": "Konfigurazioa ondo esportatu da",
+                "importSuccess": "Konfigurazioa ondo inportatu da",
+                "clearSuccess": "Datu guztiak ondo ezabatu dira",
+                "exportError": "Ustekabeko errorea esportatzean: {{error}}",
+                "importError": "Ustekabeko errorea inportatzean: {{error}}",
+                "clearError": "Ustekabeko errorea ezabatzean: {{error}}"
+            },
+            "confirmClear": "⚠️ OHARRA: Ekintza honek gordetako konfigurazio GUZTIA ezabatuko du, barne:\n\n- Laguntzaileen konfigurazioa\n- Identifikatutako ariketen datuak\n- Konfiguratutako laborategien datuak\n\nEkintza hau EZIN DA desegin. Ziur jarraitu nahi duzula?"
+        }
+    },
+    "sidebar": {
+        "title": "Txata",
+        "placeholder": "Idatzi zure mezua...",
+        "send": "Bidali",
+        "clearHistory": "Historia garbitu",
+        "newChat": "Elkarrizketa berria"
+    },
+    "exercises": {
+        "title": "Ariketak",
+        "loading": "Ariketak kargatzen...",
+        "noExercises": "Ez dago ariketa erabilgarririk",
+        "noExercisesDesc": "Orrian ariketak detektatzen direnean, hemen agertuko dira gordetako azalpen eta ebaluazioekin batera.",
+        "challenge": "Erronka",
+        "picky": "Zorrotza",
+        "viewExplanation": "Ikusi azalpena",
+        "viewEvaluations": "Ikusi ebaluazioak",
+        "blocked": "Ariketa hau blokeatuta dago",
+        "explain": "Azaldu",
+        "evaluate": "Ebaluatu",
+        "solution": "Irtenbidea",
+        "statement": "Enuntziatua",
+        "yourSolution": "Zure irtenbidea",
+        "submitSolution": "Irtenbidea bidali",
+        "solve": "Ebatzi ariketa: {{name}}",
+        "placeholderSQL": "Idatzi zure SQL kontsulta hemen...",
+        "pickyWarning": {
+            "title": "Ariketa zorrotz gisa markatua.",
+            "desc": "Azalpen hau baliteke guztiz zuzena ez izatea. Berrikusi pausoak arretaz eta galdetu irakasleari zerbait arraroa ikusten baduzu."
+        }
+    },
+    "evaluation": {
+        "title": "Ebaluazioa",
+        "score": "Puntuazioa",
+        "scoreLabels": {
+            "excellent": "Bikain",
+            "good": "Ondo",
+            "acceptable": "Onargarria",
+            "insufficient": "Ez-nahikoa",
+            "veryPoor": "Oso txarra"
+        },
+        "feedback": "Feedbacka",
+        "evaluating": "Zure irtenbidea ebaluatzen...",
+        "strengths": "Puntu indartsuak",
+        "improvements": "Hobetzeko arloak",
+        "history": "Ebaluazio historia",
+        "noEvaluations": "Ez dago aurreko ebaluaziorik",
+        "retry": {
+            "title": "Berriro saiatu nahi duzu?",
+            "desc": "Leiho hau itxi dezakezu eta ariketa berriro ebaztea eskatu irtenbide berri bat bidaltzeko."
+        },
+        "list": {
+            "title": "{{name}}-ren ebaluazioak",
+            "loading": "Ebaluazioak kargatzen...",
+            "emptyTitle": "Ez dago ebaluaziorik gordeta",
+            "emptyDesc": "Oraindik ez duzu ariketa hau ebaluatzeko irtenbiderik bidali.",
+            "stats": "Estatistikak",
+            "bestScore": "Puntuazio onena",
+            "avgScore": "Batez besteko puntuazioa",
+            "totalAttempts": "Saiakera guztira",
+            "history": "Saiakera historia ({{count}})",
+            "attempt": "{{num}}. saiakera",
+            "yourSolution": "Zure irtenbidea",
+            "evaluatorFeedback": "Ebaluatzailearen feedbacka",
+            "selectPrompt": "Hautatu ebaluazio bat historiatik xehetasunak ikusteko."
+        }
+    },
+    "explanation": {
+        "title": "Azalpena",
+        "generating": "Azalpena sortzen...",
+        "error": "Errorea azalpena sortzean",
+        "regenerate": "Azalpena birsortu",
+        "chat": {
+            "title": "Azalpenari buruzko galderak",
+            "subtitle": "Egin galderak azalpeneko edozein pausori buruz",
+            "waiting": "Azalpena kargatu zain...",
+            "empty": "Azalpenari buruzko zalantzarik baduzu? Galdetu edozer.",
+            "user": "Zu",
+            "assistant": "Laguntzailea",
+            "generating": "Erantzuna sortzen...",
+            "placeholder": "Idatzi zure galdera...",
+            "send": "Bidali galdera"
+        },
+        "steps": "Urratsak",
+        "askQuestion": "Galdera egin",
+        "continueChat": "Elkarrizketa jarraitu"
+    },
+    "progress": {
+        "title": "Aurrerapena",
+        "completed": "Osatuta",
+        "pending": "Zain",
+        "labs": "Laborategiak",
+        "exercises": "Ariketak",
+        "score": "Puntuazioa",
+        "loading": "Aurrerapena kargatzen...",
+        "noLabsTitle": "Ez dago laborategirik konfiguratuta",
+        "noLabsDesc": "Irakasleak oraindik ez du ikastaro honetarako laborategi eta aurrerapen sistema konfiguratu.",
+        "infoTitle": "Aurrerapen sistema",
+        "infoDesc": "Laborategiak sekuentzialki desblokeatzen dira. Laborategi batera sartzeko, aurreko laborategiko <strong>erronka ariketak</strong> osatu behar dituzu irakasleak definitutako irizpideen arabera.",
+        "infoList": {
+            "challenge": "<strong>Erronka ariketak:</strong> Adimen artifizialak ezin ditu azaldu, baina zure irtenbidea bidaltzean ebaluatu daitezke.",
+            "score": "<strong>Erregistratutako puntuazioa:</strong> Ariketa bakoitzerako zure puntuazio onena gordetzen da.",
+            "required": "<strong>Laborategi derrigorrezkoak soilik:</strong> Ikuspegi honek irakasleak derrigorrezkotzat markatutako laborategiak soilik erakusten ditu, aurrera egiteko osatu beharrekoak."
+        },
+        "criteriaTitle": "Uneko irizpideak:",
+        "minScore": "Gutxieneko puntuazioa erronka bakoitzeko: {{score}} / 10",
+        "minPercentage": "Gainditu beharreko erronken ehuneko minimoa: {{percentage}}% laborategiko erronka guztietatik",
+        "labCard": {
+            "title": "{{index}}. Laborategia: {{name}}",
+            "exercises": "Ariketak: {{completed}} / {{total}}",
+            "average": "Batez besteko puntuazioa: {{score}}",
+            "challengesTitle": "Erronka ariketak:",
+            "notAttempted": "Ez da saiatu",
+            "noChallenges": "Ez dago erronka ariketarik laborategi honetan.",
+            "locked": "Laborategia blokeatuta. Osatu aurreko laborategia konfiguratutako irizpideei jarraituz."
+        }
+    },
+    "errors": {
+        "generic": "Errore bat gertatu da",
+        "network": "Konexio errorea",
+        "apiKey": "API giltza baliogabea edo konfiguratu gabea",
+        "notFound": "Ez da aurkitu",
+        "exerciseBlocked": "\"{{exerciseName}}\" ariketa blokeatuta dago eta ezin da azaldu.",
+        "loadingExercise": "Ezin izan da \"{{exerciseName}}\" ariketa kargatu.",
+        "loadingExplanation": "Ez da azalpena aurkitu biltegian",
+        "chatHistory": "Errorea txat historia kargatzean",
+        "resetChat": "Errorea txat historia berrezartzean"
+    },
+    "llmPrompts": {
+        "languageInstruction": "Beti erantzun euskaraz.",
+        "progressSummary": {
+            "noProgress": "Ikasleak oraindik ez du laborategirik edo ariketa osatu.",
+            "completedLabs": "Osatutako laborategiak",
+            "completedExercises": "Laborategi bakoitzeko osatutako ariketak"
+        }
+    }
+}

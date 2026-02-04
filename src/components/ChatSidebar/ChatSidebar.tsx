@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { APP_CONFIG } from "../../constants";
 import { ConfigurationRequired } from "../ConfigurationRequired";
 import ExerciseConfigTab from "../ExerciseConfigTab";
@@ -46,6 +47,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
         handleKeyDown,
     } = useChatSidebar(props);
 
+    const { t } = useTranslation();
+
     return (
         <div
             className={`extension-sidebar ${isCollapsed ? "collapsed" : ""} ${
@@ -56,7 +59,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
             <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 className="collapse-button"
-                title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                title={isCollapsed ? t("sidebar.expand", "Expand sidebar") : t("sidebar.collapse", "Collapse sidebar")}
             >
                 {isCollapsed ? "◀" : "▶"}
             </button>
@@ -74,7 +77,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                     </div>
                     {isUserTeacher && (
                         <div className="d-flex align-items-center ms-auto mode-switch">
-                            <span className={`${!isTeacherMode ? "fw-bold" : "text-muted"}`}>Student</span>
+                            <span className={`${!isTeacherMode ? "fw-bold" : "text-muted"}`}>
+                                {t("sidebar.mode.student", "Student")}
+                            </span>
                             <div className="form-check form-switch mb-0">
                                 <input
                                     className="form-check-input"
@@ -85,7 +90,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                                     role="switch"
                                 />
                             </div>
-                            <span className={`${isTeacherMode ? "fw-bold" : "text-muted"}`}>Teacher</span>
+                            <span className={`${isTeacherMode ? "fw-bold" : "text-muted"}`}>
+                                {t("sidebar.mode.teacher", "Teacher")}
+                            </span>
                         </div>
                     )}
                 </div>
@@ -102,7 +109,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                                     type="button"
                                     role="tab"
                                 >
-                                    Chat
+                                    {t("sidebar.tabs.chat", "Chat")}
                                 </button>
                             </li>
 
@@ -115,15 +122,19 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                                         type="button"
                                         role="tab"
                                         disabled={isLabBlocked}
-                                        title={isLabBlocked ? "Not available while lab is blocked" : ""}
+                                        title={
+                                            isLabBlocked
+                                                ? t("sidebar.tooltips.labBlocked", "Not available while lab is blocked")
+                                                : ""
+                                        }
                                     >
-                                        Exercises
+                                        {t("sidebar.tabs.exercises", "Exercises")}
                                         {(exercisesWithExplanations.length > 0 ||
                                             exercisesWithEvaluations.length > 0) && (
                                             <span className="badge bg-primary ms-2">
                                                 {Math.max(
                                                     exercisesWithExplanations.length,
-                                                    exercisesWithEvaluations.length
+                                                    exercisesWithEvaluations.length,
                                                 )}
                                             </span>
                                         )}
@@ -140,7 +151,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                                         type="button"
                                         role="tab"
                                     >
-                                        My progress
+                                        {t("sidebar.tabs.progress", "My progress")}
                                     </button>
                                 </li>
                             )}
@@ -156,7 +167,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                                                 type="button"
                                                 role="tab"
                                             >
-                                                Configure course
+                                                {t("sidebar.tabs.configureCourse", "Configure course")}
                                             </button>
                                         </li>
                                     )}
@@ -167,7 +178,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                                             type="button"
                                             role="tab"
                                         >
-                                            Configure lab
+                                            {t("sidebar.tabs.configureLab", "Configure lab")}
                                         </button>
                                     </li>
                                 </>
@@ -183,9 +194,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                     <div className="d-flex align-items-center justify-content-center loading-container">
                         <div className="text-center">
                             <div className="spinner-border text-primary mb-3" role="status">
-                                <span className="visually-hidden">Checking configuration...</span>
+                                <span className="visually-hidden">
+                                    {t("sidebar.checkingConfig", "Checking configuration...")}
+                                </span>
                             </div>
-                            <p className="text-muted">Checking configuration...</p>
+                            <p className="text-muted">{t("sidebar.checkingConfig", "Checking configuration...")}</p>
                         </div>
                     </div>
                 ) : needsConfiguration || missingLLMConfig ? (

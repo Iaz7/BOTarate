@@ -1,9 +1,11 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { ImportExportTabProps } from "./types";
 import { useImportExport } from "./useImportExport";
 import { getAlertClass } from "./utils";
 
 export const ImportExportTab: React.FC<ImportExportTabProps> = props => {
+    const { t } = useTranslation();
     const { message, isProcessing, fileInputRef, handleExport, handleClearAll, handleFileSelect, setMessage } =
         useImportExport(props);
 
@@ -16,19 +18,18 @@ export const ImportExportTab: React.FC<ImportExportTabProps> = props => {
                         type="button"
                         className="btn-close"
                         onClick={() => setMessage(null)}
-                        aria-label="Close"
+                        aria-label={t('common.close')}
                     ></button>
                 </div>
             )}
 
             <div className="card mb-4">
                 <div className="card-header">
-                    <h5 className="card-title mb-0">Export configuration</h5>
+                    <h5 className="card-title mb-0">{t('options.importExport.export.title')}</h5>
                 </div>
                 <div className="card-body">
                     <p className="text-muted">
-                        Export all your configuration (assistants, exercises, and labs) to a JSON file. You can use this
-                        file to make backups or transfer the configuration to another browser.
+                        {t('options.importExport.export.description')}
                     </p>
                     <button type="button" className="btn btn-primary" onClick={handleExport} disabled={isProcessing}>
                         {isProcessing ? (
@@ -38,12 +39,12 @@ export const ImportExportTab: React.FC<ImportExportTabProps> = props => {
                                     role="status"
                                     aria-hidden="true"
                                 />
-                                {" Exporting..."}
+                                {t('options.importExport.export.processing')}
                             </>
                         ) : (
                             <>
                                 <i className="bi bi-download me-2" />
-                                {" Export configuration"}
+                                {t('options.importExport.export.button')}
                             </>
                         )}
                     </button>
@@ -52,12 +53,11 @@ export const ImportExportTab: React.FC<ImportExportTabProps> = props => {
 
             <div className="card mb-4">
                 <div className="card-header">
-                    <h5 className="card-title mb-0">Import configuration</h5>
+                    <h5 className="card-title mb-0">{t('options.importExport.import.title')}</h5>
                 </div>
                 <div className="card-body">
                     <p className="text-muted">
-                        Import a configuration from a previously exported JSON file. This will overwrite existing data
-                        with the file's data.
+                        {t('options.importExport.import.description')}
                     </p>
                     <div className="mb-3">
                         <input
@@ -70,19 +70,18 @@ export const ImportExportTab: React.FC<ImportExportTabProps> = props => {
                         />
                     </div>
                     <div className="alert alert-warning" role="alert">
-                        <strong>⚠️ Attention:</strong> Importing will overwrite existing data. It is recommended to
-                        export first as a backup.
+                        <strong>{t('options.importExport.import.warningTitle')}</strong> {t('options.importExport.import.warningDesc')}
                     </div>
                 </div>
             </div>
 
             <div className="card border-danger">
                 <div className="card-header bg-danger text-white">
-                    <h5 className="card-title mb-0">Danger zone</h5>
+                    <h5 className="card-title mb-0">{t('options.importExport.dangerZone.title')}</h5>
                 </div>
                 <div className="card-body">
                     <p className="text-muted">
-                        Permanently delete all data stored by the extension. This action cannot be undone.
+                        {t('options.importExport.dangerZone.description')}
                     </p>
                     <button type="button" className="btn btn-danger" onClick={handleClearAll} disabled={isProcessing}>
                         {isProcessing ? (
@@ -92,12 +91,12 @@ export const ImportExportTab: React.FC<ImportExportTabProps> = props => {
                                     role="status"
                                     aria-hidden="true"
                                 />
-                                {" Deleting..."}
+                                {t('options.importExport.dangerZone.processing')}
                             </>
                         ) : (
                             <>
                                 <i className="bi bi-trash me-2" />
-                                {" Delete all data"}
+                                {t('options.importExport.dangerZone.button')}
                             </>
                         )}
                     </button>

@@ -1,8 +1,10 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useProgressConfig } from "./hooks";
 import { ProgressConfigTabProps } from "./types";
 
 const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
+    const { t } = useTranslation();
     const {
         config,
         isLoading,
@@ -18,9 +20,9 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
         return (
             <div className="text-center py-4">
                 <output className="spinner-border">
-                    <span className="visually-hidden">Loading configuration...</span>
+                    <span className="visually-hidden">{t("common.loading")}</span>
                 </output>
-                <p className="text-muted small mt-2">Loading progress configuration...</p>
+                <p className="text-muted small mt-2">{t("options.progress.loading")}</p>
             </div>
         );
     }
@@ -28,10 +30,8 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
     return (
         <div>
             <div className="alert alert-info small" role="alert">
-                <strong>Configure criteria to unlock labs</strong>
-                <p className="mb-0 mt-1">
-                    Adjust the minimum score and percentage of passed challenges needed to progress.
-                </p>
+                <strong>{t("options.progress.info.title")}</strong>
+                <p className="mb-0 mt-1">{t("options.progress.info.desc")}</p>
             </div>
 
             {statusMessage && (
@@ -42,7 +42,7 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
 
             <div className="mb-4">
                 <label htmlFor="minScore" className="form-label fw-semibold">
-                    Minimum score to pass a challenge exercise
+                    {t("options.progress.minScore.label")}
                 </label>
                 <div className="input-group">
                     <input
@@ -58,14 +58,12 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
                     />
                     <span className="input-group-text">/ 10</span>
                 </div>
-                <div className="form-text">
-                    Challenges with a score equal to or higher than this value will be considered passed.
-                </div>
+                <div className="form-text">{t("options.progress.minScore.help")}</div>
             </div>
 
             <div className="mb-4">
                 <label htmlFor="minPercentage" className="form-label fw-semibold">
-                    Minimum percentage of passed challenges to progress
+                    {t("options.progress.minPercentage.label")}
                 </label>
                 <div className="input-group">
                     <input
@@ -81,9 +79,7 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
                     />
                     <span className="input-group-text">%</span>
                 </div>
-                <div className="form-text">
-                    Example: with 75%, if a lab has 4 challenges, at least 3 must be passed to unlock the next one.
-                </div>
+                <div className="form-text">{t("options.progress.minPercentage.help")}</div>
             </div>
 
             <div className="d-flex flex-wrap gap-2">
@@ -91,12 +87,12 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
                     {isSaving ? (
                         <>
                             <output className="spinner-border spinner-border-sm me-2">
-                                <span className="visually-hidden">Saving...</span>
+                                <span className="visually-hidden">{t("common.loading")}</span>
                             </output>
-                            Saving...
+                            {t("options.progress.saving")}
                         </>
                     ) : (
-                        "Save criteria"
+                        t("options.progress.save")
                     )}
                 </button>
                 <button
@@ -105,7 +101,7 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
                     onClick={handleRestoreDefaults}
                     disabled={isSaving}
                 >
-                    Restore default values
+                    {t("options.progress.restore")}
                 </button>
             </div>
         </div>

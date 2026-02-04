@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 interface NoExercisesMessageProps {
     onTimeout: () => void;
@@ -6,6 +7,8 @@ interface NoExercisesMessageProps {
 }
 
 const NoExercisesMessage: React.FC<NoExercisesMessageProps> = ({ onTimeout, duration = 3000 }) => {
+    const { t } = useTranslation();
+
     useEffect(() => {
         const timer = setTimeout(() => {
             onTimeout();
@@ -29,8 +32,8 @@ const NoExercisesMessage: React.FC<NoExercisesMessageProps> = ({ onTimeout, dura
                     <div className="text-warning mb-2" style={{ fontSize: "3rem" }}>
                         📄
                     </div>
-                    <h5 className="card-title">No exercises found</h5>
-                    <p className="card-text text-muted small mb-0">This page does not seem to contain exercises</p>
+                    <h5 className="card-title">{t("noExercisesMessage.title")}</h5>
+                    <p className="card-text text-muted small mb-0">{t("noExercisesMessage.desc")}</p>
                 </div>
             </div>
         </div>

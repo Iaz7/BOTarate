@@ -1,3 +1,4 @@
+import { getLLMLanguageInstruction } from "../../i18n/backend";
 import { Course } from "../egela/Course";
 import { AssistantConfig } from "./AssistantConfig";
 import { OpenAIService } from "./OpenAIService";
@@ -64,6 +65,15 @@ abstract class BaseAssistant {
             personalization += `\n- To make your feedback feel more familiar and natural, occasionally integrate some of the teacher's common expressions (verbal tics): ${teacherTics}. Use them sparingly and naturally - don't overuse them.`;
         }
         return personalization;
+    }
+
+    /**
+     * Builds the language instruction for prompts.
+     * Ensures the LLM responds in the user's selected language.
+     * @returns Formatted language instruction
+     */
+    protected buildLanguageInstruction(): string {
+        return `LANGUAGE REQUIREMENT:\n${getLLMLanguageInstruction()}`;
     }
 
     /**

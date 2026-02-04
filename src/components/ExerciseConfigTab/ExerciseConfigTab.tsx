@@ -1,9 +1,11 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useExerciseConfig } from "./hooks";
 import { ExerciseConfigTabProps } from "./types";
 import { getDefaultFlags } from "./utils";
 
 const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
+    const { t } = useTranslation();
     const {
         exerciseConfig,
         isSaving,
@@ -13,37 +15,27 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
         handleSaveChanges,
     } = useExerciseConfig(props);
 
+    // Función auxiliar para renderizar HTML seguro
+    const renderHTML = (html: string) => <span dangerouslySetInnerHTML={{ __html: html }} />;
+
     if (props.exercises.length === 0) {
         return (
             <div>
                 {/* Explicación del sistema */}
                 <div className="alert alert-primary small mb-3" role="alert">
                     <h6 className="alert-heading">
-                        <i className="bi bi-info-circle"></i> Lab configuration
+                        <i className="bi bi-info-circle"></i> {t("options.exerciseConfig.infoTitle")}
                     </h6>
-                    <p className="mb-2">
-                        In this tab you can configure which exercises are <strong>challenge</strong> or{" "}
-                        <strong>picky</strong>.
-                    </p>
+                    <p className="mb-2">{renderHTML(t("options.exerciseConfig.infoDesc"))}</p>
                     <ul className="mb-2 small">
-                        <li>
-                            <strong>Challenge exercises:</strong> Explanations cannot be requested, but solution
-                            evaluations can.
-                        </li>
-                        <li>
-                            <strong>Picky exercises:</strong> A warning is shown when asking for an explanation because
-                            they may contain partial answers in the statement.
-                        </li>
+                        <li>{renderHTML(t("options.exerciseConfig.infoList.challenge"))}</li>
+                        <li>{renderHTML(t("options.exerciseConfig.infoList.picky"))}</li>
                     </ul>
-                    <p className="mb-0 small">
-                        After saving changes, the system will automatically update the restrictions.
-                    </p>
+                    <p className="mb-0 small">{t("options.exerciseConfig.infoFooter")}</p>
                 </div>
                 <div className="alert alert-info" role="alert">
-                    <strong>No exercises available</strong>
-                    <p className="mb-0 mt-2 small">
-                        When exercises are detected on the page, you can configure which ones are challenge exercises.
-                    </p>
+                    <strong>{t("options.exerciseConfig.noExercisesTitle")}</strong>
+                    <p className="mb-0 mt-2 small">{t("options.exerciseConfig.noExercisesDesc")}</p>
                 </div>
             </div>
         );
@@ -54,25 +46,14 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
             {/* Explicación del sistema */}
             <div className="alert alert-primary small mb-3" role="alert">
                 <h6 className="alert-heading">
-                    <i className="bi bi-info-circle"></i> Exercise configuration
+                    <i className="bi bi-info-circle"></i> {t("options.exerciseConfig.infoTitle")}
                 </h6>
-                <p className="mb-2">
-                    In this tab you can configure which exercises are <strong>challenge</strong> or{" "}
-                    <strong>picky</strong>.
-                </p>
+                <p className="mb-2">{renderHTML(t("options.exerciseConfig.infoDesc"))}</p>
                 <ul className="mb-2 small">
-                    <li>
-                        <strong>Challenge exercises:</strong> Explanations cannot be requested, but solution evaluations
-                        can.
-                    </li>
-                    <li>
-                        <strong>Picky exercises:</strong> A warning is shown when asking for an explanation because they
-                        may contain partial answers in the statement.
-                    </li>
+                    <li>{renderHTML(t("options.exerciseConfig.infoList.challenge"))}</li>
+                    <li>{renderHTML(t("options.exerciseConfig.infoList.picky"))}</li>
                 </ul>
-                <p className="mb-0 small">
-                    After saving changes, the system will automatically update the restrictions.
-                </p>
+                <p className="mb-0 small">{t("options.exerciseConfig.infoFooter")}</p>
             </div>
 
             <div className="table-responsive">
@@ -80,13 +61,13 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
                     <thead>
                         <tr>
                             <th scope="col" style={{ width: "60%" }}>
-                                Exercise name
+                                {t("options.exerciseConfig.table.headerName")}
                             </th>
                             <th scope="col" className="text-center" style={{ width: "20%" }}>
-                                Is challenge
+                                {t("options.exerciseConfig.table.headerChallenge")}
                             </th>
                             <th scope="col" className="text-center" style={{ width: "20%" }}>
-                                Is picky
+                                {t("options.exerciseConfig.table.headerPicky")}
                             </th>
                         </tr>
                     </thead>
@@ -101,10 +82,14 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
                                         <div className="d-flex align-items-center">
                                             <span>{exercise.name}</span>
                                             {isChallenge && (
-                                                <span className="badge bg-warning text-dark ms-2">Challenge</span>
+                                                <span className="badge bg-warning text-dark ms-2">
+                                                    {t("options.exerciseConfig.table.badgeChallenge")}
+                                                </span>
                                             )}
                                             {isTiquismiqui && (
-                                                <span className="badge bg-info text-dark ms-2">Picky</span>
+                                                <span className="badge bg-info text-dark ms-2">
+                                                    {t("options.exerciseConfig.table.badgePicky")}
+                                                </span>
                                             )}
                                         </div>
                                     </td>
@@ -124,7 +109,9 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
                                                 className="form-check-label visually-hidden"
                                                 htmlFor={`challenge-switch-${exercise.name}`}
                                             >
-                                                {isChallenge ? "Is challenge" : "Not challenge"}
+                                                {isChallenge
+                                                    ? t("options.exerciseConfig.table.switchChallengeOn")
+                                                    : t("options.exerciseConfig.table.switchChallengeOff")}
                                             </label>
                                         </div>
                                     </td>
@@ -144,7 +131,9 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
                                                 className="form-check-label visually-hidden"
                                                 htmlFor={`tiquismiqui-switch-${exercise.name}`}
                                             >
-                                                {isTiquismiqui ? "Is picky" : "Not picky"}
+                                                {isTiquismiqui
+                                                    ? t("options.exerciseConfig.table.switchPickyOn")
+                                                    : t("options.exerciseConfig.table.switchPickyOff")}
                                             </label>
                                         </div>
                                     </td>
@@ -157,10 +146,8 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
 
             {hasUnsavedChanges && (
                 <div className="alert alert-warning small mb-3" role="alert">
-                    <strong>⚠️ You have unsaved changes</strong>
-                    <p className="mb-0 mt-1">
-                        Click "Save changes" to apply the configuration and regenerate the assistant.
-                    </p>
+                    <strong>{t("options.exerciseConfig.unsavedTitle")}</strong>
+                    <p className="mb-0 mt-1">{t("options.exerciseConfig.unsavedDesc")}</p>
                 </div>
             )}
 
@@ -173,12 +160,12 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
                     {isSaving ? (
                         <>
                             <output className="spinner-border spinner-border-sm me-2">
-                                <span className="visually-hidden">Saving...</span>
+                                <span className="visually-hidden">{t("common.saving")}</span>
                             </output>
-                            Saving changes...
+                            {t("options.exerciseConfig.saving")}
                         </>
                     ) : (
-                        "Save changes"
+                        t("options.exerciseConfig.save")
                     )}
                 </button>
             </div>
@@ -186,9 +173,9 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
             {isSaving && (
                 <div className="alert alert-secondary small d-flex align-items-center mt-2" role="alert">
                     <output className="spinner-border spinner-border-sm me-2">
-                        <span className="visually-hidden">Saving...</span>
+                        <span className="visually-hidden">{t("common.saving")}</span>
                     </output>
-                    Applying configuration and updating restrictions...
+                    {t("options.exerciseConfig.processing")}
                 </div>
             )}
         </div>
