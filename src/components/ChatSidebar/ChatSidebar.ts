@@ -320,21 +320,23 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
 
             setReloadKey(prev => prev + 1);
 
-            const tabs = await chrome.tabs.query({});
-            for (const tab of tabs) {
-                if (tab.id && tab.url && !tab.url.startsWith("chrome://")) {
-                    try {
-                        await chrome.tabs.sendMessage(tab.id, { action: "reloadSidebar" });
-                    } catch (error) {
-                        // Ignorar errores
+            if (chrome.tabs) {
+                const tabs = await chrome.tabs.query({});
+                for (const tab of tabs) {
+                    if (tab.id && tab.url && !tab.url.startsWith("chrome://")) {
+                        try {
+                            await chrome.tabs.sendMessage(tab.id, { action: "reloadSidebar" });
+                        } catch (error) {
+                            // Ignorar errores
+                        }
                     }
                 }
-            }
 
-            const extensionTabs = tabs.filter(tab => tab.url?.includes("chrome-extension://"));
-            for (const tab of extensionTabs) {
-                if (tab.id) {
-                    chrome.tabs.reload(tab.id);
+                const extensionTabs = tabs.filter(tab => tab.url?.includes("chrome-extension://"));
+                for (const tab of extensionTabs) {
+                    if (tab.id) {
+                        chrome.tabs.reload(tab.id);
+                    }
                 }
             }
         } catch (error) {
