@@ -7,10 +7,23 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
     const [originalConfig, setOriginalConfig] = useState<Map<string, ExerciseFlags>>(new Map());
     const [isSaving, setIsSaving] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
         setHasUnsavedChanges(!configsAreEqual(exerciseConfig, originalConfig));
     }, [exerciseConfig, originalConfig]);
+
+    // Limpiar mensajes después de 5 segundos
+    useEffect(() => {
+        if (successMessage || errorMessage) {
+            const timer = setTimeout(() => {
+                setSuccessMessage(null);
+                setErrorMessage(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [successMessage, errorMessage]);
 
     useEffect(() => {
         if (isActive && pageId) {
@@ -66,6 +79,8 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
         const changes = computePendingChanges(exerciseConfig, originalConfig);
         if (changes.length === 0) return;
 
+        setSuccessMessage(null);
+        setErrorMessage(null);
         setIsSaving(true);
         try {
             for (const change of changes) {
@@ -105,10 +120,10 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
                 onConfigUpdate();
             }
 
-            alert("Configuration saved successfully. The assistant has been updated with the new configuration.");
+            setSuccessMessage("Configuration saved successfully. The assistant has been updated with the new configuration.");
         } catch (error) {
             console.error("Error saving exercise config:", error);
-            alert("Error saving configuration. Please try again.");
+            setErrorMessage("Error saving configuration. Please try again.");
         } finally {
             setIsSaving(false);
         }
@@ -118,6 +133,8 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
         exerciseConfig,
         isSaving,
         hasUnsavedChanges,
+        successMessage,
+        errorMessage,
         handleToggleChallenge,
         handleTogglePicky,
         handleSaveChanges,

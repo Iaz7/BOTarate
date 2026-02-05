@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createHandlers } from "./handlers";
 import { useLabConfigState } from "./hooks";
@@ -12,6 +12,16 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
 
     // Función auxiliar para renderizar HTML seguro
     const renderHTML = (html: string) => <span dangerouslySetInnerHTML={{ __html: html }} />;
+
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Limpiar mensaje de error después de 5 segundos
+    useEffect(() => {
+        if (errorMessage) {
+            const timer = setTimeout(() => setErrorMessage(null), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [errorMessage]);
 
     const {
         labs,
@@ -59,21 +69,22 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
     const isAnyGenerating = Array.from(contextGenerationStatus.values()).some(s => s === "generating");
     const isDisabled = isSaving || isAnyGenerating;
 
-    const onSaveChanges = () =>
-        handleSaveChanges(
-            hasUnsavedChanges,
-            hasContextChanges,
-            labContextState,
-            setLabContextState,
-            contextGenerationStatus,
-            setContextGenerationStatus,
-            pendingChanges,
-            setPendingChanges,
-            setHasUnsavedChanges,
-            setIsSaving,
-            courseId,
-            onConfigUpdate,
-        );
+    const onSaveChanges = () => setErrorMessage(null);
+    handleSaveChanges(
+        hasUnsavedChanges,
+        hasContextChanges,
+        labContextState,
+        setLabContextState,
+        contextGenerationStatus,
+        setContextGenerationStatus,
+        pendingChanges,
+        setPendingChanges,
+        setHasUnsavedChanges,
+        setIsSaving,
+        courseId,
+        onConfigUpdate,
+        setErrorMessage,
+    );
 
     if (isLoading) {
         return (
@@ -330,6 +341,17 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                             {t("options.labConfig.unsavedContext")}
                         </p>
                     )}
+                </div>
+            )}
+
+            {errorMessage && (
+                <div className="alert alert-danger mt-3" role="alert">
+                    <h6 className="alert-heading d-flex align-items-center">
+                        <i className="bi bi-exclamation-triangle me-2"></i>
+                        {t("common.error")}
+                    </h6>
+                    <hr />
+                    <p className="mb-0">{errorMessage}</p>
                 </div>
             )}
 

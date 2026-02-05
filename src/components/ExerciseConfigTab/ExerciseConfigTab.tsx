@@ -6,8 +6,16 @@ import { getDefaultFlags } from "./utils";
 
 const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
     const { t } = useTranslation();
-    const { exerciseConfig, isSaving, hasUnsavedChanges, handleToggleChallenge, handleTogglePicky, handleSaveChanges } =
-        useExerciseConfig(props);
+    const {
+        exerciseConfig,
+        isSaving,
+        hasUnsavedChanges,
+        successMessage,
+        errorMessage,
+        handleToggleChallenge,
+        handleTogglePicky,
+        handleSaveChanges,
+    } = useExerciseConfig(props);
 
     // Función auxiliar para renderizar HTML seguro
     const renderHTML = (html: string) => <span dangerouslySetInnerHTML={{ __html: html }} />;
@@ -163,6 +171,28 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
                     )}
                 </button>
             </div>
+
+            {successMessage && (
+                <div className="alert alert-success mt-3" role="alert">
+                    <h6 className="alert-heading d-flex align-items-center">
+                        <i className="bi bi-check-circle me-2"></i>
+                        {t("common.success")}
+                    </h6>
+                    <hr />
+                    <p className="mb-0">{successMessage}</p>
+                </div>
+            )}
+
+            {errorMessage && (
+                <div className="alert alert-danger mt-3" role="alert">
+                    <h6 className="alert-heading d-flex align-items-center">
+                        <i className="bi bi-exclamation-triangle me-2"></i>
+                        {t("common.error")}
+                    </h6>
+                    <hr />
+                    <p className="mb-0">{errorMessage}</p>
+                </div>
+            )}
 
             {isSaving && (
                 <div className="alert alert-secondary small d-flex align-items-center mt-2" role="alert">

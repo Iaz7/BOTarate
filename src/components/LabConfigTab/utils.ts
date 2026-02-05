@@ -12,7 +12,8 @@ export const handleSaveChanges = async (
     setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>,
     setIsSaving: React.Dispatch<React.SetStateAction<boolean>>,
     courseId: string,
-    onConfigUpdate?: () => void
+    onConfigUpdate?: () => void,
+    onError?: (message: string) => void
 ) => {
     if (!hasUnsavedChanges && !hasContextChanges) return;
 
@@ -161,7 +162,11 @@ export const handleSaveChanges = async (
         }, 3000);
     } catch (error) {
         console.error("Error saving lab config:", error);
-        alert("Error saving configuration. Please try again.");
+        if (onError) {
+            onError("Error saving configuration. Please try again.");
+        } else {
+            alert("Error saving configuration. Please try again.");
+        }
     } finally {
         setIsSaving(false);
     }
