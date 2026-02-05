@@ -60,6 +60,25 @@ export async function setLanguage(lang: LanguageCode): Promise<void> {
     } catch (error) {
         console.warn('Error saving language to storage:', error);
     }
+
+    // Notificar a todas las pestañas activas del cambio de idioma
+    try {
+        const tabs = await chrome.tabs.query({});
+        for (const tab of tabs) {
+            if (tab.id) {
+                try {
+                    await chrome.tabs.sendMessage(tab.id, {
+                        action: 'languageChanged',
+                        language: lang
+                    });
+                } catch (error) {
+                    // Ignorar errores de pestañas que no tienen el content script
+                }
+            }
+        }
+    } catch (error) {
+        console.warn('Error notifying tabs of language change:', error);
+    }
 }
 
 /**

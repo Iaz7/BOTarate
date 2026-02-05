@@ -7,13 +7,13 @@ class Exercise {
     name: string;
     statement: string;
     allowed?: boolean;
-    isTiquismiqui?: boolean;
+    isPicky?: boolean;
 
-    constructor(name: string, statement: string, allowed: boolean = true, isTiquismiqui: boolean = false) {
+    constructor(name: string, statement: string, allowed: boolean = true, isPicky: boolean = false) {
         this.name = name;
         this.statement = statement;
         this.allowed = allowed;
-        this.isTiquismiqui = isTiquismiqui;
+        this.isPicky = isPicky;
     }
 
     toJSON() {
@@ -21,7 +21,7 @@ class Exercise {
             name: this.name,
             statement: this.statement,
             allowed: this.allowed,
-            isTiquismiqui: this.isTiquismiqui
+            isPicky: this.isPicky
         };
     }
 }

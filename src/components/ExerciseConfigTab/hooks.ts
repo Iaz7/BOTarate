@@ -58,8 +58,8 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
         updateExerciseFlags(exerciseName, flags => ({ ...flags, allowed: !flags.allowed }));
     };
 
-    const handleToggleTiquismiqui = (exerciseName: string) => {
-        updateExerciseFlags(exerciseName, flags => ({ ...flags, isTiquismiqui: !flags.isTiquismiqui }));
+    const handleTogglePicky = (exerciseName: string) => {
+        updateExerciseFlags(exerciseName, flags => ({ ...flags, isPicky: !flags.isPicky }));
     };
 
     const handleSaveChanges = async () => {
@@ -78,12 +78,12 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
                     });
                 }
 
-                if (change.isTiquismiqui !== undefined) {
+                if (change.isPicky !== undefined) {
                     await chrome.runtime.sendMessage({
-                        action: "updateExerciseTiquismiqui",
+                        action: "updateExercisePicky",
                         pageId: pageId,
                         exerciseName: change.name,
-                        isTiquismiqui: change.isTiquismiqui,
+                        isPicky: change.isPicky,
                     });
                 }
             }
@@ -119,7 +119,7 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
         isSaving,
         hasUnsavedChanges,
         handleToggleChallenge,
-        handleToggleTiquismiqui,
+        handleTogglePicky,
         handleSaveChanges,
     };
 };

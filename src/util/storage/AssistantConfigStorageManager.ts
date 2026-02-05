@@ -33,7 +33,8 @@ class AssistantConfigStorageManager extends BaseStorageManager {
             methodology: "",
             outputFormat: "",
             additionalRules: "",
-            importantNotes: ""
+            importantNotes: "",
+            pickyExerciseConfiguration: ""
         },
         common: {
             subjectName: "",

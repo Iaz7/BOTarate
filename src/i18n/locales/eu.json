@@ -98,7 +98,7 @@
     },
     "popup": {
         "welcome": "Ongi etorri {{appName}}-(e)ra. Konfiguratu luzapena erabiltzen hasteko.",
-        "openSettings": "Ezarpenak ireki"
+        "openSettings": "Konfigurazioa ireki"
     },
     "sidebar": {
         "expand": "Sidebarra zabaldu",
@@ -167,6 +167,7 @@
             "textModelHelp": "Txaterako, azalpenetarako eta ebaluazioetarako erabilia",
             "visionModel": "Ikusmen Eredua (irudiak)",
             "visionModelHelp": "Ariketen pantaila-argazkiak aztertzeko erabilia",
+            "save": "Konfigurazioa gorde",
             "saveSuccess": "Konfigurazioa behar bezala gorde da",
             "saveError": "Errorea konfigurazioa gordetzean"
         },
@@ -211,7 +212,11 @@
                     "label": "Feedback formatua",
                     "desc": "Feedbacka nola egituratu eta formatu behar den azaltzen duten argibideak"
                 },
-                "methodology": { "label": "Metodologia", "desc": "Laguntzaileak jarraitu behar duen metodologia" }
+                "methodology": { "label": "Metodologia", "desc": "Laguntzaileak jarraitu behar duen metodologia" },
+                "pickyExerciseConfig": {
+                    "label": "Ariketa zorrotzen konfigurazioa",
+                    "desc": "Deskribatu LLM-k ariketa zorrotzen azalpenetan nahita sartu behar dituen errore motak. Adib.: 'Sartu akats sotilak SQL sintaxian edo kontsulten logikan'"
+                }
             },
             "headers": {
                 "teacherPersonalization": "Irakaslearen pertsonalizazioa",
@@ -239,7 +244,7 @@
             "infoDesc": "Fitxa honetan <strong>erronka</strong> edo <strong>zorrotz</strong> diren ariketak zein diren konfiguratu dezakezu.",
             "infoList": {
                 "challenge": "<strong>Ariketa erronka:</strong> Ezin da azalpenik eskatu, baina soluzio-ebaluazioak bai.",
-                "picky": "<strong>Ariketa zorrotzak:</strong> Abisu bat erakusten da azalpen bat eskatzean, enuntziatuan erantzun partzialak izan ditzaketelako."
+                "picky": "<strong>Ariketa zorrotzak:</strong> Laguntzaileak nahita akatsak sartuko ditu azalpenean, ikasleak AA-k sortutako edukien berrikusketa kritikoa praktikatu dezan."
             },
             "infoFooter": "Aldaketak gorde ondoren, sistemak automatikoki eguneratuko ditu murrizketak.",
             "noExercisesTitle": "Ez dago ariketarik eskuragarri",
@@ -386,7 +391,7 @@
         "placeholderSQL": "Idatzi zure SQL kontsulta hemen...",
         "pickyWarning": {
             "title": "Ariketa zorrotz gisa markatua.",
-            "desc": "Azalpen hau baliteke guztiz zuzena ez izatea. Berrikusi pausoak arretaz eta galdetu irakasleari zerbait arraroa ikusten baduzu."
+            "desc": "Azalpen honek nahitako akatsak izan ditzake. Berrikusi pausoak arretaz eta erabili zure pentsamendu kritikoa. Akats bat aurkitzen baduzu, galdetu laguntzaileari baieztatzeko."
         }
     },
     "evaluation": {

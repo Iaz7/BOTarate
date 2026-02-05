@@ -5,7 +5,7 @@ import ChatSidebar from "../components/ChatSidebar";
 import EvaluationListModal from "../components/EvaluationListModal";
 import ExerciseModal from "../components/ExerciseModal";
 import SolutionModal from "../components/SolutionModal";
-import "../i18n"; // Inicializar i18n
+import i18n, { i18nInitialized } from "../i18n";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
 import { extractPdfTextFromBase64 } from "../util/pdf/PdfExtractor";
@@ -18,7 +18,7 @@ interface Exercise {
     name: string;
     statement: string;
     allowed?: boolean;
-    isTiquismiqui?: boolean;
+    isPicky?: boolean;
 }
 
 type ViewState = "loading" | "chat" | "hidden";
@@ -353,7 +353,7 @@ const ExtensionContent: React.FC = () => {
                 data.exercises.map((exercise: Exercise) => ({
                     ...exercise,
                     allowed: exercise.allowed ?? true,
-                    isTiquismiqui: exercise.isTiquismiqui ?? false,
+                    isPicky: exercise.isPicky ?? false,
                 })),
             );
         }
@@ -533,8 +533,19 @@ const ContentApp: React.FC = () => {
     useEffect(() => {
         console.log("Chrome extension loaded at:", globalThis.location.href);
 
+        // Escuchar cambios de idioma desde el background script
+        const handleLanguageChange = (message: any) => {
+            if (message.action === "languageChanged" && message.language) {
+                console.log("[Content] Language changed to:", message.language);
+                i18n.changeLanguage(message.language);
+            }
+        };
+
+        chrome.runtime.onMessage.addListener(handleLanguageChange);
+
         return () => {
             console.log("Chrome extension unloaded");
+            chrome.runtime.onMessage.removeListener(handleLanguageChange);
         };
     }, []);
 
@@ -546,6 +557,8 @@ const mountPoint = document.createElement("div");
 mountPoint.id = "chrome-extension-react-root";
 document.body.appendChild(mountPoint);
 
-// Renderizar la extensión usando React 18
-const root = createRoot(mountPoint);
-root.render(<ContentApp />);
+// Esperar a que i18n esté completamente inicializado antes de renderizar
+i18nInitialized.then(() => {
+    const root = createRoot(mountPoint);
+    root.render(<ContentApp />);
+});

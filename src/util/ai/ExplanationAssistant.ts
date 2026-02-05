@@ -68,10 +68,14 @@ class ExplanationAssistant extends BaseAssistant {
         concepts?: string[],
         learningObjectives?: string,
         progressSummary?: string,
-        pageId?: string
+        pageId?: string,
+        isPicky?: boolean
     ): string {
         const assistantConfig = this.config.explanationAssistant;
         const pedagogicalContext = this.buildPedagogicalContext(concepts, learningObjectives, progressSummary);
+
+        // Build picky exercise instructions if applicable
+        const pickyInstructions = isPicky ? this.buildPickyExerciseInstructions() : '';
 
         const systemPromptTemplate = `You are an expert tutor that solves exercises for students. Specifically: {role}.
 Your task is {taskDescription}
@@ -101,7 +105,9 @@ PEDAGOGICAL CONTEXT:
 
 {languageInstruction}
 
-{importantNotes}`;
+{importantNotes}
+
+{pickyInstructions}`;
 
         const systemPromptVariables = {
             role: assistantConfig.role,
@@ -115,10 +121,37 @@ PEDAGOGICAL CONTEXT:
             ...pedagogicalContext,
             teacherPersonalization: this.buildTeacherPersonalization(),
             languageInstruction: this.buildLanguageInstruction(),
-            importantNotes: assistantConfig.importantNotes || ''
+            importantNotes: assistantConfig.importantNotes || '',
+            pickyInstructions: pickyInstructions
         };
 
         return this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);
+    }
+
+    /**
+     * Builds the instructions for picky exercises that require intentional mistakes
+     */
+    private buildPickyExerciseInstructions(): string {
+        const assistantConfig = this.config.explanationAssistant;
+        const pickyConfig = assistantConfig.pickyExerciseConfiguration || '';
+
+        return `CRITICAL - PICKY EXERCISE MODE:
+This is a "picky" exercise designed to train the student in critically reviewing AI-generated content.
+
+INSTRUCTIONS FOR THIS EXERCISE:
+1. You MUST intentionally introduce one or more subtle mistakes in your explanation.
+2. The mistakes should be plausible enough that they require careful review to detect.
+3. NEVER mention in the explanation that there are intentional mistakes or that the student should look for errors. The explanation should be presented as if it were completely correct.
+5. Act completely naturally as if you were providing a correct explanation.
+
+${pickyConfig ? `SPECIFIC MISTAKE GUIDELINES FROM TEACHER (may override previous instructions):\n${pickyConfig}\n` : ''}
+
+IF THE STUDENT IDENTIFIES A MISTAKE:
+- Acknowledge and congratulate them for finding the error.
+- Explain why it was incorrect and provide the correct information.
+- You can then continue helping them with additional questions if needed.
+
+IMPORTANT: Your initial explanation MUST contain intentional errors as specified above. This is a pedagogical exercise to develop critical thinking skills.`;
     }
 
     /**
@@ -150,7 +183,9 @@ NOTE: After generating the explanation, the student will have the opportunity to
      * @param concepts - Concepts worked on the page (optional)
      * @param learningObjectives - Learning objectives of the page (optional)
      * @param progressSummary - Student progress summary (optional)
+     * @param pageId - Page ID for tool calls (optional)
      * @param responseOptions - Verbosity and reasoning options (optional)
+     * @param isPicky - Whether this is a picky exercise that requires intentional mistakes (optional)
      * @returns Structured explanation with steps
      */
     async generateExplanation(
@@ -161,14 +196,18 @@ NOTE: After generating the explanation, the student will have the opportunity to
         learningObjectives?: string,
         progressSummary?: string,
         pageId?: string,
-        responseOptions?: ResponseOptions
+        responseOptions?: ResponseOptions,
+        isPicky?: boolean
     ): Promise<ExplanationSchemaType> {
         console.log(`[generateExplanation] Generating explanation for: ${exerciseName}`);
         if (responseOptions) {
             console.log(`[generateExplanation] Options: verbosity=${responseOptions.verbosity}, reasoning=${responseOptions.reasoningEffort}`);
         }
+        if (isPicky) {
+            console.log(`[generateExplanation] Picky mode enabled - intentional mistakes will be introduced`);
+        }
 
-        const systemPrompt = this.buildExplanationSystemPrompt(exerciseContext, concepts, learningObjectives, progressSummary, pageId);
+        const systemPrompt = this.buildExplanationSystemPrompt(exerciseContext, concepts, learningObjectives, progressSummary, pageId, isPicky);
         const userPrompt = this.buildExplanationUserPrompt(exerciseName, exerciseStatement, exerciseContext);
 
         try {
@@ -239,6 +278,7 @@ NOTE: After generating the explanation, the student will have the opportunity to
      * @param progressSummary - Student progress summary
      * @param chatHistory - Previous chat message history (optional)
      * @param pageId - Page ID for tool calls
+     * @param isPicky - Whether this is a picky exercise (optional)
      */
     async initializeContextForFollowUp(
         exerciseName: string,
@@ -249,12 +289,13 @@ NOTE: After generating the explanation, the student will have the opportunity to
         learningObjectives?: string,
         progressSummary?: string,
         chatHistory?: Array<{ role: string; content: string }>,
-        pageId?: string
+        pageId?: string,
+        isPicky?: boolean
     ): Promise<void> {
         console.log(`[initializeContextForFollowUp] Initializing context for: ${exerciseName}`);
 
         // Use the same system prompt as generateExplanation
-        const systemPrompt = this.buildExplanationSystemPrompt(exerciseContext, concepts, learningObjectives, progressSummary, pageId);
+        const systemPrompt = this.buildExplanationSystemPrompt(exerciseContext, concepts, learningObjectives, progressSummary, pageId, isPicky);
 
         // Reconstruct the original user prompt
         const userPrompt = this.buildExplanationUserPrompt(exerciseName, exerciseStatement, exerciseContext);

@@ -167,6 +167,7 @@
             "textModelHelp": "Usado para chat, explicaciones y evaluaciones",
             "visionModel": "Modelo de visión (imágenes)",
             "visionModelHelp": "Usado para analizar capturas de pantalla de ejercicios",
+            "save": "Guardar configuración",
             "saveSuccess": "Configuración guardada correctamente",
             "saveError": "Error al guardar la configuración"
         },
@@ -211,7 +212,11 @@
                     "label": "Formato de retroalimentación",
                     "desc": "Instrucciones sobre cómo estructurar y formatear la retroalimentación"
                 },
-                "methodology": { "label": "Metodología", "desc": "Metodología que debe seguir el asistente" }
+                "methodology": { "label": "Metodología", "desc": "Metodología que debe seguir el asistente" },
+                "pickyExerciseConfig": {
+                    "label": "Configuración de ejercicios tiquismiquis",
+                    "desc": "Describe el tipo de errores que el LLM debe introducir intencionalmente en las explicaciones de ejercicios tiquismiquis. Ej: 'Introduce errores sutiles en la sintaxis SQL o en la lógica de las consultas'"
+                }
             },
             "headers": {
                 "teacherPersonalization": "Personalización del profesor",
@@ -239,7 +244,7 @@
             "infoDesc": "En esta pestaña puedes configurar qué ejercicios son <strong>retos</strong> o <strong>tiquismiquis</strong>.",
             "infoList": {
                 "challenge": "<strong>Ejercicios reto:</strong> No se pueden pedir explicaciones, pero sí evaluaciones de solución.",
-                "picky": "<strong>Ejercicios tiquismiquis:</strong> Se muestra un aviso al pedir una explicación porque pueden contener respuestas parciales en el enunciado."
+                "picky": "<strong>Ejercicios tiquismiquis:</strong> El asistente introducirá errores intencionales en la explicación para que el alumno practique la revisión crítica de contenido generado por IA."
             },
             "infoFooter": "Después de guardar los cambios, el sistema actualizará automáticamente las restricciones.",
             "noExercisesTitle": "No hay ejercicios disponibles",
@@ -366,7 +371,7 @@
         "noExercises": "No hay ejercicios disponibles",
         "noExercisesDesc": "Cuando se detecten ejercicios en la página, aparecerán aquí junto con las explicaciones y evaluaciones guardadas.",
         "challenge": "Reto",
-        "picky": "Puntilloso",
+        "picky": "Tiquismiquis",
         "viewExplanation": "Ver explicación",
         "viewEvaluations": "Ver evaluaciones",
         "blocked": "Este ejercicio está bloqueado",
@@ -379,8 +384,8 @@
         "solve": "Resolver ejercicio: {{name}}",
         "placeholderSQL": "Escribe tu consulta SQL aquí...",
         "pickyWarning": {
-            "title": "Ejercicio marcado como puntilloso.",
-            "desc": "Esta explicación podría no ser completamente correcta. Revisa los pasos con cuidado y consulta a tu profesor si encuentras algo extraño."
+            "title": "Ejercicio marcado como tiquismiquis.",
+            "desc": "Esta explicación puede contener errores intencionales. Revisa los pasos con cuidado y usa tu pensamiento crítico. Si encuentras un error, pregúntale al asistente para confirmarlo."
         }
     },
     "evaluation": {

@@ -157,6 +157,12 @@ export function handleGenerateExplanation(request: any, sendResponse: (response?
                     }
                 }
 
+                // Check if the exercise is marked as picky
+                const isPicky = exercise?.isPicky === true;
+                if (isPicky) {
+                    console.log(`Ejercicio ${exerciseName} marcado como picky - se introducirán errores intencionales`);
+                }
+
                 const explanation = await explanationAssistant.generateExplanation(
                     exerciseName,
                     exercise?.statement || "",
@@ -166,6 +172,7 @@ export function handleGenerateExplanation(request: any, sendResponse: (response?
                     progressSummary,
                     pageId,
                     responseOptions,
+                    isPicky,
                 );
 
                 console.log(`Explicación generada:`, explanation);
@@ -293,10 +300,14 @@ export function handleInitializeExplanationChat(request: any, sendResponse: (res
                 const exerciseData = await ExerciseStorageManager.getExerciseData(pageId);
                 let concepts: string[] | undefined = undefined;
                 let learningObjectives: string | undefined = undefined;
+                let isPicky = false;
 
                 if (exerciseData) {
                     concepts = exerciseData.concepts;
                     learningObjectives = exerciseData.learningObjectives;
+                    // Check if the exercise is marked as picky
+                    const exercise = exerciseData.exercises.find(ex => ex.name === exerciseName);
+                    isPicky = exercise?.isPicky === true;
                 }
 
                 const progressSummary = await buildProgressSummary(courseId);
@@ -316,10 +327,11 @@ export function handleInitializeExplanationChat(request: any, sendResponse: (res
                     learningObjectives,
                     progressSummary,
                     chatHistoryForAssistant,
-                    pageId
+                    pageId,
+                    isPicky
                 );
 
-                console.log(`Contexto de chat inicializado desde storage para: ${exerciseName}`);
+                console.log(`Contexto de chat inicializado desde storage para: ${exerciseName}${isPicky ? ' (picky mode)' : ''}`);
                 sendResponse({ success: true });
             } else {
                 console.log(`Contexto de chat ya inicializado para explicación recién generada: ${exerciseName}`);

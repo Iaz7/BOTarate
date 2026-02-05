@@ -35,7 +35,7 @@ import {
     handleSaveChatHistory,
     handleSaveProgressConfig,
     handleUpdateExerciseAllowed,
-    handleUpdateExerciseTiquismiqui,
+    handleUpdateExercisePicky,
     handleUpdateLabReasoningEffort,
     handleUpdateLabRequired,
     handleUpdateLabVerbosity
@@ -102,8 +102,8 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleRemoveExerciseData(request, sendResponse);
         case "updateExerciseAllowed":
             return handleUpdateExerciseAllowed(request, sendResponse);
-        case "updateExerciseTiquismiqui":
-            return handleUpdateExerciseTiquismiqui(request, sendResponse);
+        case "updateExercisePicky":
+            return handleUpdateExercisePicky(request, sendResponse);
         case "getExerciseData":
             return handleGetExerciseData(request, sendResponse);
         case "removeChallengeExercisesExplanations":

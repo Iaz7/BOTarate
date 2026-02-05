@@ -42,16 +42,16 @@ export function handleUpdateExerciseAllowed(request: any, sendResponse: (respons
     return true;
 }
 
-export function handleUpdateExerciseTiquismiqui(request: any, sendResponse: (response?: any) => void): boolean {
-    const { pageId, exerciseName, isTiquismiqui } = request;
+export function handleUpdateExercisePicky(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId, exerciseName, isPicky } = request;
 
     (async () => {
         try {
-            await ExerciseStorageManager.updateExerciseTiquismiqui(pageId, exerciseName, isTiquismiqui);
-            console.log(`Estado 'tiquismiqui' actualizado para ${exerciseName}: ${isTiquismiqui}`);
+            await ExerciseStorageManager.updateExercisePicky(pageId, exerciseName, isPicky);
+            console.log(`Estado 'picky' actualizado para ${exerciseName}: ${isPicky}`);
             sendResponse({ success: true });
         } catch (error: any) {
-            console.error('Error al actualizar tiquismiqui del ejercicio:', error);
+            console.error('Error al actualizar picky del ejercicio:', error);
             sendResponse({ success: false, error: error.message });
         }
     })();

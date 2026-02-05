@@ -13,7 +13,7 @@ export interface Exercise {
     name: string;
     statement: string;
     allowed?: boolean;
-    isTiquismiqui?: boolean;
+    isPicky?: boolean;
 }
 
 export interface Step {

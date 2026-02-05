@@ -16,8 +16,19 @@ const Popup: React.FC = () => {
             setCurrentLang((lng.split("-")[0] as LanguageCode) || "es");
         };
         i18n.on("languageChanged", handleLanguageChanged);
+
+        // También escuchar mensajes del background script
+        const handleRuntimeMessage = (message: any) => {
+            if (message.action === "languageChanged" && message.language) {
+                console.log("[Popup] Language changed to:", message.language);
+                i18n.changeLanguage(message.language);
+            }
+        };
+        chrome.runtime.onMessage.addListener(handleRuntimeMessage);
+
         return () => {
             i18n.off("languageChanged", handleLanguageChanged);
+            chrome.runtime.onMessage.removeListener(handleRuntimeMessage);
         };
     }, [i18n]);
 

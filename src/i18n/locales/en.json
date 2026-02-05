@@ -167,6 +167,7 @@
             "textModelHelp": "Used for chat, explanations, and evaluations",
             "visionModel": "Vision Model (images)",
             "visionModelHelp": "Used for analyzing exercise screenshots",
+            "save": "Save configuration",
             "saveSuccess": "Configuration saved successfully",
             "saveError": "Error saving configuration"
         },
@@ -208,7 +209,11 @@
                     "label": "Feedback format",
                     "desc": "Instructions on how to structure and format feedback"
                 },
-                "methodology": { "label": "Process methodology", "desc": "Methodology the assistant should follow" }
+                "methodology": { "label": "Process methodology", "desc": "Methodology the assistant should follow" },
+                "pickyExerciseConfig": {
+                    "label": "Picky exercise configuration",
+                    "desc": "Describes the type of errors the LLM should intentionally introduce in picky exercise explanations. E.g.: 'Introduce subtle errors in SQL syntax or query logic'"
+                }
             },
             "headers": {
                 "teacherPersonalization": "Teacher personalization",
@@ -236,7 +241,7 @@
             "infoDesc": "In this tab you can configure which exercises are <strong>challenge</strong> or <strong>picky</strong>.",
             "infoList": {
                 "challenge": "<strong>Challenge exercises:</strong> Explanations cannot be requested, but solution evaluations can.",
-                "picky": "<strong>Picky exercises:</strong> A warning is shown when asking for an explanation because they may contain partial answers in the statement."
+                "picky": "<strong>Picky exercises:</strong> The assistant will intentionally introduce errors in the explanation so the student can practice critical review of AI-generated content."
             },
             "infoFooter": "After saving changes, the system will automatically update the restrictions.",
             "noExercisesTitle": "No exercises available",
@@ -380,11 +385,7 @@
         "yourSolution": "Your solution",
         "submitSolution": "Submit solution",
         "solve": "Solve exercise: {{name}}",
-        "placeholderSQL": "Write your SQL query here...",
-        "pickyWarning": {
-            "title": "Exercise marked as picky.",
-            "desc": "This explanation might not be completely correct. Review the steps carefully and consult your teacher if you find anything strange."
-        }
+        "placeholderSQL": "Write your SQL query here..."
     },
     "evaluation": {
         "title": "Evaluation",

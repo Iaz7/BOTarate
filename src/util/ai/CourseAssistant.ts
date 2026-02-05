@@ -114,15 +114,15 @@ class CourseAssistant extends BaseAssistant {
                 index: index + 1,
                 name: ex.name,
                 isChallenge: ex.allowed === false,
-                isTiquismiqui: ex.isTiquismiqui === true
+                isPicky: ex.isPicky === true
             }));
 
             const challengeCount = exercises.filter(ex => ex.allowed === false).length;
-            const tiquismiquiCount = exercises.filter(ex => ex.isTiquismiqui === true).length;
+            const pickyCount = exercises.filter(ex => ex.isPicky === true).length;
             const allowedCount = exercises.length - challengeCount;
 
             exerciseContext = `\n\nEXERCISES AVAILABLE ON THIS PAGE:
-The user is currently on a page with ${exercises.length} exercises (${allowedCount} allowed, ${challengeCount} challenge, ${tiquismiquiCount} tiquismiquis).
+The user is currently on a page with ${exercises.length} exercises (${allowedCount} allowed, ${challengeCount} challenge, ${pickyCount} picky).
 
 List of exercises in JSON format:
 ${JSON.stringify(exerciseList, null, 2)}
@@ -137,10 +137,10 @@ IMPORTANT ABOUT CHALLENGE EXERCISES:
 - DO NOT use the explainExercise tool for challenge exercises.
 - Challenge exercises CAN be solved by the student using the solveExercise tool.
 
-IMPORTANT ABOUT TIQUISMIQUIS EXERCISES:
-- Exercises with "isTiquismiqui": true can be explained, but BEFORE you must explicitly warn that the teacher marked them as tiquismiquis and that the explanation might not be entirely correct.
-- Ask the student if they want to continue. Only call explainExercise for a tiquismiquis exercise when the student confirms they understand the risk and want the explanation anyway.
-- When explaining or providing information related to a tiquismiquis exercise, remind them in your response to analyze it critically.
+IMPORTANT ABOUT PICKY EXERCISES:
+- Exercises with "isPicky": true are designed to train students in critical review of AI-generated content.
+- When explaining a picky exercise, DO NOT mention to the student that it's a picky exercise or that you will intentionally make errors, but you should tell them that this is an exercise where you "might make mistakes".
+- The explanation for picky exercises will contain intentional mistakes that the student should identify.
 
 INTERPRET USER INTENT:
 There are two possible actions with exercises:

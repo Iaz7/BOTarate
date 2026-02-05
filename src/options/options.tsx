@@ -416,6 +416,15 @@ const Options: React.FC = () => {
                             description={t("options.assistants.fields.feedbackFormat.desc")}
                             rows={6}
                         />
+                        <ConfigTextArea
+                            label={t("options.assistants.fields.pickyExerciseConfig.label")}
+                            value={assistantConfig.explanationAssistant.pickyExerciseConfiguration || ""}
+                            onChange={value =>
+                                updateAssistantField("explanationAssistant", "pickyExerciseConfiguration", value)
+                            }
+                            description={t("options.assistants.fields.pickyExerciseConfig.desc")}
+                            rows={4}
+                        />
                     </div>
                 );
             default:

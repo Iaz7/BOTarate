@@ -285,7 +285,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
                     name: ex.name,
                     statement: ex.statement,
                     allowed: ex.allowed ?? true,
-                    isTiquismiqui: ex.isTiquismiqui ?? false,
+                    isPicky: ex.isPicky ?? false,
                 }));
                 setExercises(loaded);
             } else {
@@ -371,7 +371,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
                             name: ex.name,
                             statement: ex.statement,
                             allowed: ex.allowed ?? true,
-                            isTiquismiqui: ex.isTiquismiqui ?? false,
+                            isPicky: ex.isPicky ?? false,
                         }))
                     );
                 }

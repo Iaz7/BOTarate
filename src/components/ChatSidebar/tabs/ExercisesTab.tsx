@@ -5,7 +5,7 @@ interface Exercise {
     name: string;
     statement: string;
     allowed?: boolean;
-    isTiquismiqui?: boolean;
+    isPicky?: boolean;
 }
 
 interface ExercisesTabProps {
@@ -59,7 +59,7 @@ const ExercisesTab: React.FC<ExercisesTabProps> = ({
                 const hasExplanation = exercisesWithExplanations.includes(exercise.name);
                 const hasEvaluation = exercisesWithEvaluations.includes(exercise.name);
                 const isChallenge = exercise.allowed === false;
-                const isPicky = exercise.isTiquismiqui === true;
+                const isPicky = exercise.isPicky === true;
 
                 return (
                     <div

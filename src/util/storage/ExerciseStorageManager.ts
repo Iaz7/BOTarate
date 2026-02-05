@@ -19,7 +19,7 @@ export class ExerciseStorageManager extends BaseStorageManager {
      */
     static async saveExerciseData(
         pageId: string,
-        exercises: Array<{ name: string; statement: string; allowed?: boolean; isTiquismiqui?: boolean }> | import("../../types/shared").Exercise[],
+        exercises: Array<{ name: string; statement: string; allowed?: boolean; isPicky?: boolean }> | import("../../types/shared").Exercise[],
         exerciseContext?: string,
         concepts?: string[],
         learningObjectives?: string
@@ -106,9 +106,9 @@ export class ExerciseStorageManager extends BaseStorageManager {
     }
 
     /**
-     * Actualiza el estado "tiquismiqui" de un ejercicio específico
+     * Updates the "picky" status of a specific exercise
      */
-    static async updateExerciseTiquismiqui(pageId: string, exerciseName: string, isTiquismiqui: boolean): Promise<void> {
+    static async updateExercisePicky(pageId: string, exerciseName: string, isPicky: boolean): Promise<void> {
         const data = await this.getExerciseData(pageId);
         if (!data) {
             throw new Error(`No se encontraron datos de ejercicios para la página ${pageId}`);
@@ -119,7 +119,7 @@ export class ExerciseStorageManager extends BaseStorageManager {
             throw new Error(`No se encontró el ejercicio ${exerciseName}`);
         }
 
-        exercise.isTiquismiqui = isTiquismiqui;
+        exercise.isPicky = isPicky;
 
         await this.saveExerciseData(
             pageId,

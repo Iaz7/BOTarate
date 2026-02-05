@@ -5,7 +5,7 @@ interface Exercise {
     name: string;
     statement: string;
     allowed?: boolean;
-    isTiquismiqui?: boolean;
+    isPicky?: boolean;
 }
 
 // Formato de tool call del historial (viene de OpenAI)

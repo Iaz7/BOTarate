@@ -47,12 +47,6 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
             <div className="d-flex" style={{ flex: 1, overflow: "hidden", height: "87vh" }}>
                 {/* Columna izquierda - Explicación */}
                 <div className="p-4" style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #dee2e6" }}>
-                    {exercise.isTiquismiqui && (
-                        <div className="alert alert-warning" role="alert">
-                            <strong>⚠️ {t("exercises.pickyWarning.title")}</strong>
-                            <p className="mb-0 mt-1 small">{t("exercises.pickyWarning.desc")}</p>
-                        </div>
-                    )}
                     {isLoadingExplanation && (
                         <div
                             className="d-flex flex-column align-items-center justify-content-center"

@@ -6,14 +6,8 @@ import { getDefaultFlags } from "./utils";
 
 const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
     const { t } = useTranslation();
-    const {
-        exerciseConfig,
-        isSaving,
-        hasUnsavedChanges,
-        handleToggleChallenge,
-        handleToggleTiquismiqui,
-        handleSaveChanges,
-    } = useExerciseConfig(props);
+    const { exerciseConfig, isSaving, hasUnsavedChanges, handleToggleChallenge, handleTogglePicky, handleSaveChanges } =
+        useExerciseConfig(props);
 
     // Función auxiliar para renderizar HTML seguro
     const renderHTML = (html: string) => <span dangerouslySetInnerHTML={{ __html: html }} />;
@@ -75,7 +69,7 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
                         {props.exercises.map(exercise => {
                             const flags = exerciseConfig.get(exercise.name) ?? getDefaultFlags();
                             const isChallenge = !flags.allowed;
-                            const isTiquismiqui = flags.isTiquismiqui;
+                            const isPicky = flags.isPicky;
                             return (
                                 <tr key={exercise.name}>
                                     <td>
@@ -86,7 +80,7 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
                                                     {t("options.exerciseConfig.table.badgeChallenge")}
                                                 </span>
                                             )}
-                                            {isTiquismiqui && (
+                                            {isPicky && (
                                                 <span className="badge bg-info text-dark ms-2">
                                                     {t("options.exerciseConfig.table.badgePicky")}
                                                 </span>
@@ -121,17 +115,17 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
                                                 className="form-check-input"
                                                 type="checkbox"
                                                 role="switch"
-                                                id={`tiquismiqui-switch-${exercise.name}`}
-                                                checked={isTiquismiqui}
-                                                onChange={() => handleToggleTiquismiqui(exercise.name)}
+                                                id={`picky-switch-${exercise.name}`}
+                                                checked={isPicky}
+                                                onChange={() => handleTogglePicky(exercise.name)}
                                                 disabled={isSaving}
                                                 style={{ cursor: "pointer" }}
                                             />
                                             <label
                                                 className="form-check-label visually-hidden"
-                                                htmlFor={`tiquismiqui-switch-${exercise.name}`}
+                                                htmlFor={`picky-switch-${exercise.name}`}
                                             >
-                                                {isTiquismiqui
+                                                {isPicky
                                                     ? t("options.exerciseConfig.table.switchPickyOn")
                                                     : t("options.exerciseConfig.table.switchPickyOff")}
                                             </label>

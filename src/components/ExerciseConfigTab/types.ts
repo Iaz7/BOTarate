@@ -3,7 +3,7 @@ export type { Exercise } from "../../types/shared";
 
 export interface ExerciseFlags {
     allowed: boolean;
-    isTiquismiqui: boolean;
+    isPicky: boolean;
 }
 
 export interface ExerciseConfigTabProps {

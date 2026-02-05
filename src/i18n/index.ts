@@ -1,5 +1,4 @@
 import i18n from 'i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 
 import en from './locales/en.json';
@@ -22,41 +21,49 @@ export const LLM_LANGUAGE_NAMES: Record<LanguageCode, string> = {
     eu: 'Basque (Euskara)',
 };
 
-// Inicialización de i18next
-i18n
-    .use(LanguageDetector)
-    .use(initReactI18next)
-    .init({
-        resources: {
-            en: { translation: en },
-            es: { translation: es },
-            eu: { translation: eu },
-        },
-        fallbackLng: 'es',
-        supportedLngs: ['en', 'es', 'eu'],
-        interpolation: {
-            escapeValue: false, // React ya escapa por defecto
-        },
-        detection: {
-            // Orden de detección: navigator solamente (storage lo manejamos manualmente para extensión)
-            order: ['navigator'],
-            caches: [], // No usar caché de languagedetector
-        },
-    });
-
-// Cargar idioma guardado en chrome.storage
-const loadSavedLanguage = async () => {
+// Función para obtener el idioma guardado de forma síncrona desde storage
+const getSavedLanguage = async (): Promise<LanguageCode> => {
     try {
         const result = await chrome.storage.local.get(['botarate_language']);
-        if (result.botarate_language) {
-            await i18n.changeLanguage(result.botarate_language);
+        if (result.botarate_language && ['en', 'es', 'eu'].includes(result.botarate_language)) {
+            console.log('[i18n] Found saved language:', result.botarate_language);
+            return result.botarate_language as LanguageCode;
         }
     } catch (error) {
-        console.warn('Error loading language from storage:', error);
+        console.warn('[i18n] Error loading language from storage:', error);
     }
+    console.log('[i18n] No saved language, using fallback: en');
+    return 'en';
 };
 
-loadSavedLanguage();
+// Inicializar i18next con el idioma guardado
+const initializeI18n = async () => {
+    const savedLang = await getSavedLanguage();
+
+    await i18n
+        .use(initReactI18next)
+        .init({
+            resources: {
+                en: { translation: en },
+                es: { translation: es },
+                eu: { translation: eu },
+            },
+            lng: savedLang, // Usar el idioma guardado directamente
+            fallbackLng: 'en',
+            supportedLngs: ['en', 'es', 'eu'],
+            interpolation: {
+                escapeValue: false, // React ya escapa por defecto
+            },
+            react: {
+                useSuspense: false, // No usar Suspense en extensiones de Chrome
+            },
+        });
+
+    console.log('[i18n] Initialized with language:', i18n.language);
+};
+
+// Exportar promesa de inicialización para que los componentes puedan esperar
+export const i18nInitialized = initializeI18n();
 
 // Escuchar cambios en storage para sincronizar pestañas/ventanas
 chrome.storage.onChanged.addListener((changes, namespace) => {
@@ -91,7 +98,7 @@ export const changeLanguage = async (lng: LanguageCode): Promise<void> => {
 
 // Obtener idioma actual
 export const getCurrentLanguage = (): LanguageCode => {
-    return (i18n.language?.split('-')[0] as LanguageCode) || 'es';
+    return (i18n.language?.split('-')[0] as LanguageCode) || 'en';
 };
 
 // Obtener nombre del idioma para el LLM

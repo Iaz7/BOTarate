@@ -39,6 +39,8 @@ export interface AssistantConfig {
         outputFormat: string;
         additionalRules?: string;
         importantNotes?: string;
+        /** Configuration describing the type of intentional mistakes the LLM should make for picky exercises */
+        pickyExerciseConfiguration?: string;
     };
 
     /**

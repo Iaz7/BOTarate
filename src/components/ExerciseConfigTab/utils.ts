@@ -1,10 +1,10 @@
 import { Exercise, ExerciseFlags } from './types';
 
-export const getDefaultFlags = (): ExerciseFlags => ({ allowed: true, isTiquismiqui: false });
+export const getDefaultFlags = (): ExerciseFlags => ({ allowed: true, isPicky: false });
 
 export const createFlagsFromExercise = (exercise: Exercise): ExerciseFlags => ({
     allowed: exercise.allowed ?? true,
-    isTiquismiqui: exercise.isTiquismiqui ?? false,
+    isPicky: exercise.isPicky ?? false,
 });
 
 export const buildConfigMap = (list: Exercise[]): Map<string, ExerciseFlags> => {
@@ -20,7 +20,7 @@ export const configsAreEqual = (a: Map<string, ExerciseFlags>, b: Map<string, Ex
     for (const [name, flags] of a) {
         const reference = b.get(name);
         if (!reference) return false;
-        if (flags.allowed !== reference.allowed || flags.isTiquismiqui !== reference.isTiquismiqui) {
+        if (flags.allowed !== reference.allowed || flags.isPicky !== reference.isPicky) {
             return false;
         }
     }
@@ -30,20 +30,20 @@ export const configsAreEqual = (a: Map<string, ExerciseFlags>, b: Map<string, Ex
 export const computePendingChanges = (
     exerciseConfig: Map<string, ExerciseFlags>,
     originalConfig: Map<string, ExerciseFlags>
-): Array<{ name: string; allowed?: boolean; isTiquismiqui?: boolean }> => {
-    const changes: Array<{ name: string; allowed?: boolean; isTiquismiqui?: boolean }> = [];
+): Array<{ name: string; allowed?: boolean; isPicky?: boolean }> => {
+    const changes: Array<{ name: string; allowed?: boolean; isPicky?: boolean }> = [];
     for (const [name, flags] of exerciseConfig.entries()) {
         const originalFlags = originalConfig.get(name) ?? getDefaultFlags();
-        const change: { name: string; allowed?: boolean; isTiquismiqui?: boolean } = { name };
+        const change: { name: string; allowed?: boolean; isPicky?: boolean } = { name };
 
         if (flags.allowed !== originalFlags.allowed) {
             change.allowed = flags.allowed;
         }
-        if (flags.isTiquismiqui !== originalFlags.isTiquismiqui) {
-            change.isTiquismiqui = flags.isTiquismiqui;
+        if (flags.isPicky !== originalFlags.isPicky) {
+            change.isPicky = flags.isPicky;
         }
 
-        if (change.allowed !== undefined || change.isTiquismiqui !== undefined) {
+        if (change.allowed !== undefined || change.isPicky !== undefined) {
             changes.push(change);
         }
     }

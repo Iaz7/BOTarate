@@ -184,7 +184,7 @@ ${pageContent}`;
                     name: ex.name,
                     statement: ex.statement,
                     allowed: previous?.allowed ?? ex.allowed,
-                    isTiquismiqui: previous?.isTiquismiqui ?? ex.isTiquismiqui,
+                    isPicky: previous?.isPicky ?? ex.isPicky,
                 };
             });
             await ExerciseStorageManager.saveExerciseData(
