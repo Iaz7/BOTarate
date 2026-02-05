@@ -18,6 +18,11 @@ export async function fetchSectionHtml(courseId: string, sectionNumber: number):
         throw new Error(`HTTP error! status: ${response.status}`);
     }
 
+    // Detectar sesión expirada usando sólo la URL de login
+    if (response.url && response.url.includes('egela.ehu.eus/login/index.php')) {
+        throw new Error('EgelaSessionExpired: sesión expirada (login)');
+    }
+
     return await response.text();
 }
 
@@ -30,6 +35,11 @@ export async function fetchPageHtml(pageId: string): Promise<string> {
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Detectar sesión expirada usando sólo la URL de login
+    if (response.url && response.url.includes('egela.ehu.eus/login/index.php')) {
+        throw new Error('EgelaSessionExpired: sesión expirada (login)');
     }
 
     return await response.text();
@@ -281,7 +291,9 @@ class Course {
         if (!profileResponse.ok) {
             throw new Error(`[isCurrentUserTeacher] Error al obtener perfil: ${profileResponse.status}`);
         }
-
+        if (profileResponse.url && profileResponse.url.includes('egela.ehu.eus/login/index.php')) {
+            throw new Error('[isCurrentUserTeacher] EgelaSessionExpired: sesión expirada (login)');
+        }
         const profileHtml = await profileResponse.text();
         const { document: profileDoc } = parseHTML(profileHtml);
 
@@ -304,7 +316,9 @@ class Course {
         if (!participantsResponse.ok) {
             throw new Error(`[isCurrentUserTeacher] Error al obtener participantes: ${participantsResponse.status}`);
         }
-
+        if (participantsResponse.url && participantsResponse.url.includes('egela.ehu.eus/login/index.php')) {
+            throw new Error('[isCurrentUserTeacher] EgelaSessionExpired: sesión expirada (login)');
+        }
         const participantsHtml = await participantsResponse.text();
         const { document: participantsDoc } = parseHTML(participantsHtml);
 
@@ -338,7 +352,9 @@ class Course {
                 userIndex++;
                 continue;
             }
-
+            if (userProfileResponse.url && userProfileResponse.url.includes('egela.ehu.eus/login/index.php')) {
+                throw new Error('[isCurrentUserTeacher] EgelaSessionExpired: sesión expirada (login)');
+            }
             const userProfileHtml = await userProfileResponse.text();
             const { document: userProfileDoc } = parseHTML(userProfileHtml);
 

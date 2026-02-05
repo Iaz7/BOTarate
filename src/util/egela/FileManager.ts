@@ -20,6 +20,19 @@ const fileCache: Map<string, Map<string, FileData>> = new Map();
  * Class responsible for file management, download and conversion
  */
 class FileManager {
+
+    /**
+     * Detecta si un HTML corresponde a la página de login de Egela
+     */
+    static isLoginHtml(_html: string, url?: string): boolean {
+        if (!url) return false;
+        try {
+            const u = new URL(url);
+            return u.hostname.endsWith('egela.ehu.eus') && u.pathname === '/login/index.php';
+        } catch (e) {
+            return url.includes('egela.ehu.eus/login/index.php');
+        }
+    }
     /**
      * Downloads a file from a URL and converts it according to its type
      * @param url URL of the file to download
@@ -31,6 +44,10 @@ class FileManager {
 
         try {
             const response = await fetch(url);
+            // Detectar si hemos sido redirigidos a la página de login comprobando la URL
+            if (response.url && response.url.includes('egela.ehu.eus/login/index.php')) {
+                throw new Error('EgelaSessionExpired: se recibió la página de login');
+            }
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -269,8 +286,12 @@ class FileManager {
             // Si no hubo redirección, puede ser una página intermedia con un enlace
             if (!viewResponse.redirected) {
                 console.log(`[FileManager.downloadResourceFile] No hubo redirección, buscando enlace en HTML...`);
-                const htmlText = await viewResponse.text();
+                // Detectar si la respuesta es la página de login por URL
+                if (viewResponse.url && viewResponse.url.includes('egela.ehu.eus/login/index.php')) {
+                    throw new Error('EgelaSessionExpired: sesión expirada, se recibió la página de login');
+                }
 
+                const htmlText = await viewResponse.text();
                 // Parsear el HTML para buscar el enlace en resourceworkaround
                 const { parseHTML } = await import('linkedom');
                 const { document: doc } = parseHTML(htmlText);
@@ -296,6 +317,12 @@ class FileManager {
             if (!fileResponse.ok) {
                 console.error(`[FileManager.downloadResourceFile] Error descargando archivo: ${fileResponse.status}`);
                 throw new Error(`Error descargando archivo: ${fileResponse.status}`);
+            }
+
+            // Si el recurso devuelve HTML, comprobar si es la página de login
+            // Detectar si la descarga nos ha devuelto la página de login comprobando la URL
+            if (fileResponse.url && fileResponse.url.includes('egela.ehu.eus/login/index.php')) {
+                throw new Error('EgelaSessionExpired: sesión expirada al descargar recurso');
             }
 
             const blob = await fileResponse.blob();
