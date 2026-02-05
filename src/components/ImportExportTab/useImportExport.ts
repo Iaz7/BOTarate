@@ -18,8 +18,15 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
 
         try {
             const result = await ImportExportManager.exportToFile();
+            let text = "";
+            if (result.success) {
+                text = t('options.importExport.messages.exportSuccess', 'Configuration exported successfully');
+            } else {
+                text = t('options.importExport.messages.exportError', 'Unexpected error exporting: {{error}}', { error: result.message });
+            }
+
             setMessage({
-                text: result.success ? t('options.importExport.messages.exportSuccess', 'Configuration exported successfully') : result.message,
+                text,
                 type: result.success ? "success" : "error",
             });
         } catch (error) {
@@ -42,8 +49,29 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
 
         try {
             const result = await ImportExportManager.importFromFile(file);
+
+            let text = "";
+            if (result.success) {
+                text = t('options.importExport.messages.importSuccess', 'Configuration imported successfully');
+            } else {
+                // Map complex errors
+                switch (result.message) {
+                    case "invalid_format":
+                        text = t('options.importExport.messages.importFormatError');
+                        break;
+                    case "invalid_signature":
+                        text = t('options.importExport.messages.importSignatureError');
+                        break;
+                    case "invalid_json":
+                        text = t('options.importExport.messages.importJsonError');
+                        break;
+                    default:
+                        text = t('options.importExport.messages.importError', 'Unexpected error importing: {{error}}', { error: result.message });
+                }
+            }
+
             setMessage({
-                text: result.success ? t('options.importExport.messages.importSuccess', 'Configuration imported successfully') : result.message,
+                text,
                 type: result.success ? "success" : "error",
             });
             if (result.success && onDataChange) {
@@ -79,8 +107,15 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
 
         try {
             const result = await ImportExportManager.clearAllData();
+            let text = "";
+            if (result.success) {
+                text = t('options.importExport.messages.clearSuccess', 'All data has been deleted successfully');
+            } else {
+                text = t('options.importExport.messages.clearError', 'Unexpected error clearing: {{error}}', { error: result.message });
+            }
+
             setMessage({
-                text: result.success ? t('options.importExport.messages.clearSuccess', 'All data has been deleted successfully') : result.message,
+                text,
                 type: result.success ? "info" : "error",
             });
             if (result.success && onDataChange) {
@@ -102,7 +137,7 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
         if (file) {
             if (!file.name.endsWith(".json")) {
                 setMessage({
-                    text: "Please select a valid JSON file.",
+                    text: t('options.importExport.messages.invalidFile', 'Please select a valid JSON file.'),
                     type: "error",
                 });
                 return;

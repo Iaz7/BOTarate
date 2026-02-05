@@ -1,3 +1,4 @@
+import { t } from "../../i18n/backend";
 import { Course } from "../../util/egela/Course";
 import { Exercise } from "../../util/egela/Exercise";
 import { EvaluationStorageManager } from "../../util/storage/EvaluationStorageManager";
@@ -31,7 +32,7 @@ export function handleGetCourseData(request: any, sendResponse: (response?: any)
                 sendResponse({ success: true, course: course });
                 console.log('[background] Curso cargado:', course);
             } else {
-                sendResponse({ success: false, error: 'No se pudo cargar el curso' });
+                sendResponse({ success: false, error: t('errors.loadingCourse') });
                 console.log('[background] No se pudo crear el curso desde href y storage');
             }
         })

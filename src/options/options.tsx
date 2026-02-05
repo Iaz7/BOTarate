@@ -239,15 +239,10 @@ const Options: React.FC = () => {
                     console.error("Error sending config to background:", error);
                 });
 
-            setSaveMessage(
-                "Configuration saved successfully. Text model: " +
-                    ConfigManager.getSelectedModel() +
-                    ". Vision model: " +
-                    ConfigManager.getSelectedVisionModel(),
-            );
+            setSaveMessage(t("options.llm.saveSuccess"));
         } catch (error) {
             console.error("Error saving configuration:", error);
-            setSaveMessage("Error saving configuration");
+            setSaveMessage(t("options.llm.saveError"));
         }
     };
 
@@ -256,7 +251,7 @@ const Options: React.FC = () => {
 
         try {
             await AssistantConfigStorageManager.saveConfig(assistantConfig);
-            setAssistantSaveMessage("Assistant configuration saved successfully");
+            setAssistantSaveMessage(t("options.assistants.buttons.saved"));
 
             // Notificar al background script para recargar la configuración
             chrome.runtime.sendMessage({ action: "reloadAssistantConfig" }).catch(error => {
@@ -264,7 +259,7 @@ const Options: React.FC = () => {
             });
         } catch (error) {
             console.error("Error saving assistant configuration:", error);
-            setAssistantSaveMessage("Error saving configuration");
+            setAssistantSaveMessage(t("options.assistants.buttons.error"));
         }
     };
 
@@ -650,7 +645,7 @@ const Options: React.FC = () => {
                                         type="button"
                                         className="btn-close"
                                         onClick={() => setAssistantSaveMessage("")}
-                                        aria-label="Close"
+                                        aria-label={t("common.close")}
                                     ></button>
                                 </div>
                             )}
@@ -662,7 +657,7 @@ const Options: React.FC = () => {
                                         className={`nav-link ${activeAssistantSection === "general" ? "active" : ""}`}
                                         onClick={() => setActiveAssistantSection("general")}
                                     >
-                                        Environment
+                                        {t("options.assistants.sections.general")}
                                     </button>
                                 </li>
                                 <li className="nav-item">
@@ -670,7 +665,7 @@ const Options: React.FC = () => {
                                         className={`nav-link ${activeAssistantSection === "exercise" ? "active" : ""}`}
                                         onClick={() => setActiveAssistantSection("exercise")}
                                     >
-                                        Context extraction
+                                        {t("options.assistants.sections.exercise")}
                                     </button>
                                 </li>
                                 <li className="nav-item">
@@ -680,7 +675,7 @@ const Options: React.FC = () => {
                                         }`}
                                         onClick={() => setActiveAssistantSection("evaluation")}
                                     >
-                                        Evaluator
+                                        {t("options.assistants.sections.evaluation")}
                                     </button>
                                 </li>
                                 <li className="nav-item">
@@ -690,7 +685,7 @@ const Options: React.FC = () => {
                                         }`}
                                         onClick={() => setActiveAssistantSection("explanation")}
                                     >
-                                        Solver
+                                        {t("options.assistants.sections.explanation")}
                                     </button>
                                 </li>
                             </ul>
@@ -704,7 +699,7 @@ const Options: React.FC = () => {
                                             className="btn btn-primary me-2"
                                             onClick={handleSaveAssistantConfig}
                                         >
-                                            Save configuration
+                                            {t("options.assistants.buttons.save")}
                                         </button>
                                     </div>
                                 </div>

@@ -1,3 +1,4 @@
+import { t } from "../../i18n/backend";
 import { Lab } from "../../types/shared";
 import { EvaluationStorageManager } from "../../util/storage/EvaluationStorageManager";
 import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManager";
@@ -17,7 +18,7 @@ async function buildProgressSummary(courseId?: string): Promise<string | undefin
 
     const { completedLabs, completedExercises } = await collectLabCompletionData(requiredLabs);
     if (completedLabs.length === 0 && completedExercises.size === 0) {
-        return "El alumno aún no ha completado ningún laboratorio ni ejercicio.\n";
+        return t("llmPrompts.progressSummary.noProgress") + "\n";
     }
 
     return formatProgressSummary(completedLabs, completedExercises);
@@ -86,13 +87,13 @@ function formatProgressSummary(completedLabs: string[], completedExercises: Map<
     let summary = "";
 
     if (completedLabs.length > 0) {
-        summary += `- Laboratorios completados: ${completedLabs.join(', ')}\n`;
+        summary += `- ${t("llmPrompts.progressSummary.completedLabs")}: ${completedLabs.join(", ")}\n`;
     }
 
     if (completedExercises.size > 0) {
-        summary += "- Ejercicios completados por laboratorio:\n";
+        summary += `- ${t("llmPrompts.progressSummary.completedExercises")}:\n`;
         for (const [labName, exercises] of completedExercises) {
-            summary += `  * ${labName}: ${exercises.join(', ')}\n`;
+            summary += `  * ${labName}: ${exercises.join(", ")}\n`;
         }
     }
 
@@ -130,7 +131,7 @@ export function handleGenerateExplanation(request: any, sendResponse: (response?
                     console.log(`Intento de explicar ejercicio bloqueado: ${exerciseName}`);
                     sendResponse({
                         success: false,
-                        error: `El ejercicio "${exerciseName}" está bloqueado y no puede ser explicado.`
+                        error: t("errors.exerciseBlocked", { exerciseName: exerciseName }),
                     });
                     return;
                 }
@@ -148,21 +149,23 @@ export function handleGenerateExplanation(request: any, sendResponse: (response?
                     if (labConfig) {
                         responseOptions = {
                             verbosity: labConfig.verbosity,
-                            reasoningEffort: labConfig.reasoningEffort
+                            reasoningEffort: labConfig.reasoningEffort,
                         };
-                        console.log(`Configuración del laboratorio cargada: verbosity=${labConfig.verbosity}, reasoning=${labConfig.reasoningEffort}`);
+                        console.log(
+                            `Configuración del laboratorio cargada: verbosity=${labConfig.verbosity}, reasoning=${labConfig.reasoningEffort}`,
+                        );
                     }
                 }
 
                 const explanation = await explanationAssistant.generateExplanation(
                     exerciseName,
-                    exercise?.statement || '',
+                    exercise?.statement || "",
                     exerciseData?.exerciseContext,
                     accumulatedConcepts,
                     exerciseData?.learningObjectives,
                     progressSummary,
                     pageId,
-                    responseOptions
+                    responseOptions,
                 );
 
                 console.log(`Explicación generada:`, explanation);
@@ -170,18 +173,17 @@ export function handleGenerateExplanation(request: any, sendResponse: (response?
                 await ExplanationStorageManager.saveExplanation(
                     pageId,
                     exerciseName,
-                    exercise?.statement || '',
+                    exercise?.statement || "",
                     explanation,
-                    exerciseData.exerciseContext
+                    exerciseData.exerciseContext,
                 );
                 console.log(`Explicación guardada en cache para: ${exerciseName}`);
 
                 sendResponse({ success: true, explanation: explanation });
-            }
-            else {
+            } else {
                 sendResponse({
                     success: false,
-                    error: `No se ha podido cargar el ejercicio "${exerciseName}".`
+                    error: t("errors.loadingExercise", { exerciseName: exerciseName }),
                 });
             }
         } catch (error: any) {
@@ -284,7 +286,7 @@ export function handleInitializeExplanationChat(request: any, sendResponse: (res
                 const explanation = await ExplanationStorageManager.getExplanation(pageId, exerciseName);
 
                 if (!explanation) {
-                    sendResponse({ success: false, error: 'No se encontró la explicación en el storage' });
+                    sendResponse({ success: false, error: t("errors.loadingExplanation") });
                     return;
                 }
 

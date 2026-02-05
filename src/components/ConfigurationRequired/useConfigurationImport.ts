@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { ImportExportManager } from "../../util/storage/ImportExportManager";
 
 interface UseConfigurationImportProps {
@@ -6,6 +7,7 @@ interface UseConfigurationImportProps {
 }
 
 export const useConfigurationImport = ({ onConfigLoaded }: UseConfigurationImportProps) => {
+    const { t } = useTranslation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isLoading, setIsLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
@@ -15,7 +17,7 @@ export const useConfigurationImport = ({ onConfigLoaded }: UseConfigurationImpor
         if (!file) return;
 
         if (!file.name.endsWith(".json")) {
-            setError("Please select a valid JSON file.");
+            setError(t('options.importExport.messages.invalidFile', 'Please select a valid JSON file.'));
             return;
         }
 
@@ -31,11 +33,26 @@ export const useConfigurationImport = ({ onConfigLoaded }: UseConfigurationImpor
                     onConfigLoaded();
                 }, 500);
             } else {
-                setError(result.message);
+                // Map complex errors
+                let text = "";
+                switch (result.message) {
+                    case "invalid_format":
+                        text = t('options.importExport.messages.importFormatError');
+                        break;
+                    case "invalid_signature":
+                        text = t('options.importExport.messages.importSignatureError');
+                        break;
+                    case "invalid_json":
+                        text = t('options.importExport.messages.importJsonError');
+                        break;
+                    default:
+                        text = t('options.importExport.messages.importError', 'Unexpected error importing: {{error}}', { error: result.message });
+                }
+                setError(text);
             }
         } catch (error) {
             console.error("Error loading configuration:", error);
-            setError(`Unexpected error: ${error instanceof Error ? error.message : "Unknown error"}`);
+            setError(t('options.importExport.messages.importError', 'Unexpected error: {{error}}', { error: error instanceof Error ? error.message : "Unknown error" }));
         } finally {
             setIsLoading(false);
             if (fileInputRef.current) {

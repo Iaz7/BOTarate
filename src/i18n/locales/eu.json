@@ -328,13 +328,13 @@
         "importExport": {
             "export": {
                 "title": "Esportatu konfigurazioa",
-                "description": "Esportatu zure konfigurazio guztia (laguntzaileak, ariketak eta laborategiak) JSON fitxategi batera. Fitxategi hau segurtasun kopiak egiteko edo konfigurazioa beste nabigatzaile batera transferitzeko erabil dezakezu.",
+                "description": "Esportatu zure konfigurazio guztia (laguntzaileak, ariketak eta laborategiak) JSON fitxategi sinatua batera. Fitxategi hau segurtasun kopiak egiteko edo konfigurazioa beste nabigatzaile batera transferitzeko erabil dezakezu. Fitxategia eskuzko aldaketetatik babestuta dago.",
                 "button": "Esportatu konfigurazioa",
                 "processing": " Esportatzen..."
             },
             "import": {
                 "title": "Inportatu konfigurazioa",
-                "description": "Inportatu konfigurazioa aurrez esportatutako JSON fitxategi batetik. Honek lehendik dauden datuak gainidatziko ditu.",
+                "description": "Inportatu konfigurazio bat aurrez esportatutako eta sinatutako JSON fitxategi batetik. Honek lehendik dauden datuak gainidatziko ditu.",
                 "warningTitle": "⚠️ Adi:",
                 "warningDesc": "Inportatzeak lehendik dauden datuak gainidatziko ditu. Lehenik segurtasun kopia gisa esportatzea gomendatzen da."
             },
@@ -347,6 +347,10 @@
             "messages": {
                 "exportSuccess": "Konfigurazioa ondo esportatu da",
                 "importSuccess": "Konfigurazioa ondo inportatu da",
+                "importSignatureError": "Fitxategiaren sinadura baliogabea. Fitxategia eskuz aldatu izan da agian.",
+                "importFormatError": "Fitxategi-formatu baliogabea. Ziurtatu ondo esportatutako fitxategi bat erabiltzen duzula.",
+                "importJsonError": "Fitxategiak ez du baliozko JSONik.",
+                "invalidFile": "Hautatu baliozko JSON fitxategi bat.",
                 "clearSuccess": "Datu guztiak ondo ezabatu dira",
                 "exportError": "Ustekabeko errorea esportatzean: {{error}}",
                 "importError": "Ustekabeko errorea inportatzean: {{error}}",
@@ -478,6 +482,7 @@
         "notFound": "Ez da aurkitu",
         "exerciseBlocked": "\"{{exerciseName}}\" ariketa blokeatuta dago eta ezin da azaldu.",
         "loadingExercise": "Ezin izan da \"{{exerciseName}}\" ariketa kargatu.",
+        "loadingCourse": "Ezin izan dira ikastaroaren datuak kargatu",
         "loadingExplanation": "Ez da azalpena aurkitu biltegian",
         "chatHistory": "Errorea txat historia kargatzean",
         "resetChat": "Errorea txat historia berrezartzean"

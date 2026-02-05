@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { APP_CONFIG } from "../../constants";
 import { handleOverlayClick } from "./modalUtils";
 import { useModalKeyboard } from "./useModal";
@@ -11,6 +12,7 @@ interface BaseModalProps {
 }
 
 const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, children }) => {
+    const { t } = useTranslation();
     useModalKeyboard(isOpen, onClose);
 
     if (!isOpen) return null;
@@ -42,7 +44,7 @@ const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, children 
                             type="button"
                             className="btn-close btn-close-white ms-auto"
                             onClick={onClose}
-                            aria-label="Close"
+                            aria-label={t("common.close")}
                             style={{ fontSize: "1.2rem", fontWeight: "bold" }}
                         ></button>
                     </div>

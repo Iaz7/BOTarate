@@ -328,13 +328,13 @@
         "importExport": {
             "export": {
                 "title": "Exportar configuración",
-                "description": "Exporta toda tu configuración (asistentes, ejercicios y laboratorios) a un archivo JSON. Puedes usar este archivo para hacer copias de seguridad o transferir la configuración a otro navegador.",
+                "description": "Exporta toda tu configuración (asistentes, ejercicios y laboratorios) a un archivo JSON firmado. Puedes usar este archivo para hacer copias de seguridad o transferir la configuración a otro navegador. El archivo está protegido contra modificaciones manuales.",
                 "button": "Exportar configuración",
                 "processing": " Exportando..."
             },
             "import": {
                 "title": "Importar configuración",
-                "description": "Importa una configuración desde un archivo JSON previamente exportado. Esto sobrescribirá los datos existentes con los del archivo.",
+                "description": "Importa una configuración desde un archivo JSON previamente exportado y firmado. Esto sobrescribirá los datos existentes con los del archivo.",
                 "warningTitle": "⚠️ Atención:",
                 "warningDesc": "La importación sobrescribirá los datos existentes. Se recomienda exportar primero como copia de seguridad."
             },
@@ -347,6 +347,10 @@
             "messages": {
                 "exportSuccess": "Configuración exportada correctamente",
                 "importSuccess": "Configuración importada correctamente",
+                "importSignatureError": "Firma del archivo inválida. El archivo puede haber sido modificado manualmente.",
+                "importFormatError": "Formato de archivo inválido. Asegúrate de usar un archivo exportado correctamente.",
+                "importJsonError": "El archivo no contiene un JSON válido.",
+                "invalidFile": "Por favor, selecciona un archivo JSON válido.",
                 "clearSuccess": "Todos los datos han sido eliminados correctamente",
                 "exportError": "Error inesperado al exportar: {{error}}",
                 "importError": "Error inesperado al importar: {{error}}",
@@ -472,6 +476,7 @@
         "notFound": "No encontrado",
         "exerciseBlocked": "El ejercicio \"{{exerciseName}}\" está bloqueado y no puede ser explicado.",
         "loadingExercise": "No se ha podido cargar el ejercicio \"{{exerciseName}}\".",
+        "loadingCourse": "No se ha podido cargar los datos del curso",
         "loadingExplanation": "No se encontró la explicación en el storage",
         "chatHistory": "Error al cargar historial de chat",
         "resetChat": "Error al reiniciar historial de chat"

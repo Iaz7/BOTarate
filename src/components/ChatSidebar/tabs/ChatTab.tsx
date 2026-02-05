@@ -409,7 +409,10 @@ const ChatTab: React.FC<ChatTabProps> = ({
                     <div className="card border-secondary">
                         <div className="card-body p-2">
                             <div className="d-flex align-items-center">
-                                <div className="spinner-border spinner-border-sm me-2" aria-label="Generating response">
+                                <div
+                                    className="spinner-border spinner-border-sm me-2"
+                                    aria-label={t("chatTab.status.generating")}
+                                >
                                     <span className="visually-hidden">{t("common.loading", "Loading...")}</span>
                                 </div>
                                 <span className="small">

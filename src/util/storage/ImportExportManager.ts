@@ -21,6 +21,7 @@ export interface ExportData {
         key: string;
         data: any;
     }>;
+    signature?: string; // Firma HMAC para verificar integridad
 }
 
 /**
@@ -37,6 +38,36 @@ export interface ImportExportResult {
  * Allows saving and restoring all extension configuration in JSON format
  */
 export class ImportExportManager {
+    // Clave secreta para firmar las exportaciones (hardcodeada para simplicidad)
+    private static readonly SECRET_KEY = "egela-assistant-config-integrity-key-2024";
+
+    /**
+     * Genera una firma HMAC-SHA256 del texto dado
+     */
+    private static async generateHMAC(text: string): Promise<string> {
+        const encoder = new TextEncoder();
+        const keyData = encoder.encode(this.SECRET_KEY);
+        const textData = encoder.encode(text);
+
+        const key = await crypto.subtle.importKey(
+            "raw",
+            keyData,
+            { name: "HMAC", hash: "SHA-256" },
+            false,
+            ["sign"]
+        );
+
+        const signature = await crypto.subtle.sign("HMAC", key, textData);
+        return btoa(String.fromCharCode(...new Uint8Array(signature)));
+    }
+
+    /**
+     * Verifica una firma HMAC-SHA256
+     */
+    private static async verifyHMAC(text: string, signature: string): Promise<boolean> {
+        const expectedSignature = await this.generateHMAC(text);
+        return expectedSignature === signature;
+    }
     private static async restoreCollection(
         prefix: string,
         items?: Array<{ key: string; data: any }>
@@ -105,9 +136,20 @@ export class ImportExportManager {
         try {
             const data = await this.getAllStorageData();
 
+            // Crear JSON sin firma
+            const dataWithoutSignature = { ...data };
+            delete dataWithoutSignature.signature;
+            const jsonString = JSON.stringify(dataWithoutSignature, null, 2);
+
+            // Generar firma HMAC
+            const signature = await this.generateHMAC(jsonString);
+
+            // Añadir firma al objeto
+            const signedData = { ...dataWithoutSignature, signature };
+
             // Crear el blob JSON
-            const jsonString = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonString], { type: "application/json" });
+            const signedJsonString = JSON.stringify(signedData, null, 2);
+            const blob = new Blob([signedJsonString], { type: "application/json" });
 
             // Crear el nombre del archivo con fecha
             const date = new Date().toISOString().split("T")[0];
@@ -125,13 +167,13 @@ export class ImportExportManager {
 
             return {
                 success: true,
-                message: `Configuration exported successfully: ${filename}`,
+                message: "success",
             };
         } catch (error) {
             console.error("[ImportExportManager] Error al exportar configuración:", error);
             return {
                 success: false,
-                message: `Error al exportar configuración: ${error instanceof Error ? error.message : "Error desconocido"}`,
+                message: "export_error",
             };
         }
     }
@@ -147,6 +189,10 @@ export class ImportExportManager {
         }
 
         if (!data.exportDate) {
+            return false;
+        }
+
+        if (!data.signature || typeof data.signature !== "string") {
             return false;
         }
 
@@ -176,7 +222,19 @@ export class ImportExportManager {
             if (!this.validateImportData(data)) {
                 return {
                     success: false,
-                    message: "Formato de archivo inválido. Asegúrate de usar un archivo exportado correctamente.",
+                    message: "invalid_format",
+                };
+            }
+
+            // Verificar firma
+            const { signature, ...dataWithoutSignature } = data;
+            const jsonString = JSON.stringify(dataWithoutSignature, null, 2);
+            const isValidSignature = await this.verifyHMAC(jsonString, signature);
+
+            if (!isValidSignature) {
+                return {
+                    success: false,
+                    message: "invalid_signature",
                 };
             }
 
@@ -202,22 +260,22 @@ export class ImportExportManager {
 
             return {
                 success: true,
-                message: `Configuration imported successfully. ${importedCount} elements restored.`,
+                message: "success",
                 itemsProcessed: importedCount,
             };
         } catch (error) {
             console.error("[ImportExportManager] Error al importar configuración:", error);
 
-            let errorMessage = "Error desconocido";
+            let errorMessage = "unknown_error";
             if (error instanceof SyntaxError) {
-                errorMessage = "El archivo no contiene JSON válido";
+                errorMessage = "invalid_json";
             } else if (error instanceof Error) {
                 errorMessage = error.message;
             }
 
             return {
                 success: false,
-                message: `Error al importar configuración: ${errorMessage}`,
+                message: errorMessage,
             };
         }
     }
@@ -237,13 +295,13 @@ export class ImportExportManager {
 
             return {
                 success: true,
-                message: "Todos los datos han sido eliminados correctamente. Se recomienda recargar la página.",
+                message: "success",
             };
         } catch (error) {
             console.error("[ImportExportManager] Error al limpiar datos:", error);
             return {
                 success: false,
-                message: `Error al limpiar datos: ${error instanceof Error ? error.message : "Error desconocido"}`,
+                message: "clear_error",
             };
         }
     }

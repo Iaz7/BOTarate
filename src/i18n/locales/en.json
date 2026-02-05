@@ -325,13 +325,13 @@
         "importExport": {
             "export": {
                 "title": "Export configuration",
-                "description": "Export all your configuration (assistants, exercises, and labs) to a JSON file. You can use this file to make backups or transfer the configuration to another browser.",
+                "description": "Export all your configuration (assistants, exercises, and labs) to a signed JSON file. You can use this file to make backups or transfer the configuration to another browser. The file is protected against manual modifications.",
                 "button": "Export configuration",
                 "processing": " Exporting..."
             },
             "import": {
                 "title": "Import configuration",
-                "description": "Import a configuration from a previously exported JSON file. This will overwrite existing data with the file's data.",
+                "description": "Import a configuration from a previously exported and signed JSON file. This will overwrite existing data with the file's data.",
                 "warningTitle": "⚠️ Attention:",
                 "warningDesc": "Importing will overwrite existing data. It is recommended to export first as a backup."
             },
@@ -344,6 +344,10 @@
             "messages": {
                 "exportSuccess": "Configuration exported successfully",
                 "importSuccess": "Configuration imported successfully",
+                "importSignatureError": "Invalid file signature. The file may have been modified manually.",
+                "importFormatError": "Invalid file format. Make sure you use a correctly exported file.",
+                "importJsonError": "The file does not contain valid JSON.",
+                "invalidFile": "Please select a valid JSON file.",
                 "clearSuccess": "All data has been deleted successfully",
                 "exportError": "Unexpected error exporting: {{error}}",
                 "importError": "Unexpected error importing: {{error}}",
@@ -475,6 +479,7 @@
         "notFound": "Not found",
         "exerciseBlocked": "The exercise \"{{exerciseName}}\" is blocked and cannot be explained.",
         "loadingExercise": "Could not load exercise \"{{exerciseName}}\".",
+        "loadingCourse": "Could not load course data",
         "loadingExplanation": "Explanation not found in storage",
         "chatHistory": "Error loading chat history",
         "resetChat": "Error resetting chat history"
