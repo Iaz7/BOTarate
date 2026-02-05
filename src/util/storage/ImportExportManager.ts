@@ -38,35 +38,42 @@ export interface ImportExportResult {
  * Allows saving and restoring all extension configuration in JSON format
  */
 export class ImportExportManager {
-    // Clave secreta para firmar las exportaciones (hardcodeada para simplicidad)
-    private static readonly SECRET_KEY = "egela-assistant-config-integrity-key-2024";
+    // Clave secreta para cifrar las exportaciones (hardcodeada para simplicidad)
+    // NOTA: hardcodear la clave hace que el cifrado sea trivialmente reversible si alguien tiene acceso al código.
+    private static readonly SECRET_KEY = "egela-assistant-config-encryption-key-2024";
 
-    /**
-     * Genera una firma HMAC-SHA256 del texto dado
-     */
-    private static async generateHMAC(text: string): Promise<string> {
+    private static async getAesKey(): Promise<CryptoKey> {
         const encoder = new TextEncoder();
-        const keyData = encoder.encode(this.SECRET_KEY);
-        const textData = encoder.encode(text);
-
-        const key = await crypto.subtle.importKey(
-            "raw",
-            keyData,
-            { name: "HMAC", hash: "SHA-256" },
-            false,
-            ["sign"]
-        );
-
-        const signature = await crypto.subtle.sign("HMAC", key, textData);
-        return btoa(String.fromCharCode(...new Uint8Array(signature)));
+        const keyMaterial = encoder.encode(this.SECRET_KEY);
+        const keyHash = await crypto.subtle.digest("SHA-256", keyMaterial);
+        return await crypto.subtle.importKey("raw", keyHash, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
     }
 
     /**
-     * Verifica una firma HMAC-SHA256
+     * Cifra un texto con AES-GCM y devuelve un base64 con IV + ciphertext
      */
-    private static async verifyHMAC(text: string, signature: string): Promise<boolean> {
-        const expectedSignature = await this.generateHMAC(text);
-        return expectedSignature === signature;
+    private static async encryptString(plain: string): Promise<string> {
+        const key = await this.getAesKey();
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encoder = new TextEncoder();
+        const data = encoder.encode(plain);
+        const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
+        const combined = new Uint8Array(iv.length + cipher.byteLength);
+        combined.set(iv, 0);
+        combined.set(new Uint8Array(cipher), iv.length);
+        return btoa(String.fromCharCode(...combined));
+    }
+
+    /**
+     * Descifra un base64 (IV + ciphertext) y devuelve el texto plano
+     */
+    private static async decryptString(encB64: string): Promise<string> {
+        const combined = Uint8Array.from(atob(encB64), c => c.charCodeAt(0));
+        const iv = combined.slice(0, 12);
+        const data = combined.slice(12);
+        const key = await this.getAesKey();
+        const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+        return new TextDecoder().decode(plain);
     }
     private static async restoreCollection(
         prefix: string,
@@ -135,21 +142,15 @@ export class ImportExportManager {
     static async exportToFile(): Promise<ImportExportResult> {
         try {
             const data = await this.getAllStorageData();
+            // Crear JSON plano con la configuración
+            const plaintext = JSON.stringify(data, null, 2);
 
-            // Crear JSON sin firma
-            const dataWithoutSignature = { ...data };
-            delete dataWithoutSignature.signature;
-            const jsonString = JSON.stringify(dataWithoutSignature, null, 2);
+            // Cifrar todo el JSON
+            const encrypted = await this.encryptString(plaintext);
 
-            // Generar firma HMAC
-            const signature = await this.generateHMAC(jsonString);
-
-            // Añadir firma al objeto
-            const signedData = { ...dataWithoutSignature, signature };
-
-            // Crear el blob JSON
-            const signedJsonString = JSON.stringify(signedData, null, 2);
-            const blob = new Blob([signedJsonString], { type: "application/json" });
+            // Exportar únicamente el blob cifrado (en la propiedad "signature" para mantener compatibilidad mínima)
+            const exportObject = { signature: encrypted };
+            const blob = new Blob([JSON.stringify(exportObject, null, 2)], { type: "application/json" });
 
             // Crear el nombre del archivo con fecha
             const date = new Date().toISOString().split("T")[0];
@@ -192,10 +193,6 @@ export class ImportExportManager {
             return false;
         }
 
-        if (!data.signature || typeof data.signature !== "string") {
-            return false;
-        }
-
         // Validar que las estructuras de datos existan (pueden estar vacías)
         if (data.exerciseData && !Array.isArray(data.exerciseData)) {
             return false;
@@ -218,38 +215,46 @@ export class ImportExportManager {
             const text = await file.text();
             const data = JSON.parse(text);
 
-            // Validar formato
-            if (!this.validateImportData(data)) {
+            // El archivo exportado debe contener sólo la propiedad "signature" (blob cifrado)
+            if (!data || typeof data !== "object" || !data.signature || typeof data.signature !== "string") {
                 return {
                     success: false,
                     message: "invalid_format",
                 };
             }
 
-            // Verificar firma
-            const { signature, ...dataWithoutSignature } = data;
-            const jsonString = JSON.stringify(dataWithoutSignature, null, 2);
-            const isValidSignature = await this.verifyHMAC(jsonString, signature);
-
-            if (!isValidSignature) {
+            // Descifrar el blob y parsear el JSON original
+            let parsedData: any;
+            try {
+                const decrypted = await this.decryptString(data.signature);
+                parsedData = JSON.parse(decrypted);
+            } catch (err) {
                 return {
                     success: false,
                     message: "invalid_signature",
                 };
             }
 
+            // Validar la estructura del JSON descifrado
+            if (!this.validateImportData(parsedData)) {
+                return {
+                    success: false,
+                    message: "invalid_format",
+                };
+            }
+
             let importedCount = 0;
 
             // Importar configuración de asistentes
-            if (data.assistantConfig) {
-                await AssistantConfigStorageManager.saveConfig(data.assistantConfig);
+            if (parsedData.assistantConfig) {
+                await AssistantConfigStorageManager.saveConfig(parsedData.assistantConfig);
                 importedCount++;
                 console.log("[ImportExportManager] Configuración de asistentes importada");
             }
 
-            importedCount += await this.restoreCollection("exercise_data_", data.exerciseData);
-            importedCount += await this.restoreCollection("lab_data_", data.labData);
-            importedCount += await this.restoreCollection("progress_config_", data.progressConfigData);
+            importedCount += await this.restoreCollection("exercise_data_", parsedData.exerciseData);
+            importedCount += await this.restoreCollection("lab_data_", parsedData.labData);
+            importedCount += await this.restoreCollection("progress_config_", parsedData.progressConfigData);
 
             // Notificar al background script para recargar configuración
             try {
