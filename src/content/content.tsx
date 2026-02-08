@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import ChatSidebar from "../components/ChatSidebar";
@@ -58,17 +58,20 @@ const ExtensionContent: React.FC = () => {
     const [pendingSolutionModalOpen, setPendingSolutionModalOpen] = useState<number | null>(null);
     const identifyingExercisesRef = React.useRef<boolean>(false);
 
-    const openExerciseModalForIndex = (exerciseIndex: number, fromCache: boolean): boolean => {
-        const exercise = exercises[exerciseIndex];
-        if (!exercise) {
-            return false;
-        }
+    const openExerciseModalForIndex = useCallback(
+        (exerciseIndex: number, fromCache: boolean): boolean => {
+            const exercise = exercises[exerciseIndex];
+            if (!exercise) {
+                return false;
+            }
 
-        setSelectedExerciseIndex(exerciseIndex);
-        setModalLoadFromCache(fromCache);
-        setIsModalOpen(true);
-        return true;
-    };
+            setSelectedExerciseIndex(exerciseIndex);
+            setModalLoadFromCache(fromCache);
+            setIsModalOpen(true);
+            return true;
+        },
+        [exercises, setSelectedExerciseIndex, setModalLoadFromCache, setIsModalOpen],
+    );
 
     // Efecto para abrir modales pendientes cuando los ejercicios se cargan
     useEffect(() => {

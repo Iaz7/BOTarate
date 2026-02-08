@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createHandlers } from "./handlers";
 import { useLabConfigState } from "./hooks";
@@ -69,22 +69,38 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
     const isAnyGenerating = Array.from(contextGenerationStatus.values()).some(s => s === "generating");
     const isDisabled = isSaving || isAnyGenerating;
 
-    const onSaveChanges = () => setErrorMessage(null);
-    handleSaveChanges(
+    const onSaveChanges = useCallback(() => {
+        setErrorMessage(null);
+        handleSaveChanges(
+            hasUnsavedChanges,
+            hasContextChanges,
+            labContextState,
+            setLabContextState,
+            contextGenerationStatus,
+            setContextGenerationStatus,
+            pendingChanges,
+            setPendingChanges,
+            setHasUnsavedChanges,
+            setIsSaving,
+            courseId,
+            onConfigUpdate,
+            setErrorMessage,
+        );
+    }, [
         hasUnsavedChanges,
         hasContextChanges,
         labContextState,
-        setLabContextState,
         contextGenerationStatus,
-        setContextGenerationStatus,
         pendingChanges,
+        courseId,
+        onConfigUpdate,
+        setLabContextState,
+        setContextGenerationStatus,
         setPendingChanges,
         setHasUnsavedChanges,
         setIsSaving,
-        courseId,
-        onConfigUpdate,
         setErrorMessage,
-    );
+    ]);
 
     if (isLoading) {
         return (
@@ -377,4 +393,4 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
     );
 };
 
-export default LabConfigTab;
+export default React.memo(LabConfigTab);

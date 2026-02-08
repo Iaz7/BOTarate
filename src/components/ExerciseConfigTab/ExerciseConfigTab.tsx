@@ -206,4 +206,4 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
     );
 };
 
-export default ExerciseConfigTab;
+export default React.memo(ExerciseConfigTab);
