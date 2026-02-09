@@ -311,7 +311,7 @@ NOTE: After generating the explanation, the student will have the opportunity to
         const history: any[] = [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
-            { role: 'agent', content: agentResponse }
+            { role: 'assistant', content: agentResponse }
         ];
 
         // Restore any follow-up chat history

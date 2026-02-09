@@ -495,6 +495,7 @@
             "send": "Send question"
         },
         "steps": "Steps",
+        "step": "Step {{number}}",
         "askQuestion": "Ask a question",
         "continueChat": "Continue conversation"
     },

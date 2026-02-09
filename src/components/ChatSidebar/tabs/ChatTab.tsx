@@ -27,7 +27,7 @@ interface ToolCallSimple {
 type ToolCall = ToolCallFromHistory | ToolCallSimple;
 
 interface ChatMessage {
-    role: "user" | "agent" | "tool";
+    role: "user" | "assistant" | "tool";
     content: string | null;
     id: string;
     tool_calls?: ToolCall[];
@@ -346,7 +346,7 @@ const ChatTab: React.FC<ChatTabProps> = ({
                         }
 
                         // Renderizar indicadores de herramientas cuando el agente usa tools
-                        if (message.role === "agent" && message.tool_calls && message.tool_calls.length > 0) {
+                        if (message.role === "assistant" && message.tool_calls && message.tool_calls.length > 0) {
                             const toolMessages = message.tool_calls
                                 .map(tc => getToolFriendlyMessage(tc))
                                 .filter(Boolean);

@@ -13,7 +13,7 @@ export interface ResponseOptions {
 }
 
 export interface Message {
-    role: 'system' | 'user' | 'agent' | 'tool';
+    role: 'system' | 'user' | 'assistant' | 'tool';
     content: string | null | Array<{
         type: 'text' | 'image_url';
         text?: string;
@@ -147,7 +147,7 @@ class OpenAIService {
 
         const response = await OpenAIService.openai.chat.completions.create({
             model: ConfigManager.getSelectedModel(),
-            messages: this.conversationHistory as any,
+            messages: this.conversationHistory,
             tools: tools ?? TOOLS,
             tool_choice: 'auto',
             max_completion_tokens: 32768
@@ -162,7 +162,7 @@ class OpenAIService {
 
         // Add agent message to history
         this.conversationHistory.push({
-            role: 'agent',
+            role: 'assistant',
             content: message.content,
             tool_calls: message.tool_calls as ToolCall[]
         });
@@ -266,7 +266,7 @@ class OpenAIService {
         // Build API parameters
         const apiParams: any = {
             model: modelName,
-            messages: this.conversationHistory as any,
+            messages: this.conversationHistory,
             response_format: responseFormat,
             max_completion_tokens: 32768
         };
@@ -304,7 +304,7 @@ class OpenAIService {
 
         // Add agent response to history
         this.conversationHistory.push({
-            role: 'agent',
+            role: 'assistant',
             content: JSON.stringify(parsed),
             tool_calls: undefined
         });

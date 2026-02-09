@@ -122,7 +122,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
             // Manejar notificaciones de tool calls en tiempo real
             if (message.action === "toolCallsUpdate" && message.toolCalls) {
                 const toolCallMessage: ChatMessage = {
-                    role: "agent",
+                    role: "assistant",
                     content: null,
                     id: `tool-${Date.now()}`,
                     tool_calls: message.toolCalls
@@ -203,9 +203,9 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
 
                 if (response && response.success && Array.isArray(response.messages)) {
                     const uiMessages: ChatMessage[] = response.messages
-                        .filter((m: any) => m.role === "user" || m.role === "agent" || m.role === "tool")
+                        .filter((m: any) => m.role === "user" || m.role === "assistant" || m.role === "tool")
                         .map((m: any, idx: number) => ({
-                            role: m.role as "user" | "agent" | "tool",
+                            role: m.role as "user" | "assistant" | "tool",
                             content: m.content,
                             id: `${m.role}-${Date.now()}-${idx}`,
                             tool_calls: m.tool_calls,
@@ -412,7 +412,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
             });
 
             const agentMessage: ChatMessage = {
-                role: "agent",
+                role: "assistant",
                 content: response,
                 id: `agent-${Date.now()}`,
             };
@@ -421,7 +421,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
         } catch (error) {
             console.error("Error generating response:", error);
             const errorMessage: ChatMessage = {
-                role: "agent",
+                role: "assistant",
                 content: "Error generating response. Please try again.",
                 id: `error-${Date.now()}`,
             };

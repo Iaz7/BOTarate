@@ -82,7 +82,9 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                             {explanation.steps.map((step, index) => (
                                 <div key={`step-${index}`} className="card">
                                     <div className="card-header bg-primary text-white">
-                                        <h4 className="h6 mb-0">{step.title}</h4>
+                                        <h4 className="h6 mb-0">
+                                            {t("explanation.step", { number: index + 1 })}: {step.title}
+                                        </h4>
                                     </div>
                                     <div className="card-body">
                                         <ReactMarkdown

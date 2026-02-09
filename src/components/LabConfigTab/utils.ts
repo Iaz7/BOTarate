@@ -50,6 +50,7 @@ export const handleSaveChanges = async (
                     const response = await chrome.runtime.sendMessage({
                         action: "generateLabContext",
                         pageId: labId,
+                        courseId: courseId,
                     });
 
                     if (response.success) {

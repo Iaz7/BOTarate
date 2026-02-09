@@ -12,7 +12,7 @@ export interface ExplanationStep {
  * Explanation chat message
  */
 export interface ExplanationChatMessage {
-    role: "user" | "agent";
+    role: "user" | "assistant";
     content: string;
     id: string;
 }

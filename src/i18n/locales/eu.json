@@ -502,6 +502,7 @@
             "send": "Bidali galdera"
         },
         "steps": "Urratsak",
+        "step": "{{number}}. urratsa",
         "askQuestion": "Galdera egin",
         "continueChat": "Elkarrizketa jarraitu"
     },

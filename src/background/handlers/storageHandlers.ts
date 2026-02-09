@@ -200,21 +200,23 @@ export function handleSaveChatHistory(request: any, sendResponse: (response?: an
 export function handleCheckUserRole(request: any, sendResponse: (response?: any) => void): boolean {
     (async () => {
         try {
-            // Verificar si hay un caché válido del rol del usuario
-            const cachedRole = await ModeStorageManager.getUserRole();
-
-            if (cachedRole && cachedRole.isValid) {
-                console.log(`[handleCheckUserRole] Usando caché del rol: ${cachedRole.isTeacher ? 'Profesor' : 'Alumno'}`);
-                sendResponse({ success: true, isTeacher: cachedRole.isTeacher });
-                return;
-            }
-
             // Si no hay caché válido, verificar el rol en Egela
             const course: Course = getCachedCourse();
 
             if (!course) {
                 console.warn('[handleCheckUserRole] No se pudo determinar el curso, no se puede verificar el rol');
                 sendResponse({ success: false, error: 'No se pudo determinar el curso', isTeacher: false });
+                return;
+            }
+
+            const courseId = course.id;
+
+            // Verificar si hay un caché válido del rol del usuario para este curso
+            const cachedRole = await ModeStorageManager.getUserRoleForCourse(courseId);
+
+            if (cachedRole && cachedRole.isValid) {
+                console.log(`[handleCheckUserRole] Usando caché del rol para curso ${courseId}: ${cachedRole.isTeacher ? 'Profesor' : 'Alumno'}`);
+                sendResponse({ success: true, isTeacher: cachedRole.isTeacher });
                 return;
             }
 
@@ -228,10 +230,10 @@ export function handleCheckUserRole(request: any, sendResponse: (response?: any)
                 return;
             }
 
-            console.log(`[handleCheckUserRole] Usuario es profesor: ${isTeacher}`);
+            console.log(`[handleCheckUserRole] Usuario es profesor en curso ${courseId}: ${isTeacher}`);
 
-            // Guardar en caché solo si la verificación fue exitosa
-            await ModeStorageManager.saveUserRole(isTeacher);
+            // Guardar en caché para este curso
+            await ModeStorageManager.saveUserRoleForCourse(courseId, isTeacher);
 
             sendResponse({ success: true, isTeacher });
         } catch (error: any) {

@@ -307,12 +307,17 @@ async function initializeLabDataIfNeeded(course: Course): Promise<void> {
  * This allows parallel context generation for multiple labs
  */
 export function handleGenerateLabContext(request: any, sendResponse: (response?: any) => void): boolean {
-    const { pageId } = request;
+    const { pageId, courseId } = request;
 
-    console.log(`[handleGenerateLabContext] Generating context for lab: ${pageId}`);
+    console.log(`[handleGenerateLabContext] Generating context for lab: ${pageId}, course: ${courseId}`);
 
     (async () => {
         try {
+            // Load the course-specific agent configuration
+            if (courseId) {
+                await initializeAgents(courseId);
+            }
+
             // Create a new ExerciseAgent instance for this specific generation
             // This allows parallel generation without sharing state
             const exerciseAgent = createExerciseAgent();

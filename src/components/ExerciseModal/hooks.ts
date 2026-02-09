@@ -161,7 +161,7 @@ export const useExerciseModal = ({
 
             if (response.success) {
                 const agentMessage: ChatMessage = {
-                    role: "agent",
+                    role: "assistant",
                     content: response.response,
                     id: `agent-${Date.now()}`,
                 };
@@ -180,7 +180,7 @@ export const useExerciseModal = ({
                 }
             } else {
                 const errorMessage: ChatMessage = {
-                    role: "agent",
+                    role: "assistant",
                     content: `Error: ${response.error || "Unknown error"}`,
                     id: `error-${Date.now()}`,
                 };
@@ -190,7 +190,7 @@ export const useExerciseModal = ({
         } catch (error) {
             console.error("Error sending message:", error);
             const errorMessage: ChatMessage = {
-                role: "agent",
+                role: "assistant",
                 content: "Communication error with AI agent",
                 id: `error-${Date.now()}`,
             };

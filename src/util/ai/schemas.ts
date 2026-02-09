@@ -56,7 +56,7 @@ export const StepSchema = {
     properties: {
         title: {
             type: "string",
-            description: "Título breve y descriptivo del paso. Debe contener 'Paso X:' (con el numero del paso, comenzando por 1) para que el alumno pueda hacer referencia a él fácilmente. (ej: 'Paso 1: Identificar las tablas necesarias', 'Paso 4: Aplicar JOIN entre tablas')"
+            description: "Título breve y descriptivo del paso sin incluir numeración. El número del paso se añadirá automáticamente en la interfaz. (ej: 'Identificar las tablas necesarias', 'Aplicar JOIN entre tablas')"
         },
         content: {
             type: "string",

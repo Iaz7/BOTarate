@@ -499,6 +499,7 @@
             "send": "Enviar pregunta"
         },
         "steps": "Pasos",
+        "step": "Paso {{number}}",
         "askQuestion": "Hacer una pregunta",
         "continueChat": "Continuar conversación"
     },
