@@ -7,7 +7,7 @@ export interface ProgressConfig {
 
 export class ProgressConfigStorageManager extends BaseStorageManager {
     private static readonly STORAGE_KEY_PREFIX = "progress_config_";
-    private static readonly GLOBAL_KEY = "global";
+    private static readonly LEGACY_GLOBAL_KEY = "global";
 
     static getDefaultConfig(): ProgressConfig {
         return {
@@ -16,16 +16,36 @@ export class ProgressConfigStorageManager extends BaseStorageManager {
         };
     }
 
-    static async saveConfig(config: ProgressConfig): Promise<void> {
-        await this.saveData(this.STORAGE_KEY_PREFIX, this.GLOBAL_KEY, config);
+    /**
+     * Saves progress config for a specific course.
+     * @param config The config to save
+     * @param courseId Optional course ID. Falls back to legacy 'global' key.
+     */
+    static async saveConfig(config: ProgressConfig, courseId?: string): Promise<void> {
+        const key = courseId || this.LEGACY_GLOBAL_KEY;
+        await this.saveData(this.STORAGE_KEY_PREFIX, key, config);
     }
 
-    static async getConfig(): Promise<(ProgressConfig & { timestamp: number }) | null> {
-        return await this.getData<ProgressConfig>(this.STORAGE_KEY_PREFIX, this.GLOBAL_KEY);
+    /**
+     * Gets progress config for a specific course.
+     * Falls back to legacy 'global' key if no course-specific config.
+     * @param courseId Optional course ID.
+     */
+    static async getConfig(courseId?: string): Promise<(ProgressConfig & { timestamp: number }) | null> {
+        const key = courseId || this.LEGACY_GLOBAL_KEY;
+        const result = await this.getData<ProgressConfig>(this.STORAGE_KEY_PREFIX, key);
+        if (result) return result;
+
+        // If courseId was given but not found, try legacy global
+        if (courseId) {
+            return await this.getData<ProgressConfig>(this.STORAGE_KEY_PREFIX, this.LEGACY_GLOBAL_KEY);
+        }
+        return null;
     }
 
-    static async removeConfig(): Promise<void> {
-        await this.removeData(this.STORAGE_KEY_PREFIX, this.GLOBAL_KEY);
+    static async removeConfig(courseId?: string): Promise<void> {
+        const key = courseId || this.LEGACY_GLOBAL_KEY;
+        await this.removeData(this.STORAGE_KEY_PREFIX, key);
     }
 
     static async clearAll(): Promise<void> {

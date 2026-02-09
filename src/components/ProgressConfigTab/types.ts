@@ -1,5 +1,6 @@
 export interface ProgressConfigTabProps {
     isActive: boolean;
+    courseId?: string;
 }
 
 export interface ProgressConfigForm {

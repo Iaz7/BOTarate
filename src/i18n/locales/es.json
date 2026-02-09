@@ -151,6 +151,13 @@
         "llmWarning": "Para configurar el LLM, ve a la página de opciones de la extensión, establece tu clave API y un modelo compatible, guarda la configuración y recarga esta página."
     },
     "options": {
+        "course": {
+            "label": "Curso",
+            "loading": "Cargando cursos...",
+            "noCourses": "No se encontraron cursos. Aseg\u00farate de estar matriculado en al menos un curso en eGela.",
+            "loadError": "Error al cargar la lista de cursos.",
+            "sessionExpired": "Tu sesi\u00f3n en eGela ha expirado. Por favor, <a href='https://egela.ehu.eus/' target='_blank'>inicia sesi\u00f3n</a> y vuelve a abrir las opciones."
+        },
         "tabs": {
             "llm": "Configuración LLM",
             "agents": "Prompts",
@@ -381,7 +388,7 @@
         "importExport": {
             "export": {
                 "title": "Exportar configuración",
-                "description": "Exporta toda tu configuración (agentes, ejercicios y laboratorios) a un archivo JSON firmado. Puedes usar este archivo para hacer copias de seguridad o transferir la configuración a otro navegador. El archivo está protegido contra modificaciones manuales.",
+                "description": "Exporta toda tu configuración (prompts, ejercicios y laboratorios) a un archivo JSON firmado. Puedes usar este archivo para hacer copias de seguridad o transferir la configuración a otro navegador. El archivo está protegido contra modificaciones manuales.",
                 "button": "Exportar configuración",
                 "processing": " Exportando..."
             },

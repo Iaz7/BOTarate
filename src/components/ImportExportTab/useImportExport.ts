@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ImportExportManager } from "../../util/storage/ImportExportManager";
 import { ImportExportTabProps } from "./types";
 
-export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
+export const useImportExport = ({ courseId, onDataChange }: ImportExportTabProps) => {
     const { t } = useTranslation();
     const [message, setMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -17,7 +17,7 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
         setMessage(null);
 
         try {
-            const result = await ImportExportManager.exportToFile();
+            const result = await ImportExportManager.exportToFile(courseId);
             let text = "";
             if (result.success) {
                 text = t('options.importExport.messages.exportSuccess', 'Configuration exported successfully');
@@ -48,7 +48,7 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
         setMessage(null);
 
         try {
-            const result = await ImportExportManager.importFromFile(file);
+            const result = await ImportExportManager.importFromFile(file, courseId);
 
             let text = "";
             if (result.success) {
@@ -106,7 +106,7 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
         setMessage(null);
 
         try {
-            const result = await ImportExportManager.clearAllData();
+            const result = await ImportExportManager.clearAllData(courseId);
             let text = "";
             if (result.success) {
                 text = t('options.importExport.messages.clearSuccess', 'All data has been deleted successfully');

@@ -9,7 +9,7 @@ export { AgentConfigStorageManager };
  */
 class AgentConfigStorageManager extends BaseStorageManager {
     private static readonly STORAGE_KEY_PREFIX = 'agent_config_';
-    private static readonly CONFIG_KEY = 'main';
+    private static readonly LEGACY_CONFIG_KEY = 'main';
     private static readonly defaultConfig: AgentConfig = {
         exerciseAgent: {
             role: "",
@@ -37,7 +37,7 @@ class AgentConfigStorageManager extends BaseStorageManager {
             pickyExerciseConfiguration: ""
         },
         common: {
-            subjectName: "",
+            courseName: "",
             platformName: "",
             institutionName: "",
             teacherName: "",
@@ -47,24 +47,36 @@ class AgentConfigStorageManager extends BaseStorageManager {
     private static cachedConfig: AgentConfig | null = null;
 
     /**
-     * Loads agent configuration from storage
-     * If no saved configuration exists, returns default configuration (SQL)
+     * Loads agent configuration from storage for a specific course.
+     * Falls back to legacy 'main' key if no course-specific config exists.
+     * @param courseId Optional course ID. If omitted, loads legacy 'main' config.
      */
-    static async loadConfig(): Promise<AgentConfig> {
+    static async loadConfig(courseId?: string): Promise<AgentConfig> {
         try {
-            const result = await this.getData<AgentConfig>(this.STORAGE_KEY_PREFIX, this.CONFIG_KEY);
+            const key = courseId || this.LEGACY_CONFIG_KEY;
+            const result = await this.getData<AgentConfig>(this.STORAGE_KEY_PREFIX, key);
 
             if (result) {
-                console.log("[AgentConfigStorageManager] Configuration loaded from storage");
-                // Extract only the configuration, without the timestamp
+                console.log(`[AgentConfigStorageManager] Configuration loaded for key: ${key}`);
                 const { timestamp, ...config } = result;
                 this.cachedConfig = config as AgentConfig;
                 return this.cachedConfig;
-            } else {
-                console.log("[AgentConfigStorageManager] No saved configuration, using default values");
-                this.cachedConfig = this.defaultConfig;
-                return this.defaultConfig;
             }
+
+            // If courseId was specified but no config found, try legacy key
+            if (courseId) {
+                const legacyResult = await this.getData<AgentConfig>(this.STORAGE_KEY_PREFIX, this.LEGACY_CONFIG_KEY);
+                if (legacyResult) {
+                    console.log(`[AgentConfigStorageManager] No config for course ${courseId}, using legacy config`);
+                    const { timestamp, ...config } = legacyResult;
+                    this.cachedConfig = config as AgentConfig;
+                    return this.cachedConfig;
+                }
+            }
+
+            console.log("[AgentConfigStorageManager] No saved configuration, using default values");
+            this.cachedConfig = this.defaultConfig;
+            return this.defaultConfig;
         } catch (error) {
             console.error("[AgentConfigStorageManager] Error loading configuration:", error);
             return this.defaultConfig;
@@ -72,10 +84,13 @@ class AgentConfigStorageManager extends BaseStorageManager {
     }
 
     /**
-     * Saves agent configuration to storage
+     * Saves agent configuration to storage for a specific course.
+     * @param config The agent configuration to save
+     * @param courseId Optional course ID. If omitted, saves to legacy 'main' key.
      */
-    static async saveConfig(config: AgentConfig): Promise<void> {
-        await this.saveData(this.STORAGE_KEY_PREFIX, this.CONFIG_KEY, config);
+    static async saveConfig(config: AgentConfig, courseId?: string): Promise<void> {
+        const key = courseId || this.LEGACY_CONFIG_KEY;
+        await this.saveData(this.STORAGE_KEY_PREFIX, key, config);
         this.cachedConfig = config;
     }
 
@@ -96,24 +111,38 @@ class AgentConfigStorageManager extends BaseStorageManager {
 
     /**
      * Updates a specific section of the configuration
+     * @param section The section to update
+     * @param data The new data for the section
+     * @param courseId Optional course ID
      */
     static async updateSection(
         section: keyof AgentConfig,
-        data: any
+        data: any,
+        courseId?: string
     ): Promise<void> {
-        const currentConfig = await this.loadConfig();
+        const currentConfig = await this.loadConfig(courseId);
         const updatedConfig = {
             ...currentConfig,
             [section]: data
         };
-        await this.saveConfig(updatedConfig);
+        await this.saveConfig(updatedConfig, courseId);
     }
 
     /**
-     * Deletes saved configuration
+     * Deletes saved configuration for a specific course or the legacy key.
+     * @param courseId Optional course ID. If omitted, clears legacy 'main' config.
      */
-    static async clearConfig(): Promise<void> {
-        await this.removeData(this.STORAGE_KEY_PREFIX, this.CONFIG_KEY);
+    static async clearConfig(courseId?: string): Promise<void> {
+        const key = courseId || this.LEGACY_CONFIG_KEY;
+        await this.removeData(this.STORAGE_KEY_PREFIX, key);
         this.cachedConfig = null;
+    }
+
+    /**
+     * Checks if a course-specific configuration exists.
+     * @param courseId The course ID to check
+     */
+    static async hasConfigForCourse(courseId: string): Promise<boolean> {
+        return await this.hasData(this.STORAGE_KEY_PREFIX, courseId);
     }
 }

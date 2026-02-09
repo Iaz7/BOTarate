@@ -6,21 +6,26 @@ import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManage
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
 import { Lab, LabStorageManager } from "../../util/storage/LabStorageManager";
 import { ProgressConfigStorageManager } from "../../util/storage/ProgressConfigStorageManager";
-import { createExerciseAgent, getCourseAgent, getEvaluationAgent, getExerciseAgent, getExplanationAgent } from "../context";
+import { createExerciseAgent, getCourseAgent, getEvaluationAgent, getExerciseAgent, getExplanationAgent, initializeAgents } from "../context";
 
 let cachedCourse: Course;
 
 export function handleGetCourseData(request: any, sendResponse: (response?: any) => void): boolean {
     const { href, sessionStorageData } = request;
-    const courseAgent = getCourseAgent();
-    const exerciseAgent = getExerciseAgent();
-    const explanationAgent = getExplanationAgent();
-    const evaluationAgent = getEvaluationAgent();
 
     Course.fromHrefAndStorage(href, sessionStorageData)
         .then(async course => {
             if (course) {
                 cachedCourse = course;
+
+                // Re-initialize agents with course-specific config
+                await initializeAgents(course.id);
+
+                const courseAgent = getCourseAgent();
+                const exerciseAgent = getExerciseAgent();
+                const explanationAgent = getExplanationAgent();
+                const evaluationAgent = getEvaluationAgent();
+
                 courseAgent.setCourse(course);
                 exerciseAgent.setCourse(course);
                 explanationAgent.setCourse(course);
@@ -203,10 +208,11 @@ export function handleGetLabData(request: any, sendResponse: (response?: any) =>
     return true;
 }
 
-export function handleGetProgressConfig(_request: any, sendResponse: (response?: any) => void): boolean {
+export function handleGetProgressConfig(request: any, sendResponse: (response?: any) => void): boolean {
+    const { courseId } = request || {};
     (async () => {
         try {
-            const storedConfig = await ProgressConfigStorageManager.getConfig();
+            const storedConfig = await ProgressConfigStorageManager.getConfig(courseId);
             if (storedConfig) {
                 const { timestamp, ...config } = storedConfig;
                 sendResponse({ success: true, config, timestamp });

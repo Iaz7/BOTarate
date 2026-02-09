@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useProgressConfig } from "./hooks";
 import { ProgressConfigTabProps } from "./types";
 
-const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
+const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive, courseId }) => {
     const { t } = useTranslation();
     const {
         config,
@@ -14,7 +14,7 @@ const ProgressConfigTab: React.FC<ProgressConfigTabProps> = ({ isActive }) => {
         handleNumberChange,
         handleSave,
         handleRestoreDefaults,
-    } = useProgressConfig(isActive);
+    } = useProgressConfig(isActive, courseId);
 
     if (isLoading) {
         return (

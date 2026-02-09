@@ -151,6 +151,13 @@
         "llmWarning": "LLM konfiguratzeko, joan luzapenaren aukeren orrira, ezarri zure API gakoa eta eredu bateragarri bat, gorde konfigurazioa eta freskatu orri hau."
     },
     "options": {
+        "course": {
+            "label": "Ikastaroa",
+            "loading": "Ikastaroak kargatzen...",
+            "noCourses": "Ez da ikastarorik aurkitu. Ziurtatu eGela-n gutxienez ikastaro batean matrikulatuta zaudela.",
+            "loadError": "Errorea ikastaroen zerrenda kargatzean.",
+            "sessionExpired": "Zure eGela-ko saioa iraungi da. Mesedez, <a href='https://egela.ehu.eus/' target='_blank'>hasi saioa</a> eta ireki berriro aukerak."
+        },
         "tabs": {
             "llm": "LLM Konfigurazioa",
             "agents": "Prompts",
@@ -381,7 +388,7 @@
         "importExport": {
             "export": {
                 "title": "Esportatu konfigurazioa",
-                "description": "Esportatu zure konfigurazio guztia (agenteak, ariketak eta laborategiak) JSON fitxategi sinatua batera. Fitxategi hau segurtasun kopiak egiteko edo konfigurazioa beste nabigatzaile batera transferitzeko erabil dezakezu. Fitxategia eskuzko aldaketetatik babestuta dago.",
+                "description": "Esportatu zure konfigurazio guztia (promptak, ariketak eta laborategiak) JSON fitxategi sinatua batera. Fitxategi hau segurtasun kopiak egiteko edo konfigurazioa beste nabigatzaile batera transferitzeko erabil dezakezu. Fitxategia eskuzko aldaketetatik babestuta dago.",
                 "button": "Esportatu konfigurazioa",
                 "processing": " Esportatzen..."
             },

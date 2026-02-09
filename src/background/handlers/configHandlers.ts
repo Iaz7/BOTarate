@@ -34,11 +34,11 @@ export function handleUpdateConfig(request: any, sendResponse: (response?: any) 
     return false;
 }
 
-export function handleReloadAgentConfig(sendResponse: (response?: any) => void): boolean {
+export function handleReloadAgentConfig(sendResponse: (response?: any) => void, courseId?: string): boolean {
     (async () => {
         try {
-            await initializeAgents();
-            console.log("Configuración de agentes recargada");
+            await initializeAgents(courseId);
+            console.log(`Configuración de agentes recargada${courseId ? ` para curso ${courseId}` : ''}`);
             sendResponse({ success: true });
         } catch (error: any) {
             console.error("Error al recargar configuración de agentes:", error);

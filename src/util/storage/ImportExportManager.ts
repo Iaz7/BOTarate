@@ -8,6 +8,7 @@ import { ProgressConfigStorageManager } from "./ProgressConfigStorageManager";
  */
 export interface ExportData {
     exportDate: string;
+    courseId?: string;
     agentConfig?: any;
     exerciseData: Array<{
         key: string;
@@ -93,41 +94,80 @@ export class ImportExportManager {
     }
 
     /**
-     * Gets all storage data for export
+     * Gets all storage data for export, optionally filtered by courseId.
+     * When courseId is provided, exports only data relevant to that course.
+     * @param courseId Optional course ID to filter data
      * @returns Object with all configuration
      */
-    static async getAllStorageData(): Promise<ExportData> {
+    static async getAllStorageData(courseId?: string): Promise<ExportData> {
         // Get all storage data
         const allData = await chrome.storage.local.get(null);
 
-        // Filter exercise data
-        const exerciseData = Object.keys(allData)
-            .filter(key => key.startsWith("exercise_data_"))
-            .map(key => ({
-                key: key.replace("exercise_data_", ""),
-                data: allData[key],
-            }));
+        let exerciseData: Array<{ key: string; data: any }>;
+        let labData: Array<{ key: string; data: any }>;
+        let progressConfigData: Array<{ key: string; data: any }>;
 
-        // Filter lab data
-        const labData = Object.keys(allData)
-            .filter(key => key.startsWith("lab_data_"))
-            .map(key => ({
-                key: key.replace("lab_data_", ""),
-                data: allData[key],
-            }));
+        if (courseId) {
+            // Course-specific export: get lab data for this course
+            labData = Object.keys(allData)
+                .filter(key => key === `lab_data_${courseId}`)
+                .map(key => ({
+                    key: key.replace("lab_data_", ""),
+                    data: allData[key],
+                }));
 
-        const progressConfigData = Object.keys(allData)
-            .filter(key => key.startsWith("progress_config_"))
-            .map(key => ({
-                key: key.replace("progress_config_", ""),
-                data: allData[key],
-            }));
+            // Get lab IDs from the course's lab_data to filter exercise_data
+            const courseLabData = allData[`lab_data_${courseId}`];
+            const labIds: string[] = courseLabData?.labs?.map((lab: any) => lab.id) || [];
 
-        // Get agent configuration
-        const agentConfig = await AgentConfigStorageManager.loadConfig();
+            exerciseData = Object.keys(allData)
+                .filter(key => {
+                    if (!key.startsWith("exercise_data_")) return false;
+                    const pageId = key.replace("exercise_data_", "");
+                    return labIds.includes(pageId);
+                })
+                .map(key => ({
+                    key: key.replace("exercise_data_", ""),
+                    data: allData[key],
+                }));
+
+            // Get progress config for this course
+            progressConfigData = Object.keys(allData)
+                .filter(key => key === `progress_config_${courseId}`)
+                .map(key => ({
+                    key: key.replace("progress_config_", ""),
+                    data: allData[key],
+                }));
+        } else {
+            // Legacy: export all data
+            exerciseData = Object.keys(allData)
+                .filter(key => key.startsWith("exercise_data_"))
+                .map(key => ({
+                    key: key.replace("exercise_data_", ""),
+                    data: allData[key],
+                }));
+
+            labData = Object.keys(allData)
+                .filter(key => key.startsWith("lab_data_"))
+                .map(key => ({
+                    key: key.replace("lab_data_", ""),
+                    data: allData[key],
+                }));
+
+            progressConfigData = Object.keys(allData)
+                .filter(key => key.startsWith("progress_config_"))
+                .map(key => ({
+                    key: key.replace("progress_config_", ""),
+                    data: allData[key],
+                }));
+        }
+
+        // Get agent configuration (per course if courseId given)
+        const agentConfig = await AgentConfigStorageManager.loadConfig(courseId);
 
         return {
             exportDate: new Date().toISOString(),
+            courseId,
             agentConfig,
             exerciseData,
             labData,
@@ -137,11 +177,12 @@ export class ImportExportManager {
 
     /**
      * Exporta la configuración a un archivo JSON y lo descarga
+     * @param courseId Optional course ID to export course-specific data
      * @returns Resultado de la operación
      */
-    static async exportToFile(): Promise<ImportExportResult> {
+    static async exportToFile(courseId?: string): Promise<ImportExportResult> {
         try {
-            const data = await this.getAllStorageData();
+            const data = await this.getAllStorageData(courseId);
             // Crear JSON plano con la configuración
             const plaintext = JSON.stringify(data, null, 2);
 
@@ -152,9 +193,10 @@ export class ImportExportManager {
             const exportObject = { signature: encrypted };
             const blob = new Blob([JSON.stringify(exportObject, null, 2)], { type: "application/json" });
 
-            // Crear el nombre del archivo con fecha
-            const date = new Date().toISOString().split("T")[0];
-            const filename = `egela-agent-config-${date}.json`;
+            // Crear el nombre del archivo
+            const courseName = data.agentConfig?.common?.courseName || 'global';
+            const sanitizedCourseName = courseName.replace(/[^a-zA-Z0-9-_]/g, '_');
+            const filename = `BOTarate-${sanitizedCourseName}-config.json`;
 
             // Crear un enlace temporal y descargarlo
             const url = URL.createObjectURL(blob);
@@ -208,9 +250,10 @@ export class ImportExportManager {
     /**
      * Importa la configuración desde un archivo JSON
      * @param file Archivo JSON a importar
+     * @param courseId Optional course ID to save imported data under
      * @returns Resultado de la operación
      */
-    static async importFromFile(file: File): Promise<ImportExportResult> {
+    static async importFromFile(file: File, courseId?: string): Promise<ImportExportResult> {
         try {
             const text = await file.text();
             const data = JSON.parse(text);
@@ -247,9 +290,10 @@ export class ImportExportManager {
 
             // Importar configuración de agentes
             if (parsedData.agentConfig) {
-                await AgentConfigStorageManager.saveConfig(parsedData.agentConfig);
+                await AgentConfigStorageManager.saveConfig(parsedData.agentConfig, courseId);
                 importedCount++;
-                console.log("[ImportExportManager] Configuración de agentes importada");
+                const logSuffix = courseId ? ' for course ' + courseId : '';
+                console.log('[ImportExportManager] Agent config imported' + logSuffix);
             }
 
             importedCount += await this.restoreCollection("exercise_data_", parsedData.exerciseData);
@@ -289,14 +333,47 @@ export class ImportExportManager {
      * Limpia todos los datos del storage
      * @returns Resultado de la operación
      */
-    static async clearAllData(): Promise<ImportExportResult> {
+    /**
+     * Limpia todos los datos del storage, or course-specific data
+     * @param courseId Optional course ID to clear only that course's data
+     * @returns Resultado de la operación
+     */
+    static async clearAllData(courseId?: string): Promise<ImportExportResult> {
         try {
-            await ExerciseStorageManager.clearAllExerciseData();
-            await LabStorageManager.clearAllLabData();
-            await AgentConfigStorageManager.clearConfig();
-            await ProgressConfigStorageManager.clearAll();
+            if (courseId) {
+                // Course-specific clear
+                const allData = await chrome.storage.local.get(null);
+                const courseLabData = allData[`lab_data_${courseId}`];
+                const labIds: string[] = courseLabData?.labs?.map((lab: any) => lab.id) || [];
 
-            console.log("[ImportExportManager] Todos los datos han sido eliminados");
+                // Remove exercise data for this course's labs
+                const exerciseKeysToRemove = Object.keys(allData).filter(key => {
+                    if (!key.startsWith('exercise_data_')) return false;
+                    const pageId = key.replace('exercise_data_', '');
+                    return labIds.includes(pageId);
+                });
+                if (exerciseKeysToRemove.length > 0) {
+                    await chrome.storage.local.remove(exerciseKeysToRemove);
+                }
+
+                // Remove lab data for this course
+                await chrome.storage.local.remove([`lab_data_${courseId}`]);
+
+                // Remove agent config for this course
+                await AgentConfigStorageManager.clearConfig(courseId);
+
+                // Remove progress config for this course
+                await ProgressConfigStorageManager.removeConfig(courseId);
+
+                console.log(`[ImportExportManager] Data cleared for course ${courseId}`);
+            } else {
+                await ExerciseStorageManager.clearAllExerciseData();
+                await LabStorageManager.clearAllLabData();
+                await AgentConfigStorageManager.clearConfig();
+                await ProgressConfigStorageManager.clearAll();
+
+                console.log("[ImportExportManager] Todos los datos han sido eliminados");
+            }
 
             return {
                 success: true,

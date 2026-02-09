@@ -1,4 +1,5 @@
 import type { Course } from "../../util/egela/Course";
+import { getUserCourses, isUserTeacherInCourse } from "../../util/egela/EgelaDashboard";
 import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManager";
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
 import { LabStorageManager, ReasoningEffort, VerbosityLevel } from "../../util/storage/LabStorageManager";
@@ -156,7 +157,7 @@ export function handleGetLabConfig(request: any, sendResponse: (response?: any) 
 }
 
 export function handleSaveProgressConfig(request: any, sendResponse: (response?: any) => void): boolean {
-    const { config } = request;
+    const { config, courseId } = request;
 
     (async () => {
         try {
@@ -165,8 +166,9 @@ export function handleSaveProgressConfig(request: any, sendResponse: (response?:
                 minChallengesPercentage: Math.min(Math.max(Number(config?.minChallengesPercentage ?? 100), 0), 100),
             };
 
-            await ProgressConfigStorageManager.saveConfig(sanitizedConfig);
-            console.log("Configuración de progreso global guardada");
+            await ProgressConfigStorageManager.saveConfig(sanitizedConfig, courseId);
+            const logSuffix = courseId ? ' para curso ' + courseId : '';
+            console.log('Configuración de progreso guardada' + logSuffix);
             sendResponse({ success: true, config: sanitizedConfig });
         } catch (error: any) {
             console.error("Error al guardar configuración de progreso:", error);
@@ -326,6 +328,71 @@ export function handleUpdateExercise(request: any, sendResponse: (response?: any
         } catch (error: any) {
             console.error('Error al actualizar ejercicio:', error);
             sendResponse({ success: false, error: error.message });
+        }
+    })();
+    return true;
+}
+
+/**
+ * Fetches the user's course list from the eGela dashboard.
+ */
+export function handleGetUserCourses(_request: any, sendResponse: (response?: any) => void): boolean {
+    (async () => {
+        try {
+            const courses = await getUserCourses();
+            console.log(`[handleGetUserCourses] Found ${courses.length} courses`);
+            sendResponse({ success: true, courses });
+        } catch (error: any) {
+            console.error('[handleGetUserCourses] Error:', error);
+            const isSessionExpired = error.message?.includes('EgelaSessionExpired');
+            sendResponse({
+                success: false,
+                error: error.message,
+                isSessionExpired
+            });
+        }
+    })();
+    return true;
+}
+
+/**
+ * Checks user role for a specific course with per-course caching.
+ */
+export function handleCheckUserRoleForCourse(request: any, sendResponse: (response?: any) => void): boolean {
+    const { courseId } = request;
+
+    (async () => {
+        try {
+            if (!courseId) {
+                sendResponse({ success: false, error: 'courseId is required', isTeacher: false });
+                return;
+            }
+
+            // Check per-course cache first
+            const cachedRole = await ModeStorageManager.getUserRoleForCourse(courseId);
+            if (cachedRole && cachedRole.isValid) {
+                console.log(`[handleCheckUserRoleForCourse] Using cache for course ${courseId}: ${cachedRole.isTeacher ? 'Teacher' : 'Student'}`);
+                sendResponse({ success: true, isTeacher: cachedRole.isTeacher });
+                return;
+            }
+
+            // No valid cache, check role in Egela
+            const isTeacher = await isUserTeacherInCourse(courseId);
+            console.log(`[handleCheckUserRoleForCourse] User is teacher in course ${courseId}: ${isTeacher}`);
+
+            // Cache the result
+            await ModeStorageManager.saveUserRoleForCourse(courseId, isTeacher);
+
+            sendResponse({ success: true, isTeacher });
+        } catch (error: any) {
+            console.error('[handleCheckUserRoleForCourse] Error:', error);
+            const isSessionExpired = error.message?.includes('EgelaSessionExpired');
+            sendResponse({
+                success: false,
+                error: error.message,
+                isTeacher: false,
+                isSessionExpired
+            });
         }
     })();
     return true;

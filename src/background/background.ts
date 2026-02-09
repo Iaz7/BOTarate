@@ -30,7 +30,9 @@ import {
 import {
     handleAddExercise,
     handleCheckUserRole,
+    handleCheckUserRoleForCourse,
     handleGetLabConfig,
+    handleGetUserCourses,
     handleRemoveChallengeExercisesExplanations,
     handleRemoveExercise,
     handleRemoveExerciseData,
@@ -89,7 +91,7 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
         case "updateConfig":
             return handleUpdateConfig(request, sendResponse);
         case "reloadAgentConfig":
-            return handleReloadAgentConfig(sendResponse);
+            return handleReloadAgentConfig(sendResponse, request.courseId);
         case "getCourseData":
             return handleGetCourseData(request, sendResponse);
         case "getModelList":
@@ -146,6 +148,10 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleSaveChatHistory(request, sendResponse);
         case "checkUserRole":
             return handleCheckUserRole(request, sendResponse);
+        case "checkUserRoleForCourse":
+            return handleCheckUserRoleForCourse(request, sendResponse);
+        case "getUserCourses":
+            return handleGetUserCourses(request, sendResponse);
         case "checkConfiguration":
             return handleCheckConfiguration(request, sendResponse);
         case "generateLabContext":

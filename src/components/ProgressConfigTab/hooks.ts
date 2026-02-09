@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { DEFAULT_CONFIG } from "./constants";
 import { ProgressConfigForm, StatusMessage } from "./types";
 
-export const useProgressConfig = (isActive: boolean) => {
+export const useProgressConfig = (isActive: boolean, courseId?: string) => {
     const { t } = useTranslation();
     const [config, setConfig] = useState<ProgressConfigForm>(DEFAULT_CONFIG);
     const [originalConfig, setOriginalConfig] = useState<ProgressConfigForm | null>(null);
@@ -29,6 +29,7 @@ export const useProgressConfig = (isActive: boolean) => {
             try {
                 const response = await chrome.runtime.sendMessage({
                     action: "getProgressConfig",
+                    courseId,
                 });
 
                 if (response?.success && response.config) {
@@ -55,7 +56,7 @@ export const useProgressConfig = (isActive: boolean) => {
         };
 
         loadProgressConfig();
-    }, [isActive]);
+    }, [isActive, courseId]);
 
     const handleNumberChange = (field: keyof ProgressConfigForm, value: string) => {
         const numericValue = Number(value);
@@ -77,6 +78,7 @@ export const useProgressConfig = (isActive: boolean) => {
             const response = await chrome.runtime.sendMessage({
                 action: "saveProgressConfig",
                 config: payload,
+                courseId,
             });
 
             if (response?.success) {

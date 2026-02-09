@@ -13,15 +13,15 @@ let exerciseAgent: ExerciseAgent;
 let explanationAgent: ExplanationAgent;
 let evaluationAgent: EvaluationAgent;
 
-export async function initializeAgents(): Promise<void> {
-    agentsConfig = await AgentConfigStorageManager.loadConfig();
+export async function initializeAgents(courseId?: string): Promise<void> {
+    agentsConfig = await AgentConfigStorageManager.loadConfig(courseId);
 
     courseAgent = new CourseAgent(agentsConfig);
     exerciseAgent = new ExerciseAgent(agentsConfig);
     explanationAgent = new ExplanationAgent(agentsConfig);
     evaluationAgent = new EvaluationAgent(agentsConfig);
 
-    console.log("Agentes inicializados con configuración cargada");
+    console.log(`Agentes inicializados con configuración${courseId ? ` del curso ${courseId}` : ''}`);
 }
 
 export function getCourseAgent(): CourseAgent {

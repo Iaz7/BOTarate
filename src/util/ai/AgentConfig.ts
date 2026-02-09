@@ -47,7 +47,7 @@ export interface AgentConfig {
      * Common configuration for all agents
      */
     common: {
-        subjectName: string;
+        courseName: string;
         platformName: string;
         institutionName: string;
         /** Teacher's name for personalized references */

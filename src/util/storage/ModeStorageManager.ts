@@ -19,6 +19,7 @@ interface UserRoleData {
 export class ModeStorageManager extends BaseStorageManager {
     private static readonly MODE_STORAGE_KEY = "app_mode";
     private static readonly USER_ROLE_STORAGE_KEY = "user_role";
+    private static readonly USER_ROLE_COURSE_PREFIX = "user_role_course_";
     private static readonly USER_ROLE_CACHE_DURATION = 3600000; // 1 hour in milliseconds
 
     /**
@@ -83,6 +84,43 @@ export class ModeStorageManager extends BaseStorageManager {
      */
     static async clearUserRoleCache(): Promise<void> {
         await this.removeData("", this.USER_ROLE_STORAGE_KEY);
+    }
+
+    /**
+     * Saves user role for a specific course
+     * @param courseId Course ID
+     * @param isTeacher true if user is teacher in this course
+     */
+    static async saveUserRoleForCourse(courseId: string, isTeacher: boolean): Promise<void> {
+        const data: UserRoleData = { isTeacher };
+        await this.saveData(this.USER_ROLE_COURSE_PREFIX, courseId, data);
+    }
+
+    /**
+     * Gets user role for a specific course if cached and valid
+     * @param courseId Course ID
+     * @returns Object with isTeacher and isValid, or null if no valid cache
+     */
+    static async getUserRoleForCourse(courseId: string): Promise<{ isTeacher: boolean; isValid: boolean } | null> {
+        const data = await this.getData<UserRoleData>(this.USER_ROLE_COURSE_PREFIX, courseId);
+
+        if (!data) {
+            return null;
+        }
+
+        const isValid = Date.now() - data.timestamp < this.USER_ROLE_CACHE_DURATION;
+
+        return {
+            isTeacher: data.isTeacher,
+            isValid
+        };
+    }
+
+    /**
+     * Clears user role cache for a specific course
+     */
+    static async clearUserRoleCacheForCourse(courseId: string): Promise<void> {
+        await this.removeData(this.USER_ROLE_COURSE_PREFIX, courseId);
     }
 
     /**

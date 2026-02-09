@@ -11,6 +11,11 @@ import { ConfigManager } from "../util/config/ConfigManager";
 import { AppMode, ModeManager } from "../util/config/ModeManager";
 import { AgentConfigStorageManager } from "../util/storage/AgentConfigStorageManager";
 
+interface CourseInfo {
+    id: string;
+    name: string;
+}
+
 type TabType = "llm" | "agents" | "progress" | "import-export";
 type AgentSection = "general" | "exercise" | "evaluation" | "explanation";
 
@@ -82,6 +87,13 @@ const Options: React.FC = () => {
     // Mode Configuration
     const [isUserTeacher, setIsUserTeacher] = useState<boolean>(false);
 
+    // Course selection
+    const [courses, setCourses] = useState<CourseInfo[]>([]);
+    const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+    const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(true);
+    const [courseError, setCourseError] = useState<string>("");
+    const [isCheckingRole, setIsCheckingRole] = useState<boolean>(false);
+
     const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newLang = e.target.value as LanguageCode;
         await changeLanguage(newLang);
@@ -138,21 +150,30 @@ const Options: React.FC = () => {
             });
     };
 
-    // Cargar configuración inicial
+    // Cargar configuración inicial: cursos y LLM (global)
     useEffect(() => {
         const loadConfiguration = async () => {
-            // Verificar si el usuario es profesor en Egela comunicándose con el background
-            const response = await chrome.runtime.sendMessage({ action: "checkUserRole" });
-            const userIsTeacher = response?.success ? response.isTeacher : false;
-            setIsUserTeacher(userIsTeacher);
-
-            // Si el usuario no es profesor, forzar modo alumno y seleccionar pestaña import-export
-            if (!userIsTeacher) {
-                await ModeManager.setMode(AppMode.STUDENT);
-                setActiveTab("import-export");
+            // 1. Cargar cursos del usuario desde eGela
+            setIsLoadingCourses(true);
+            setCourseError("");
+            try {
+                const response = await chrome.runtime.sendMessage({ action: "getUserCourses" });
+                if (response?.success && response.courses?.length > 0) {
+                    setCourses(response.courses);
+                    setSelectedCourseId(response.courses[0].id);
+                } else if (response?.isSessionExpired) {
+                    setCourseError(t("options.course.sessionExpired"));
+                } else {
+                    setCourseError(t("options.course.noCourses"));
+                }
+            } catch (error) {
+                console.error("Error loading courses:", error);
+                setCourseError(t("options.course.loadError"));
+            } finally {
+                setIsLoadingCourses(false);
             }
 
-            // Cargar configuración LLM
+            // 2. Cargar configuración LLM (global)
             await ConfigManager.loadConfig();
 
             const currentProvider = ConfigManager.getSelectedProvider();
@@ -160,15 +181,10 @@ const Options: React.FC = () => {
             setSelectedProvider(Math.max(providerIndex, 0));
             setApiKey(currentProvider.key || "");
 
-            // Obtener los modelos seleccionados guardados
             const savedModel = ConfigManager.getSelectedModel();
             const savedVisionModel = ConfigManager.getSelectedVisionModel();
 
-            // Validar y cargar modelos
             validateAndLoadModels(providerIndex, savedModel, savedVisionModel, currentProvider.key);
-
-            // Cargar configuración de agentes
-            await loadAgentConfig();
 
             setIsConfigLoaded(true);
         };
@@ -176,8 +192,66 @@ const Options: React.FC = () => {
         loadConfiguration();
     }, []);
 
-    const loadAgentConfig = async () => {
-        const config = await AgentConfigStorageManager.loadConfig();
+    // Cuando se selecciona un curso, verificar el rol y cargar config de agentes
+    useEffect(() => {
+        if (!selectedCourseId || !isConfigLoaded) return;
+
+        const loadCourseConfig = async () => {
+            setIsCheckingRole(true);
+            setIsUserTeacher(false);
+
+            try {
+                // Verificar rol para este curso específico
+                const response = await chrome.runtime.sendMessage({
+                    action: "checkUserRoleForCourse",
+                    courseId: selectedCourseId,
+                });
+                const userIsTeacher = response?.success ? response.isTeacher : false;
+                setIsUserTeacher(userIsTeacher);
+
+                if (!userIsTeacher) {
+                    await ModeManager.setMode(AppMode.STUDENT);
+                    // Si está en un tab de profesor, cambiar a import-export
+                    if (activeTab === "agents" || activeTab === "progress") {
+                        setActiveTab("import-export");
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking role:", error);
+                setIsUserTeacher(false);
+            } finally {
+                setIsCheckingRole(false);
+            }
+
+            // Cargar config de agentes para este curso
+            await loadAgentConfig(selectedCourseId);
+        };
+
+        loadCourseConfig();
+    }, [selectedCourseId, isConfigLoaded]);
+
+    // Actualizar courseName automáticamente si está vacío
+    useEffect(() => {
+        if (agentConfig && selectedCourseId && courses.length > 0 && !agentConfig.common.courseName.trim()) {
+            const selectedCourse = courses.find(c => c.id === selectedCourseId);
+            if (selectedCourse) {
+                setAgentConfig(prev =>
+                    prev
+                        ? {
+                              ...prev,
+                              common: {
+                                  ...prev.common,
+                                  courseName: selectedCourse.name,
+                              },
+                          }
+                        : null,
+                );
+            }
+        }
+    }, [agentConfig, selectedCourseId, courses]);
+
+    const loadAgentConfig = async (courseId?: string) => {
+        const config = await AgentConfigStorageManager.loadConfig(courseId);
         setAgentConfig(config);
     };
 
@@ -250,13 +324,18 @@ const Options: React.FC = () => {
         if (!agentConfig) return;
 
         try {
-            await AgentConfigStorageManager.saveConfig(agentConfig);
+            await AgentConfigStorageManager.saveConfig(agentConfig, selectedCourseId || undefined);
             setAgentSaveMessage(t("options.agents.buttons.saved"));
 
             // Notificar al background script para recargar la configuración
-            chrome.runtime.sendMessage({ action: "reloadAgentConfig" }).catch(error => {
-                console.error("Error notifying background:", error);
-            });
+            chrome.runtime
+                .sendMessage({
+                    action: "reloadAgentConfig",
+                    courseId: selectedCourseId || undefined,
+                })
+                .catch(error => {
+                    console.error("Error notifying background:", error);
+                });
         } catch (error) {
             console.error("Error saving agent configuration:", error);
             setAgentSaveMessage(t("options.agents.buttons.error"));
@@ -301,12 +380,6 @@ const Options: React.FC = () => {
                 return (
                     <div>
                         <h5 className="mb-3">{t("options.agents.sections.general")}</h5>
-                        <ConfigTextField
-                            label={t("options.agents.fields.subject.label")}
-                            value={agentConfig.common.courseName}
-                            onChange={value => updateAgentField("common", "courseName", value)}
-                            description={t("options.agents.fields.subject.desc")}
-                        />
                         <ConfigTextField
                             label={t("options.agents.fields.platform.label")}
                             value={agentConfig.common.platformName}
@@ -441,7 +514,7 @@ const Options: React.FC = () => {
                     <h5 className="card-title mb-0">{t("options.progress.globalTitle")}</h5>
                 </div>
                 <div className="card-body">
-                    <ProgressConfigTab isActive={activeTab === "progress"} />
+                    <ProgressConfigTab isActive={activeTab === "progress"} courseId={selectedCourseId || undefined} />
                 </div>
             </div>
         );
@@ -474,48 +547,102 @@ const Options: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Tabs de navegación principal */}
-                    <ul className="nav nav-pills mb-4">
-                        <li className="nav-item">
-                            <button
-                                className={`nav-link ${activeTab === "llm" ? "active" : ""}`}
-                                onClick={() => setActiveTab("llm")}
-                            >
-                                {t("options.tabs.llm")}
-                            </button>
-                        </li>
-                        {isUserTeacher && (
+                    {/* Tabs de navegación principal con selector de curso integrado */}
+                    <div className="d-flex align-items-center mb-4">
+                        {/* Primera sección: LLM Configuration */}
+                        <ul className="nav nav-pills me-3">
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === "agents" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("agents")}
+                                    className={`nav-link ${activeTab === "llm" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("llm")}
                                 >
-                                    {t("options.tabs.agents")}
+                                    {t("options.tabs.llm")}
                                 </button>
                             </li>
-                        )}
-                        {isUserTeacher && (
+                        </ul>
+
+                        {/* Separador vertical */}
+                        <hr className="vr me-3" />
+
+                        {/* Selector de curso */}
+                        <div className="me-3">
+                            <div className="d-flex align-items-center gap-3">
+                                <label className="form-label mb-0 fw-bold text-nowrap">
+                                    {t("options.course.label")}:
+                                </label>
+                                {isLoadingCourses ? (
+                                    <div className="d-flex align-items-center gap-2">
+                                        <output className="spinner-border spinner-border-sm">
+                                            <span className="visually-hidden">{t("common.loading")}</span>
+                                        </output>
+                                        <span className="text-muted small">{t("options.course.loading")}</span>
+                                    </div>
+                                ) : courseError ? (
+                                    <div
+                                        className="text-danger small"
+                                        dangerouslySetInnerHTML={{ __html: courseError }}
+                                    />
+                                ) : (
+                                    <select
+                                        className="form-select"
+                                        style={{ maxWidth: "400px" }}
+                                        value={selectedCourseId}
+                                        onChange={e => setSelectedCourseId(e.target.value)}
+                                        disabled={isCheckingRole}
+                                    >
+                                        {courses.map(course => (
+                                            <option key={course.id} value={course.id}>
+                                                {course.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+                                {isCheckingRole && (
+                                    <output className="spinner-border spinner-border-sm">
+                                        <span className="visually-hidden">{t("common.loading")}</span>
+                                    </output>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Separador vertical */}
+                        <hr className="vr me-3" />
+
+                        {/* Resto de pestañas */}
+                        <ul className="nav nav-pills">
+                            {isUserTeacher && (
+                                <li className="nav-item">
+                                    <button
+                                        className={`nav-link ${activeTab === "agents" ? "active" : ""}`}
+                                        onClick={() => setActiveTab("agents")}
+                                    >
+                                        {t("options.tabs.agents")}
+                                    </button>
+                                </li>
+                            )}
+                            {isUserTeacher && (
+                                <li className="nav-item">
+                                    <button
+                                        className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
+                                        onClick={() => setActiveTab("progress")}
+                                    >
+                                        {t("options.tabs.progress")}
+                                    </button>
+                                </li>
+                            )}
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === "progress" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("progress")}
+                                    className={`nav-link ${activeTab === "import-export" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("import-export")}
                                 >
-                                    {t("options.tabs.progress")}
+                                    {t("options.tabs.importExport")}
                                 </button>
                             </li>
-                        )}
-                        <li className="nav-item">
-                            <button
-                                className={`nav-link ${activeTab === "import-export" ? "active" : ""}`}
-                                onClick={() => setActiveTab("import-export")}
-                            >
-                                {t("options.tabs.importExport")}
-                            </button>
-                        </li>
-                    </ul>
+                        </ul>
+                    </div>
 
                     {/* Mensaje informativo para alumnos */}
-                    {!isUserTeacher && (
+                    {!isUserTeacher && !isLoadingCourses && !isCheckingRole && selectedCourseId && (
                         <div className="alert alert-info mb-4">
                             <span dangerouslySetInnerHTML={{ __html: t("options.studentMode.warning") }} />
                         </div>
@@ -679,9 +806,7 @@ const Options: React.FC = () => {
                                 </li>
                                 <li className="nav-item">
                                     <button
-                                        className={`nav-link ${
-                                            activeAgentSection === "evaluation" ? "active" : ""
-                                        }`}
+                                        className={`nav-link ${activeAgentSection === "evaluation" ? "active" : ""}`}
                                         onClick={() => setActiveAgentSection("evaluation")}
                                     >
                                         {t("options.agents.sections.evaluation")}
@@ -689,9 +814,7 @@ const Options: React.FC = () => {
                                 </li>
                                 <li className="nav-item">
                                     <button
-                                        className={`nav-link ${
-                                            activeAgentSection === "explanation" ? "active" : ""
-                                        }`}
+                                        className={`nav-link ${activeAgentSection === "explanation" ? "active" : ""}`}
                                         onClick={() => setActiveAgentSection("explanation")}
                                     >
                                         {t("options.agents.sections.explanation")}
@@ -719,7 +842,12 @@ const Options: React.FC = () => {
                     {activeTab === "progress" && renderProgressTab()}
 
                     {/* Contenido de Importar/Exportar */}
-                    {activeTab === "import-export" && <ImportExportTab onDataChange={loadAgentConfig} />}
+                    {activeTab === "import-export" && (
+                        <ImportExportTab
+                            courseId={selectedCourseId || undefined}
+                            onDataChange={() => loadAgentConfig(selectedCourseId || undefined)}
+                        />
+                    )}
                 </div>
             </div>
         </div>

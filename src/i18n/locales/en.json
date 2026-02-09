@@ -151,6 +151,13 @@
         "llmWarning": "To configure the LLM, go to the extension options page, set your API key and a compatible model, save the configuration and reload this page."
     },
     "options": {
+        "course": {
+            "label": "Course",
+            "loading": "Loading courses...",
+            "noCourses": "No courses found. Make sure you are enrolled in at least one course on eGela.",
+            "loadError": "Error loading course list.",
+            "sessionExpired": "Your eGela session has expired. Please <a href='https://egela.ehu.eus/' target='_blank'>log in</a> and reopen the options."
+        },
         "tabs": {
             "llm": "LLM Configuration",
             "agents": "Prompts",
@@ -378,7 +385,7 @@
         "importExport": {
             "export": {
                 "title": "Export configuration",
-                "description": "Export all your configuration (agents, exercises, and labs) to a signed JSON file. You can use this file to make backups or transfer the configuration to another browser. The file is protected against manual modifications.",
+                "description": "Export all your configuration (prompts, exercises, and labs) to a signed JSON file. You can use this file to make backups or transfer the configuration to another browser. The file is protected against manual modifications.",
                 "button": "Export configuration",
                 "processing": " Exporting..."
             },
