@@ -167,7 +167,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                                                 type="button"
                                                 role="tab"
                                             >
-                                                {t("sidebar.tabs.configureCourse", "Configure course")}
+                                                {t("sidebar.tabs.configureCourse", "Configure subject")}
                                             </button>
                                         </li>
                                     )}

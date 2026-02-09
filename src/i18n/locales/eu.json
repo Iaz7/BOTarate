@@ -39,10 +39,10 @@
             "default": "Idatzi zure galdera..."
         },
         "welcome": {
-            "default": "Ikastaroaren edukiari buruz galdetu diezaidakezu. Ariketetan lan egin nahi baduzu, ireki laborategi bat lehenik.",
+            "default": "Irakasgaiaren edukiari buruz galdetu diezaidakezu. Ariketetan lan egin nahi baduzu, ireki laborategi bat lehenik.",
             "ready": "Orri honetako ariketak prest daude. Eskatu azalpen bat edo esan irtenbidea egiaztatu nahi baduzu. Nahi baduzu, eskuragarri dauden ariketen zerrenda eman diezazuket.",
             "identifying": "Ariketak identifikatu bezain laster, haiekin lagundu ahal izango dizut.",
-            "genericHelper": "Hemen nago ikastaroarekin laguntzeko."
+            "genericHelper": "Hemen nago irakasgaiarekin laguntzeko."
         },
         "status": {
             "checkingAccess": "Laborategiko sarbidea egiaztatzen...",
@@ -111,7 +111,7 @@
             "chat": "Txata",
             "exercises": "Ariketak",
             "progress": "Nire aurrerapena",
-            "configureCourse": "Ikastaroa konfiguratu",
+            "configureCourse": "Irakasgaia konfiguratu",
             "configureLab": "Laborategia konfiguratu"
         },
         "tooltips": {
@@ -137,7 +137,7 @@
         "title": "Konfigurazioa beharrezkoa",
         "requiredBoth": {
             "text": "Konfigurazioa beharrezkoa da luzapena erabiltzeko:",
-            "agentConfig": "<strong>Agentearen konfigurazioa:</strong> Inportatu irakasleak emandako konfigurazio fitxategia ikastaroko ariketa eta laborategiekin.",
+            "agentConfig": "<strong>Agentearen konfigurazioa:</strong> Inportatu irakasleak emandako konfigurazio fitxategia irakasgaiko ariketa eta laborategiekin.",
             "llmConfig": "<strong>LLM konfigurazioa:</strong> Konfiguratu API gakoa eta AI hornitzailearen eredua luzapenaren aukeren orrian."
         },
         "requiredExercise": "Ez da agentearen konfiguraziorik aurkitu. Mesedez, inportatu irakasleak emandako konfigurazio fitxategia luzapena erabiltzen hasteko.",
@@ -152,10 +152,10 @@
     },
     "options": {
         "course": {
-            "label": "Ikastaroa",
-            "loading": "Ikastaroak kargatzen...",
-            "noCourses": "Ez da ikastarorik aurkitu. Ziurtatu eGela-n gutxienez ikastaro batean matrikulatuta zaudela.",
-            "loadError": "Errorea ikastaroen zerrenda kargatzean.",
+            "label": "Irakasgaia",
+            "loading": "Irakasgaiak kargatzen...",
+            "noCourses": "Ez da irakasgairik aurkitu. Ziurtatu eGela-n gutxienez irakasgai batean matrikulatuta zaudela.",
+            "loadError": "Errorea irakasgaien zerrenda kargatzean.",
             "sessionExpired": "Zure eGela-ko saioa iraungi da. Mesedez, <a href='https://egela.ehu.eus/' target='_blank'>hasi saioa</a> eta ireki berriro aukerak."
         },
         "tabs": {
@@ -208,7 +208,7 @@
                 },
                 "role": {
                     "label": "Rola",
-                    "desc": "Ikastaroaren testuinguruan agentearen helburua/rola definitzen du"
+                    "desc": "Irakasgaiaren testuinguruan agentearen helburua/rola definitzen du"
                 },
                 "evaluationCriteria": {
                     "label": "Ebaluazio irizpideak",
@@ -280,8 +280,8 @@
         "labConfig": {
             "loading": "Laborategiak kargatzen...",
             "noLabsTitle": "Ez dago laborategirik eskuragarri",
-            "noLabsDesc": "Ez da laborategi gisa konfiguratu daitekeen 'page' motako baliabiderik aurkitu ikastaroan.",
-            "infoTitle": "Ikastaroaren konfigurazioa",
+            "noLabsDesc": "Ez da laborategi gisa konfiguratu daitekeen 'page' motako baliabiderik aurkitu irakasgaian.",
+            "infoTitle": "Irakasgaiaren konfigurazioa",
             "infoDesc": "Konfiguratu zein laborategi sartu eta haien <strong>derrigorrezkotasuna</strong>, <strong>hitzezko maila</strong> eta <strong>arrazoibide</strong> aukerak.",
             "infoList": {
                 "include": "<strong>Laborategia sartu:</strong> Gaitu hau laborategia analizatzeko eta ariketak ateratzeko. Hau beharrezkoa da beste konfigurazio aukerak erabili aurretik.",
@@ -514,7 +514,7 @@
         "score": "Puntuazioa",
         "loading": "Aurrerapena kargatzen...",
         "noLabsTitle": "Ez dago laborategirik konfiguratuta",
-        "noLabsDesc": "Irakasleak oraindik ez du ikastaro honetarako laborategi eta aurrerapen sistema konfiguratu.",
+        "noLabsDesc": "Irakasleak oraindik ez du irakasgai honetarako laborategi eta aurrerapen sistema konfiguratu.",
         "infoTitle": "Aurrerapen sistema",
         "infoDesc": "Laborategiak sekuentzialki desblokeatzen dira. Laborategi batera sartzeko, aurreko laborategiko <strong>erronka ariketak</strong> osatu behar dituzu irakasleak definitutako irizpideen arabera.",
         "infoList": {
@@ -542,7 +542,7 @@
         "notFound": "Ez da aurkitu",
         "exerciseBlocked": "\"{{exerciseName}}\" ariketa blokeatuta dago eta ezin da azaldu.",
         "loadingExercise": "Ezin izan da \"{{exerciseName}}\" ariketa kargatu.",
-        "loadingCourse": "Ezin izan dira ikastaroaren datuak kargatu",
+        "loadingCourse": "Ezin izan dira irakasgaiaren datuak kargatu",
         "loadingExplanation": "Ez da azalpena aurkitu biltegian",
         "chatHistory": "Errorea txat historia kargatzean",
         "resetChat": "Errorea txat historia berrezartzean"

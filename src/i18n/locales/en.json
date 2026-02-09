@@ -39,10 +39,10 @@
             "default": "Type your question..."
         },
         "welcome": {
-            "default": "You can ask me about the course content. If you want to work on exercises, open a lab first.",
+            "default": "You can ask me about the subject content. If you want to work on exercises, open a lab first.",
             "ready": "The exercises on this page are ready. Ask me for an explanation or tell me if you want to check your solution for any of them. If you want, I can also give you the list of available exercises.",
             "identifying": "As soon as you identify the exercises, I will be able to help you with them.",
-            "genericHelper": "I am here to help you with the course."
+            "genericHelper": "I am here to help you with the subject."
         },
         "status": {
             "checkingAccess": "Checking lab access...",
@@ -111,7 +111,7 @@
             "chat": "Chat",
             "exercises": "Exercises",
             "progress": "My progress",
-            "configureCourse": "Configure course",
+            "configureCourse": "Configure subject",
             "configureLab": "Configure lab"
         },
         "tooltips": {
@@ -137,7 +137,7 @@
         "title": "Configuration required",
         "requiredBoth": {
             "text": "Configuration is required to use the extension:",
-            "agentConfig": "<strong>Agent configuration:</strong> Import a configuration file provided by your teacher with the course exercises and labs.",
+            "agentConfig": "<strong>Agent configuration:</strong> Import a configuration file provided by your teacher with the subject exercises and labs.",
             "llmConfig": "<strong>LLM configuration:</strong> Configure the API key and AI provider model from the extension options page."
         },
         "requiredExercise": "No agent configuration found. Please import a configuration file provided by your teacher to start using the extension.",
@@ -152,10 +152,10 @@
     },
     "options": {
         "course": {
-            "label": "Course",
-            "loading": "Loading courses...",
-            "noCourses": "No courses found. Make sure you are enrolled in at least one course on eGela.",
-            "loadError": "Error loading course list.",
+            "label": "Subject",
+            "loading": "Loading subjects...",
+            "noCourses": "No subjects found. Make sure you are enrolled in at least one subject on eGela.",
+            "loadError": "Error loading subject list.",
             "sessionExpired": "Your eGela session has expired. Please <a href='https://egela.ehu.eus/' target='_blank'>log in</a> and reopen the options."
         },
         "tabs": {
@@ -205,7 +205,7 @@
                 },
                 "role": {
                     "label": "Role",
-                    "desc": "Defines the role/purpose of the agent in the context of the course"
+                    "desc": "Defines the role/purpose of the agent in the context of the subject"
                 },
                 "evaluationCriteria": {
                     "label": "Evaluation criteria",
@@ -277,8 +277,8 @@
         "labConfig": {
             "loading": "Loading labs...",
             "noLabsTitle": "No labs available",
-            "noLabsDesc": "No 'page' type resources found in the course that can be configured as labs.",
-            "infoTitle": "Course configuration",
+            "noLabsDesc": "No 'page' type resources found in the subject that can be configured as labs.",
+            "infoTitle": "Subject configuration",
             "infoDesc": "Configure which labs to include and their <strong>required level</strong>, <strong>verbosity</strong> and <strong>reasoning</strong> options.",
             "infoList": {
                 "include": "<strong>Include lab:</strong> Enable this to analyze the lab and extract exercises. This is required before other configuration options can be used.",
@@ -507,7 +507,7 @@
         "score": "Score",
         "loading": "Loading progress...",
         "noLabsTitle": "No labs configured",
-        "noLabsDesc": "The teacher has not yet configured the lab and progression system for this course.",
+        "noLabsDesc": "The teacher has not yet configured the lab and progression system for this subject.",
         "infoTitle": "Progression system",
         "infoDesc": "Labs unlock sequentially. To access a lab, you must complete the <strong>challenge exercises</strong> of the previous lab following the criteria defined by your teacher.",
         "infoList": {
@@ -535,7 +535,7 @@
         "notFound": "Not found",
         "exerciseBlocked": "The exercise \"{{exerciseName}}\" is blocked and cannot be explained.",
         "loadingExercise": "Could not load exercise \"{{exerciseName}}\".",
-        "loadingCourse": "Could not load course data",
+        "loadingCourse": "Could not load subject data",
         "loadingExplanation": "Explanation not found in storage",
         "chatHistory": "Error loading chat history",
         "resetChat": "Error resetting chat history"

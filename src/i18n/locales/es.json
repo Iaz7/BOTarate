@@ -39,10 +39,10 @@
             "default": "Escribe tu pregunta..."
         },
         "welcome": {
-            "default": "Puedes preguntarme sobre el contenido del curso. Si quieres trabajar en ejercicios, abre un laboratorio primero.",
+            "default": "Puedes preguntarme sobre el contenido de la asignatura. Si quieres trabajar en ejercicios, abre un laboratorio primero.",
             "ready": "Los ejercicios de esta página están listos. Pídeme una explicación o dime si quieres comprobar tu solución para cualquiera de ellos. Si quieres, también puedo darte la lista de ejercicios disponibles.",
             "identifying": "Tan pronto como identifique los ejercicios, podré ayudarte con ellos.",
-            "genericHelper": "Estoy aquí para ayudarte con el curso."
+            "genericHelper": "Estoy aquí para ayudarte con la asignatura."
         },
         "status": {
             "checkingAccess": "Comprobando acceso al laboratorio...",
@@ -111,7 +111,7 @@
             "chat": "Chat",
             "exercises": "Ejercicios",
             "progress": "Mi progreso",
-            "configureCourse": "Configurar curso",
+            "configureCourse": "Configurar asignatura",
             "configureLab": "Configurar laboratorio"
         },
         "tooltips": {
@@ -137,7 +137,7 @@
         "title": "Configuración requerida",
         "requiredBoth": {
             "text": "Se requiere configuración para usar la extensión:",
-            "agentConfig": "<strong>Configuración del agente:</strong> Importa un archivo de configuración proporcionado por tu profesor con los ejercicios y laboratorios del curso.",
+            "agentConfig": "<strong>Configuración del agente:</strong> Importa un archivo de configuración proporcionado por tu profesor con los ejercicios y laboratorios de la asignatura.",
             "llmConfig": "<strong>Configuración LLM:</strong> Configura la clave API y el modelo del proveedor de IA desde la página de opciones de la extensión."
         },
         "requiredExercise": "No se encontró configuración del agente. Por favor, importa un archivo de configuración proporcionado por tu profesor para comenzar a usar la extensión.",
@@ -152,10 +152,10 @@
     },
     "options": {
         "course": {
-            "label": "Curso",
-            "loading": "Cargando cursos...",
-            "noCourses": "No se encontraron cursos. Aseg\u00farate de estar matriculado en al menos un curso en eGela.",
-            "loadError": "Error al cargar la lista de cursos.",
+            "label": "Asignatura",
+            "loading": "Cargando asignaturas...",
+            "noCourses": "No se encontraron asignaturas. Asegúrate de estar matriculado en al menos una asignatura en eGela.",
+            "loadError": "Error al cargar la lista de asignaturas.",
             "sessionExpired": "Tu sesi\u00f3n en eGela ha expirado. Por favor, <a href='https://egela.ehu.eus/' target='_blank'>inicia sesi\u00f3n</a> y vuelve a abrir las opciones."
         },
         "tabs": {
@@ -209,7 +209,10 @@
                     "label": "Identificación de ejercicios",
                     "desc": "Criterios para identificar qué constituye un ejercicio y cómo debe extraerse"
                 },
-                "role": { "label": "Rol", "desc": "Define el rol (propósito) del agente en el contexto del curso" },
+                "role": {
+                    "label": "Rol",
+                    "desc": "Define el rol (propósito) del agente en el contexto de la asignatura"
+                },
                 "evaluationCriteria": {
                     "label": "Criterios de evaluación",
                     "desc": "Criterios detallados para evaluar soluciones"
@@ -280,8 +283,8 @@
         "labConfig": {
             "loading": "Cargando laboratorios...",
             "noLabsTitle": "No hay laboratorios disponibles",
-            "noLabsDesc": "No se encontraron recursos tipo 'página' en el curso que puedan configurarse como laboratorios.",
-            "infoTitle": "Configuración del curso",
+            "noLabsDesc": "No se encontraron recursos tipo 'página' en la asignatura que puedan configurarse como laboratorios.",
+            "infoTitle": "Configuración de la asignatura",
             "infoDesc": "Configura qué laboratorios incluir y sus opciones de <strong>nivel requerido</strong>, <strong>verbosidad</strong> y <strong>razonamiento</strong>.",
             "infoList": {
                 "include": "<strong>Incluir laboratorio:</strong> Habilita esto para analizar el laboratorio y extraer ejercicios. Es necesario antes de poder usar otras configuraciones.",
@@ -508,7 +511,7 @@
         "score": "Puntuación",
         "loading": "Cargando progreso...",
         "noLabsTitle": "No hay laboratorios configurados",
-        "noLabsDesc": "El profesor aún no ha configurado el sistema de laboratorios y progresión para este curso.",
+        "noLabsDesc": "El profesor aún no ha configurado el sistema de laboratorios y progresión para esta asignatura.",
         "infoTitle": "Sistema de progresión",
         "infoDesc": "Los laboratorios se desbloquean secuencialmente. Para acceder a un laboratorio, debes completar los <strong>ejercicios de reto</strong> del laboratorio anterior según los criterios definidos por tu profesor.",
         "infoList": {
@@ -536,7 +539,7 @@
         "notFound": "No encontrado",
         "exerciseBlocked": "El ejercicio \"{{exerciseName}}\" está bloqueado y no puede ser explicado.",
         "loadingExercise": "No se ha podido cargar el ejercicio \"{{exerciseName}}\".",
-        "loadingCourse": "No se ha podido cargar los datos del curso",
+        "loadingCourse": "No se ha podido cargar los datos de la asignatura",
         "loadingExplanation": "No se encontró la explicación en el storage",
         "chatHistory": "Error al cargar historial de chat",
         "resetChat": "Error al reiniciar historial de chat"
