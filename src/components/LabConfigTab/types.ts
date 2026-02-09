@@ -1,5 +1,5 @@
 import type { ReasoningEffort, VerbosityLevel } from "../../types/shared";
-export type { Lab, ReasoningEffort, VerbosityLevel } from "../../types/shared";
+export type { Exercise, Lab, ReasoningEffort, VerbosityLevel } from "../../types/shared";
 
 export type ContextGenerationStatus = "idle" | "generating" | "completed" | "error";
 

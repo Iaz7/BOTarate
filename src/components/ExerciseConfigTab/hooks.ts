@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { Exercise } from '../../types/shared';
 import { ExerciseConfigTabProps, ExerciseFlags } from './types';
 import { buildConfigMap, computePendingChanges, configsAreEqual, getDefaultFlags } from './utils';
 
@@ -9,6 +10,10 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Modal states for exercise management
+    const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
+    const [isAddingExercise, setIsAddingExercise] = useState(false);
 
     useEffect(() => {
         setHasUnsavedChanges(!configsAreEqual(exerciseConfig, originalConfig));
@@ -120,12 +125,39 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
                 onConfigUpdate();
             }
 
-            setSuccessMessage("Configuration saved successfully. The assistant has been updated with the new configuration.");
+            setSuccessMessage("Configuration saved successfully. The agent has been updated with the new configuration.");
         } catch (error) {
             console.error("Error saving exercise config:", error);
             setErrorMessage("Error saving configuration. Please try again.");
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleDeleteExercise = async (exerciseName: string) => {
+        try {
+            await chrome.runtime.sendMessage({
+                action: "removeExercise",
+                pageId: pageId,
+                exerciseName,
+            });
+
+            // Reload config after deletion
+            await loadConfigFromStorage();
+
+            if (onConfigUpdate) {
+                onConfigUpdate();
+            }
+        } catch (error) {
+            console.error("Error deleting exercise:", error);
+            setErrorMessage("Error deleting exercise. Please try again.");
+        }
+    };
+
+    const refreshExercises = async () => {
+        await loadConfigFromStorage();
+        if (onConfigUpdate) {
+            onConfigUpdate();
         }
     };
 
@@ -138,5 +170,11 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
         handleToggleChallenge,
         handleTogglePicky,
         handleSaveChanges,
+        editingExercise,
+        setEditingExercise,
+        isAddingExercise,
+        setIsAddingExercise,
+        handleDeleteExercise,
+        refreshExercises,
     };
 };

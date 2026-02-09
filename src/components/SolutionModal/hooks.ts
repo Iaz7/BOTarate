@@ -66,7 +66,7 @@ export const useSolutionModal = (
             const errorMessage =
                 error instanceof Error
                     ? `Communication error: ${error.message}`
-                    : "Communication error with AI assistant";
+                    : "Communication error with AI agent";
             setEvaluationError(errorMessage);
         } finally {
             setIsEvaluating(false);

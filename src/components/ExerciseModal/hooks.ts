@@ -115,7 +115,7 @@ export const useExerciseModal = ({
                 setExplanation(response.explanation);
                 console.log("Explanation generated successfully");
 
-                // El contexto ya está en explanationAssistant, no necesitamos inicializar
+                // El contexto ya está en explanationAgent, no necesitamos inicializar
                 setIsChatInitialized(true);
 
                 // Notificar que se generó una nueva explicación
@@ -132,7 +132,7 @@ export const useExerciseModal = ({
             const errorMessage =
                 error instanceof Error
                     ? `Communication error: ${error.message}`
-                    : "Communication error with AI assistant";
+                    : "Communication error with AI agent";
             setExplanationError(errorMessage);
         } finally {
             setIsLoadingExplanation(false);
@@ -160,13 +160,13 @@ export const useExerciseModal = ({
             });
 
             if (response.success) {
-                const assistantMessage: ChatMessage = {
-                    role: "assistant",
+                const agentMessage: ChatMessage = {
+                    role: "agent",
                     content: response.response,
-                    id: `assistant-${Date.now()}`,
+                    id: `agent-${Date.now()}`,
                 };
 
-                const updatedMessages = [...newMessages, assistantMessage];
+                const updatedMessages = [...newMessages, agentMessage];
                 setChatMessages(updatedMessages);
 
                 // Guardar el historial actualizado en el storage
@@ -180,7 +180,7 @@ export const useExerciseModal = ({
                 }
             } else {
                 const errorMessage: ChatMessage = {
-                    role: "assistant",
+                    role: "agent",
                     content: `Error: ${response.error || "Unknown error"}`,
                     id: `error-${Date.now()}`,
                 };
@@ -190,8 +190,8 @@ export const useExerciseModal = ({
         } catch (error) {
             console.error("Error sending message:", error);
             const errorMessage: ChatMessage = {
-                role: "assistant",
-                content: "Communication error with AI assistant",
+                role: "agent",
+                content: "Communication error with AI agent",
                 id: `error-${Date.now()}`,
             };
 

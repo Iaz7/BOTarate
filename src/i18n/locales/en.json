@@ -1,7 +1,7 @@
 {
     "app": {
         "name": "BOTarate",
-        "description": "AI powered extension for teaching and learning assistance",
+        "description": "AI powered extension for teaching and learning support",
         "loading": "Loading..."
     },
     "common": {
@@ -32,7 +32,7 @@
     "chatTab": {
         "placeholder": {
             "disabledModal": "Chat disabled (modal open)...",
-            "teacherMode": "Switch to student mode to work on the lab...",
+            "teacherMode": "Switch to student mode to use the chat...",
             "labBlocked": "Lab blocked...",
             "loadingExercises": "Loading exercises...",
             "notConfigured": "Lab not configured by teacher...",
@@ -55,7 +55,7 @@
                 "checkProgress": "Check your progress in the \"My progress\" tab"
             },
             "teacherModeTitle": "Teacher mode active",
-            "teacherModeDesc": "You are in teacher mode. To work on this lab's exercises, you must switch to student mode.",
+            "teacherModeDesc": "You are in teacher mode. To use the chat agent, you must switch to student mode.",
             "teacherModeAction": "Go to the <strong>\"Mode\"</strong> switch to change your mode.",
             "loadingExercises": "Loading...",
             "searchingExercises": "Searching for exercises...",
@@ -67,7 +67,7 @@
         },
         "roles": {
             "user": "You",
-            "assistant": "Assistant"
+            "agent": "Agent"
         },
         "buttons": {
             "send": "Send message",
@@ -137,10 +137,10 @@
         "title": "Configuration required",
         "requiredBoth": {
             "text": "Configuration is required to use the extension:",
-            "assistantConfig": "<strong>Assistant configuration:</strong> Import a configuration file provided by your teacher with the course exercises and labs.",
+            "agentConfig": "<strong>Agent configuration:</strong> Import a configuration file provided by your teacher with the course exercises and labs.",
             "llmConfig": "<strong>LLM configuration:</strong> Configure the API key and AI provider model from the extension options page."
         },
-        "requiredExercise": "No assistant configuration found. Please import a configuration file provided by your teacher to start using the extension.",
+        "requiredExercise": "No agent configuration found. Please import a configuration file provided by your teacher to start using the extension.",
         "requiredLLM": {
             "text": "LLM is not configured. To use the extension you need to:",
             "key": "Configure the AI provider API key (OpenAI, Google, etc.)",
@@ -153,7 +153,7 @@
     "options": {
         "tabs": {
             "llm": "LLM Configuration",
-            "assistants": "Assistants",
+            "agents": "Prompts",
             "progress": "Progress",
             "importExport": "Import/Export"
         },
@@ -171,16 +171,16 @@
             "saveSuccess": "Configuration saved successfully",
             "saveError": "Error saving configuration"
         },
-        "assistants": {
-            "title": "Assistants Configuration",
+        "agents": {
+            "title": "Agents Configuration",
             "sections": {
-                "general": "General",
-                "exercise": "Exercises",
-                "evaluation": "Evaluation",
-                "explanation": "Explanation"
+                "general": "Teacher Personalization",
+                "exercise": "Lab Context Extraction",
+                "evaluation": "Solution Evaluator",
+                "explanation": "Exercise Solver"
             },
             "fields": {
-                "subject": { "label": "Subject", "desc": "Name of the subject for which assistants are configured" },
+                "subject": { "label": "Subject", "desc": "Name of the subject for which agents are configured" },
                 "platform": {
                     "label": "LMS Platform",
                     "desc": "Name of the educational platform (e.g., Moodle, Canvas, Egela)"
@@ -198,7 +198,7 @@
                 },
                 "role": {
                     "label": "Role",
-                    "desc": "Defines the role/purpose of the assistant in the context of the course"
+                    "desc": "Defines the role/purpose of the agent in the context of the course"
                 },
                 "evaluationCriteria": {
                     "label": "Evaluation criteria",
@@ -209,7 +209,7 @@
                     "label": "Feedback format",
                     "desc": "Instructions on how to structure and format feedback"
                 },
-                "methodology": { "label": "Process methodology", "desc": "Methodology the assistant should follow" },
+                "methodology": { "label": "Process methodology", "desc": "Methodology the agent should follow" },
                 "pickyExerciseConfig": {
                     "label": "Picky exercise configuration",
                     "desc": "Describes the type of errors the LLM should intentionally introduce in picky exercise explanations. E.g.: 'Introduce subtle errors in SQL syntax or query logic'"
@@ -222,9 +222,9 @@
                 "solver": "Exercise solver configuration"
             },
             "buttons": {
-                "save": "Save assistants configuration",
+                "save": "Save agents configuration",
                 "saving": "Saving...",
-                "saved": "Assistants configuration saved successfully",
+                "saved": "Agents configuration saved successfully",
                 "error": "Error saving configuration"
             }
         },
@@ -234,34 +234,38 @@
         "language": {
             "title": "Language",
             "select": "Select language",
-            "description": "The language affects the interface and assistant responses"
+            "description": "The language affects the interface and agent responses"
         },
         "exerciseConfig": {
             "infoTitle": "Exercise configuration",
-            "infoDesc": "In this tab you can configure which exercises are <strong>challenge</strong> or <strong>picky</strong>.",
+            "infoDesc": "In this tab you can configure which exercises are <strong>student only</strong> or <strong>false friend</strong>.",
             "infoList": {
-                "challenge": "<strong>Challenge exercises:</strong> Explanations cannot be requested, but solution evaluations can.",
-                "picky": "<strong>Picky exercises:</strong> The assistant will intentionally introduce errors in the explanation so the student can practice critical review of AI-generated content."
+                "challenge": "<strong>Student only exercises:</strong> Explanations cannot be requested, but solution evaluations can.",
+                "picky": "<strong>False friend exercises:</strong> The agent will intentionally give an incorrect answer so the student can practice critical review of AI-generated content."
             },
             "infoFooter": "After saving changes, the system will automatically update the restrictions.",
             "noExercisesTitle": "No exercises available",
-            "noExercisesDesc": "When exercises are detected on the page, you can configure which ones are challenge exercises.",
+            "noExercisesDesc": "When exercises are detected on the page, you can configure which ones are student only exercises.",
+            "noLabOpenDesc": "You must open a lab first to be able to add or configure exercises.",
             "table": {
                 "headerName": "Exercise name",
-                "headerChallenge": "Is challenge",
-                "headerPicky": "Is picky",
-                "badgeChallenge": "Challenge",
-                "badgePicky": "Picky",
-                "switchChallengeOn": "Is challenge",
-                "switchChallengeOff": "Not challenge",
-                "switchPickyOn": "Is picky",
-                "switchPickyOff": "Not picky"
+                "headerChallenge": "Is student only",
+                "headerPicky": "Is false friend",
+                "headerActions": "Actions",
+                "badgeChallenge": "Student only",
+                "badgePicky": "False friend",
+                "switchChallengeOn": "Is student only",
+                "switchChallengeOff": "Not student only",
+                "switchPickyOn": "Is false friend",
+                "switchPickyOff": "Not false friend"
             },
             "unsavedTitle": "⚠️ You have unsaved changes",
-            "unsavedDesc": "Click \"Save changes\" to apply the configuration and regenerate the assistant.",
+            "unsavedDesc": "Click \"Save changes\" to apply the configuration and regenerate the agent.",
             "save": "Save changes",
             "saving": "Saving changes...",
-            "processing": "Applying configuration and updating restrictions..."
+            "processing": "Applying configuration and updating restrictions...",
+            "addExercise": "Add exercise",
+            "deleteConfirm": "Are you sure you want to delete the exercise '{{name}}'?"
         },
         "labConfig": {
             "loading": "Loading labs...",
@@ -272,13 +276,13 @@
             "infoList": {
                 "include": "<strong>Include lab:</strong> Enable this to analyze the lab and extract exercises. This is required before other configuration options can be used.",
                 "required": "<strong>Required lab:</strong> Labs marked as required will unlock sequentially when the student completes the challenges of the previous lab.",
-                "verbosity": "<strong>Verbosity level:</strong> Controls the level of detail in the assistant's explanations (low, medium, or high).",
-                "reasoning": "<strong>Reasoning effort:</strong> Configures how much detail the assistant should put into explaining its reasoning (minimal, low, medium, or high)."
+                "verbosity": "<strong>Verbosity level:</strong> Controls the level of detail in the agent's explanations (low, medium, or high).",
+                "reasoning": "<strong>Reasoning effort:</strong> Configures how much detail the agent should put into explaining its reasoning (minimal, low, medium, or high)."
             },
             "infoFooter": "Click on an included lab to expand its configuration options.",
             "includeLabel": "Include",
             "requiredLabel": "Required lab",
-            "explanationConfig": "Explanation assistant configuration:",
+            "explanationConfig": "Explanation agent configuration:",
             "goToLab": "Go to lab",
             "unsavedTitle": "⚠️ You have unsaved changes",
             "unsavedDesc": "Click \"Save changes\" to apply the configuration.",
@@ -303,7 +307,51 @@
                 "reasoningLow": "Basic reasoning",
                 "reasoningMedium": "Moderate reasoning",
                 "reasoningHigh": "Detailed step-by-step reasoning"
-            }
+            },
+            "editContext": "View / Edit context",
+            "exercisesTitle": "Exercises:",
+            "noExercises": "No exercises in this lab.",
+            "addExercise": "Add exercise",
+            "deleteExerciseConfirm": "Are you sure you want to delete exercise \"{{name}}\"?"
+        },
+        "labContext": {
+            "title": "Lab Context - {{name}}",
+            "tabs": {
+                "learningObjectives": "Learning Objectives",
+                "exercises": "Exercises",
+                "concepts": "Concepts",
+                "exerciseContext": "Exercise Context"
+            },
+            "learningObjectives": {
+                "description": "Define what students should learn from this lab.",
+                "placeholder": "Enter the learning objectives for this lab..."
+            },
+            "exercises": {
+                "description": "List of exercises identified in this lab. Exercises are configured from the exercise configuration tab.",
+                "empty": "No exercises in this lab."
+            },
+            "concepts": {
+                "description": "List of concepts covered in this lab. You can add, edit, or remove concepts.",
+                "placeholder": "Enter a new concept...",
+                "add": "Add",
+                "empty": "No concepts defined yet."
+            },
+            "exerciseContext": {
+                "description": "Shared context for all exercises in this lab (e.g., database schema, specifications).",
+                "placeholder": "Enter the exercise context..."
+            },
+            "save": "Save changes",
+            "saving": "Saving...",
+            "saveSuccess": "Context saved successfully.",
+            "saveError": "Error saving context. Please try again."
+        },
+        "exerciseEdit": {
+            "editTitle": "Edit Exercise - {{name}}",
+            "addTitle": "Add Exercise",
+            "name": "Exercise name",
+            "namePlaceholder": "Enter exercise name...",
+            "statement": "Statement",
+            "statementPlaceholder": "Enter exercise statement..."
         },
         "progress": {
             "loading": "Loading progress configuration...",
@@ -330,7 +378,7 @@
         "importExport": {
             "export": {
                 "title": "Export configuration",
-                "description": "Export all your configuration (assistants, exercises, and labs) to a signed JSON file. You can use this file to make backups or transfer the configuration to another browser. The file is protected against manual modifications.",
+                "description": "Export all your configuration (agents, exercises, and labs) to a signed JSON file. You can use this file to make backups or transfer the configuration to another browser. The file is protected against manual modifications.",
                 "button": "Export configuration",
                 "processing": " Exporting..."
             },
@@ -358,7 +406,7 @@
                 "importError": "Unexpected error importing: {{error}}",
                 "clearError": "Unexpected error clearing: {{error}}"
             },
-            "confirmClear": "⚠️ WARNING: This action will delete ALL saved configuration, including:\n\n- Assistant configuration\n- Identified exercise data\n- Configured lab data\n\nThis action CANNOT be undone. Are you sure you want to continue?"
+            "confirmClear": "⚠️ WARNING: This action will delete ALL saved configuration, including:\n\n- Agent configuration\n- Identified exercise data\n- Configured lab data\n\nThis action CANNOT be undone. Are you sure you want to continue?"
         }
     },
     "sidebar": {
@@ -434,7 +482,7 @@
             "waiting": "Waiting for explanation to load...",
             "empty": "Do you have any questions about the explanation? Ask me anything.",
             "user": "You",
-            "assistant": "Assistant",
+            "agent": "Agent",
             "generating": "Generating response...",
             "placeholder": "Type your question...",
             "send": "Send question"

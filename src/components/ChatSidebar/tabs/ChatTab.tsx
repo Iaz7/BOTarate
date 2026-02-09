@@ -27,7 +27,7 @@ interface ToolCallSimple {
 type ToolCall = ToolCallFromHistory | ToolCallSimple;
 
 interface ChatMessage {
-    role: "user" | "assistant" | "tool";
+    role: "user" | "agent" | "tool";
     content: string | null;
     id: string;
     tool_calls?: ToolCall[];
@@ -176,8 +176,7 @@ const ChatTab: React.FC<ChatTabProps> = ({
 
     const getChatPlaceholder = () => {
         if (isAnyModalOpen) return t("chatTab.placeholder.disabledModal", "Chat disabled (modal open)...");
-        if (isTeacherMode && pageId)
-            return t("chatTab.placeholder.teacherMode", "Switch to student mode to work on the lab...");
+        if (isTeacherMode) return t("chatTab.placeholder.teacherMode", "Switch to student mode to use the chat...");
         if (isLabBlocked) return t("chatTab.placeholder.labBlocked", "Lab blocked...");
         if (isLoadingExercises) return t("chatTab.placeholder.loadingExercises", "Loading exercises...");
         if (pageId && !hasExercisesLoaded)
@@ -272,7 +271,7 @@ const ChatTab: React.FC<ChatTabProps> = ({
                             </li>
                         </ul>
                     </div>
-                ) : isTeacherMode && pageId ? (
+                ) : isTeacherMode ? (
                     <div className="alert alert-info" role="alert">
                         <h5 className="alert-heading">
                             <i className="bi bi-info-circle-fill me-2"></i>
@@ -281,7 +280,7 @@ const ChatTab: React.FC<ChatTabProps> = ({
                         <p>
                             {t(
                                 "chatTab.status.teacherModeDesc",
-                                "You are in teacher mode. To work on this lab's exercises, you must switch to student mode.",
+                                "You are in teacher mode. To use the chat agent, you must switch to student mode.",
                             )}
                         </p>
                         <hr />
@@ -346,8 +345,8 @@ const ChatTab: React.FC<ChatTabProps> = ({
                             return null;
                         }
 
-                        // Renderizar indicadores de herramientas cuando el asistente usa tools
-                        if (message.role === "assistant" && message.tool_calls && message.tool_calls.length > 0) {
+                        // Renderizar indicadores de herramientas cuando el agente usa tools
+                        if (message.role === "agent" && message.tool_calls && message.tool_calls.length > 0) {
                             const toolMessages = message.tool_calls
                                 .map(tc => getToolFriendlyMessage(tc))
                                 .filter(Boolean);
@@ -395,7 +394,7 @@ const ChatTab: React.FC<ChatTabProps> = ({
                                         <strong>
                                             {message.role === "user"
                                                 ? t("chatTab.roles.user", "You")
-                                                : t("chatTab.roles.assistant", "Assistant")}
+                                                : t("chatTab.roles.agent", "Agent")}
                                         </strong>
                                     </div>
                                     <div style={{ whiteSpace: "pre-wrap" }}>{message.content}</div>

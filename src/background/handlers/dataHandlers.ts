@@ -6,27 +6,27 @@ import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManage
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
 import { Lab, LabStorageManager } from "../../util/storage/LabStorageManager";
 import { ProgressConfigStorageManager } from "../../util/storage/ProgressConfigStorageManager";
-import { createExerciseAssistant, getCourseAssistant, getEvaluationAssistant, getExerciseAssistant, getExplanationAssistant } from "../context";
+import { createExerciseAgent, getCourseAgent, getEvaluationAgent, getExerciseAgent, getExplanationAgent } from "../context";
 
 let cachedCourse: Course;
 
 export function handleGetCourseData(request: any, sendResponse: (response?: any) => void): boolean {
     const { href, sessionStorageData } = request;
-    const courseAssistant = getCourseAssistant();
-    const exerciseAssistant = getExerciseAssistant();
-    const explanationAssistant = getExplanationAssistant();
-    const evaluationAssistant = getEvaluationAssistant();
+    const courseAgent = getCourseAgent();
+    const exerciseAgent = getExerciseAgent();
+    const explanationAgent = getExplanationAgent();
+    const evaluationAgent = getEvaluationAgent();
 
     Course.fromHrefAndStorage(href, sessionStorageData)
         .then(async course => {
             if (course) {
                 cachedCourse = course;
-                courseAssistant.setCourse(course);
-                exerciseAssistant.setCourse(course);
-                explanationAssistant.setCourse(course);
-                evaluationAssistant.setCourse(course);
+                courseAgent.setCourse(course);
+                exerciseAgent.setCourse(course);
+                explanationAgent.setCourse(course);
+                evaluationAgent.setCourse(course);
 
-                await courseAssistant.loadChatHistory();
+                await courseAgent.loadChatHistory();
                 await initializeLabDataIfNeeded(course);
 
                 sendResponse({ success: true, course: course });
@@ -50,7 +50,7 @@ export function getCachedCourse(): Course {
 
 export function handleGetExerciseList(request: any, sendResponse: (response?: any) => void): boolean {
     const { pageId, resourceId, forceRefresh } = request;
-    const exerciseAssistant = getExerciseAssistant();
+    const exerciseAgent = getExerciseAgent();
 
     console.log(`Identificando ejercicios en página: ${pageId}, recurso: ${resourceId || 'N/A'}, forceRefresh: ${!!forceRefresh}`);
 
@@ -79,8 +79,8 @@ export function handleGetExerciseList(request: any, sendResponse: (response?: an
                 }
             }
 
-            console.log(forceRefresh ? 'Forzando re-identificación...' : 'No hay datos en cache, llamando al asistente...');
-            const result = await exerciseAssistant.identifyExercises(pageId, resourceId);
+            console.log(forceRefresh ? 'Forzando re-identificación...' : 'No hay datos en cache, llamando al agente...');
+            const result = await exerciseAgent.identifyExercises(pageId, resourceId);
 
             console.log('Ejercicios identificados:', result.exercises);
             console.log('Exercise Context presente:', !!result.exerciseContext);
@@ -297,7 +297,7 @@ async function initializeLabDataIfNeeded(course: Course): Promise<void> {
 }
 
 /**
- * Handles generating context for a specific lab using a new ExerciseAssistant instance
+ * Handles generating context for a specific lab using a new ExerciseAgent instance
  * This allows parallel context generation for multiple labs
  */
 export function handleGenerateLabContext(request: any, sendResponse: (response?: any) => void): boolean {
@@ -307,11 +307,11 @@ export function handleGenerateLabContext(request: any, sendResponse: (response?:
 
     (async () => {
         try {
-            // Create a new ExerciseAssistant instance for this specific generation
+            // Create a new ExerciseAgent instance for this specific generation
             // This allows parallel generation without sharing state
-            const exerciseAssistant = createExerciseAssistant();
+            const exerciseAgent = createExerciseAgent();
 
-            const result = await exerciseAssistant.identifyExercises(pageId);
+            const result = await exerciseAgent.identifyExercises(pageId);
 
             console.log(`[handleGenerateLabContext] Context generated for ${pageId}:`, {
                 exercises: result.exercises.length,

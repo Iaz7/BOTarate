@@ -1,17 +1,17 @@
 import { Exercise } from "../egela/Exercise";
 import { ExerciseStorageManager } from "../storage/ExerciseStorageManager";
-import { AssistantConfig } from "./AssistantConfig";
-import { BaseAssistant } from "./BaseAssistant";
+import { AgentConfig } from "./AgentConfig";
+import { BaseAgent } from "./BaseAgent";
 import { ExerciseListSchemaType } from "./schemas";
-import { EXERCISE_ASSISTANT_TOOLS } from "./Tools";
+import { EXERCISE_AGENT_TOOLS } from "./Tools";
 
-export { ExerciseAssistant };
+export { ExerciseAgent };
 
 /**
- * Asistente para análisis de ejercicios
+ * Agente para análisis de ejercicios
  * Maneja la identificación y análisis de ejercicios en páginas del curso
  */
-class ExerciseAssistant extends BaseAssistant {
+class ExerciseAgent extends BaseAgent {
 
     private static readonly TOOLS = [
         'getFilteredFileContent',
@@ -19,8 +19,8 @@ class ExerciseAssistant extends BaseAssistant {
         'postExercises'
     ];
 
-    constructor(config: AssistantConfig) {
-        super(config, ExerciseAssistant.TOOLS);
+    constructor(config: AgentConfig) {
+        super(config, ExerciseAgent.TOOLS);
     }
 
     /**
@@ -45,7 +45,7 @@ class ExerciseAssistant extends BaseAssistant {
             console.log(`[identifyExercises] Page content obtained (${pageContent.length} characters), files: ${attachedFiles.length}`);
 
             // 2. Build system prompt using configuration
-            const assistantConfig = this.config.exerciseAssistant;
+            const agentConfig = this.config.exerciseAgent;
 
             const systemPromptTemplate = `You are a tool to extract context from labs in educational pages.
 
@@ -65,7 +65,7 @@ AVAILABLE TOOLS:
    - Use the image description to INFER and CREATE a logical SQL script that represents the database schema
    - Example: If the description says "BIDAIAK DB eskema", infer a complete SQL script with CREATE TABLE statements for trips, hotels, customers, etc. based on common database design patterns and the exercise context
    - Your goal is to generate a reasonable SQL schema that would make sense for the exercises, not to extract existing code
-   
+
 3. postExercises: MANDATORY - You must use this tool exactly once at the end to submit the identified exercises.
    - This tool is your way of "responding" with the analysis results
    - You must always call it, even if there are no exercises (send an empty array)
@@ -105,7 +105,7 @@ When you encounter exercises that reference database tables, schemas, or relatio
 
 Example: For an image described as "BIDAIAK DB eskema", create SQL CREATE TABLE statements for logical tables like:
 - Customers (with ID, name, etc.)
-- Hotels (with ID, name, city, etc.) 
+- Hotels (with ID, name, city, etc.)
 - Trips/Bookings (with dates, customer references, hotel references, etc.)
 
 Include this inferred SQL script in the "exercise_context" field to help understand the database structure.
@@ -114,12 +114,12 @@ IMPORTANT: You must call postExercises exactly once at the end of the analysis.
 `;
 
             const systemPromptVariables = {
-                role: assistantConfig.role,
-                exerciseCriteria: assistantConfig.exerciseCriteria,
-                contextDescription: assistantConfig.contextDescription,
-                conceptsFieldDescription: assistantConfig.conceptsFieldDescription,
-                conceptsExamples: assistantConfig.conceptsExamples,
-                learningObjectivesGuidance: assistantConfig.learningObjectivesGuidance,
+                role: agentConfig.role,
+                exerciseCriteria: agentConfig.exerciseCriteria,
+                contextDescription: agentConfig.contextDescription,
+                conceptsFieldDescription: agentConfig.conceptsFieldDescription,
+                conceptsExamples: agentConfig.conceptsExamples,
+                learningObjectivesGuidance: agentConfig.learningObjectivesGuidance,
             };
 
             const systemPrompt = this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);
@@ -150,7 +150,7 @@ ${pageContent}`;
                 },
                 userPrompt,
                 systemPrompt,
-                this.allowedTools.map(tool => EXERCISE_ASSISTANT_TOOLS.find((t: any) => t.function.name === tool)).filter(Boolean)
+                this.allowedTools.map(tool => EXERCISE_AGENT_TOOLS.find((t: any) => t.function.name === tool)).filter(Boolean)
             );
 
             // Verify that a valid response was received

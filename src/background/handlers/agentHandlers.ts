@@ -4,7 +4,7 @@ import { EvaluationStorageManager } from "../../util/storage/EvaluationStorageMa
 import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManager";
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
 import { LabStorageManager } from "../../util/storage/LabStorageManager";
-import { getCourseAssistant, getEvaluationAssistant, getExplanationAssistant } from "../context";
+import { getCourseAgent, getEvaluationAgent, getExplanationAgent } from "../context";
 
 async function buildProgressSummary(courseId?: string): Promise<string | undefined> {
     if (!courseId) {
@@ -102,11 +102,11 @@ function formatProgressSummary(completedLabs: string[], completedExercises: Map<
 
 export function handleGenerateResponse(request: any, sendResponse: (response?: any) => void): boolean {
     const { userMessage, resetHistory, exercises } = request;
-    const courseAssistant = getCourseAssistant();
+    const courseAgent = getCourseAgent();
 
     console.log("Generando respuesta LLM en background...");
 
-    courseAssistant.generateResponse(userMessage, resetHistory, exercises)
+    courseAgent.generateResponse(userMessage, resetHistory, exercises)
         .then(finalResponse => sendResponse(finalResponse))
         .catch(error => {
             console.error('Error en generateResponse:', error);
@@ -118,7 +118,7 @@ export function handleGenerateResponse(request: any, sendResponse: (response?: a
 
 export function handleGenerateExplanation(request: any, sendResponse: (response?: any) => void): boolean {
     const { exerciseName, pageId, courseId } = request;
-    const explanationAssistant = getExplanationAssistant();
+    const explanationAgent = getExplanationAgent();
 
     console.log(`Generando explicación para ejercicio: ${exerciseName}`);
 
@@ -163,7 +163,7 @@ export function handleGenerateExplanation(request: any, sendResponse: (response?
                     console.log(`Ejercicio ${exerciseName} marcado como picky - se introducirán errores intencionales`);
                 }
 
-                const explanation = await explanationAssistant.generateExplanation(
+                const explanation = await explanationAgent.generateExplanation(
                     exerciseName,
                     exercise?.statement || "",
                     exerciseData?.exerciseContext,
@@ -204,7 +204,7 @@ export function handleGenerateExplanation(request: any, sendResponse: (response?
 
 export function handleEvaluateSolution(request: any, sendResponse: (response?: any) => void): boolean {
     const { exerciseName, exerciseStatement, studentSolution, exercise_context, learning_objectives, pageId, courseId } = request;
-    const evaluationAssistant = getEvaluationAssistant();
+    const evaluationAgent = getEvaluationAgent();
 
     console.log(`Evaluando solución para ejercicio: ${exerciseName}`);
 
@@ -216,7 +216,7 @@ export function handleEvaluateSolution(request: any, sendResponse: (response?: a
                 accumulatedConcepts = await ExerciseStorageManager.getAccumulatedConcepts(courseId, pageId);
             }
 
-            const evaluation = await evaluationAssistant.evaluateSolution(
+            const evaluation = await evaluationAgent.evaluateSolution(
                 exerciseName,
                 exerciseStatement,
                 studentSolution,
@@ -248,12 +248,12 @@ export function handleEvaluateSolution(request: any, sendResponse: (response?: a
 }
 
 export function handleLoadChatHistory(sendResponse: (response?: any) => void): boolean {
-    const courseAssistant = getCourseAssistant();
+    const courseAgent = getCourseAgent();
     console.log('Cargando historial de chat...');
 
     (async () => {
         try {
-            const messages = await courseAssistant.loadChatHistory();
+            const messages = await courseAgent.loadChatHistory();
             sendResponse({ success: true, messages });
         } catch (error: any) {
             console.error('Error al cargar historial de chat:', error);
@@ -265,12 +265,12 @@ export function handleLoadChatHistory(sendResponse: (response?: any) => void): b
 }
 
 export function handleResetChatHistory(sendResponse: (response?: any) => void): boolean {
-    const courseAssistant = getCourseAssistant();
+    const courseAgent = getCourseAgent();
     console.log('Reiniciando historial de chat...');
 
     (async () => {
         try {
-            await courseAssistant.resetChatHistory();
+            await courseAgent.resetChatHistory();
             sendResponse({ success: true });
         } catch (error: any) {
             console.error('Error al reiniciar historial de chat:', error);
@@ -283,7 +283,7 @@ export function handleResetChatHistory(sendResponse: (response?: any) => void): 
 
 export function handleInitializeExplanationChat(request: any, sendResponse: (response?: any) => void): boolean {
     const { pageId, exerciseName, courseId, fromCache } = request;
-    const explanationAssistant = getExplanationAssistant();
+    const explanationAgent = getExplanationAgent();
 
     console.log(`Inicializando chat de explicación para: ${exerciseName} (fromCache: ${fromCache})`);
 
@@ -312,13 +312,13 @@ export function handleInitializeExplanationChat(request: any, sendResponse: (res
 
                 const progressSummary = await buildProgressSummary(courseId);
 
-                // Convertir el chatHistory al formato correcto para el asistente
-                const chatHistoryForAssistant = explanation.chatHistory?.map(msg => ({
+                // Convertir el chatHistory al formato correcto para el agente
+                const chatHistoryForAgent = explanation.chatHistory?.map(msg => ({
                     role: msg.role,
                     content: msg.content
                 }));
 
-                await explanationAssistant.initializeContextForFollowUp(
+                await explanationAgent.initializeContextForFollowUp(
                     explanation.exerciseName,
                     explanation.exerciseStatement,
                     { steps: explanation.steps },
@@ -326,7 +326,7 @@ export function handleInitializeExplanationChat(request: any, sendResponse: (res
                     concepts,
                     learningObjectives,
                     progressSummary,
-                    chatHistoryForAssistant,
+                    chatHistoryForAgent,
                     pageId,
                     isPicky
                 );
@@ -348,13 +348,13 @@ export function handleInitializeExplanationChat(request: any, sendResponse: (res
 
 export function handleSendExplanationChatMessage(request: any, sendResponse: (response?: any) => void): boolean {
     const { message } = request;
-    const explanationAssistant = getExplanationAssistant();
+    const explanationAgent = getExplanationAgent();
 
     console.log(`Procesando mensaje de chat de explicación: ${message}`);
 
     (async () => {
         try {
-            const response = await explanationAssistant.continueConversation(message);
+            const response = await explanationAgent.continueConversation(message);
             sendResponse({ success: true, response });
         } catch (error: any) {
             console.error('Error al procesar mensaje de chat de explicación:', error);

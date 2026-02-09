@@ -13,7 +13,7 @@ export interface ResponseOptions {
 }
 
 export interface Message {
-    role: 'system' | 'user' | 'assistant' | 'tool';
+    role: 'system' | 'user' | 'agent' | 'tool';
     content: string | null | Array<{
         type: 'text' | 'image_url';
         text?: string;
@@ -45,7 +45,7 @@ class OpenAIService {
         this.openai.baseURL = ConfigManager.getSelectedProvider().baseUrl;
     }
 
-    // Gets model list from the specified provider, or from the selected provider by default 
+    // Gets model list from the specified provider, or from the selected provider by default
     static async getModelList(provider: AIProvider | undefined = undefined): Promise<string[]> {
         if (provider != undefined) {
             this.openai.baseURL = provider?.baseUrl;
@@ -160,9 +160,9 @@ class OpenAIService {
             throw new Error('No response received from model');
         }
 
-        // Add assistant message to history
+        // Add agent message to history
         this.conversationHistory.push({
-            role: 'assistant',
+            role: 'agent',
             content: message.content,
             tool_calls: message.tool_calls as ToolCall[]
         });
@@ -302,9 +302,9 @@ class OpenAIService {
 
         console.log(`[generateStructuredResponse] Structured response received successfully`);
 
-        // Add assistant response to history
+        // Add agent response to history
         this.conversationHistory.push({
-            role: 'assistant',
+            role: 'agent',
             content: JSON.stringify(parsed),
             tool_calls: undefined
         });

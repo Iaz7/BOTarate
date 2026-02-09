@@ -3,7 +3,7 @@
 import { initLanguage, setLanguage } from "../i18n/backend";
 import { OpenAIService } from "../util/ai/OpenAIService";
 import { ConfigManager } from "../util/config/ConfigManager";
-import { initializeAssistants, isConfigReady, markConfigLoaded } from "./context";
+import { initializeAgents, isConfigReady, markConfigLoaded } from "./context";
 import {
     handleEvaluateSolution,
     handleGenerateExplanation,
@@ -12,8 +12,8 @@ import {
     handleLoadChatHistory,
     handleResetChatHistory,
     handleSendExplanationChatMessage
-} from "./handlers/assistantHandlers";
-import { handleCheckConfiguration, handleGetModelList, handleReloadAssistantConfig, handleUpdateConfig } from "./handlers/configHandlers";
+} from "./handlers/agentHandlers";
+import { handleCheckConfiguration, handleGetModelList, handleReloadAgentConfig, handleUpdateConfig } from "./handlers/configHandlers";
 import {
     handleGenerateLabContext,
     handleGetAccumulatedConcepts,
@@ -28,23 +28,29 @@ import {
     handleGetProgressConfig
 } from "./handlers/dataHandlers";
 import {
+    handleAddExercise,
     handleCheckUserRole,
     handleGetLabConfig,
     handleRemoveChallengeExercisesExplanations,
+    handleRemoveExercise,
     handleRemoveExerciseData,
     handleSaveChatHistory,
     handleSaveProgressConfig,
+    handleUpdateConcepts,
+    handleUpdateExercise,
     handleUpdateExerciseAllowed,
+    handleUpdateExerciseContext,
     handleUpdateExercisePicky,
     handleUpdateLabReasoningEffort,
     handleUpdateLabRequired,
-    handleUpdateLabVerbosity
+    handleUpdateLabVerbosity,
+    handleUpdateLearningObjectives
 } from "./handlers/storageHandlers";
 
 async function loadConfiguration(): Promise<void> {
     await initLanguage();
     await ConfigManager.loadConfig();
-    await initializeAssistants();
+    await initializeAgents();
     OpenAIService.loadProviderConfig();
     markConfigLoaded();
     console.log("Configuration loaded in background script");
@@ -82,8 +88,8 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
     switch (request.action) {
         case "updateConfig":
             return handleUpdateConfig(request, sendResponse);
-        case "reloadAssistantConfig":
-            return handleReloadAssistantConfig(sendResponse);
+        case "reloadAgentConfig":
+            return handleReloadAgentConfig(sendResponse);
         case "getCourseData":
             return handleGetCourseData(request, sendResponse);
         case "getModelList":
@@ -146,6 +152,18 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleGenerateLabContext(request, sendResponse);
         case "getAccumulatedConcepts":
             return handleGetAccumulatedConcepts(request, sendResponse);
+        case "updateLearningObjectives":
+            return handleUpdateLearningObjectives(request, sendResponse);
+        case "updateExerciseContext":
+            return handleUpdateExerciseContext(request, sendResponse);
+        case "updateConcepts":
+            return handleUpdateConcepts(request, sendResponse);
+        case "addExercise":
+            return handleAddExercise(request, sendResponse);
+        case "removeExercise":
+            return handleRemoveExercise(request, sendResponse);
+        case "updateExercise":
+            return handleUpdateExercise(request, sendResponse);
         case "setLanguage":
             setLanguage(request.language)
                 .then(() => sendResponse({ success: true }))

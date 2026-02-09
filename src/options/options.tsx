@@ -5,14 +5,14 @@ import ProgressConfigTab from "../components/ProgressConfigTab";
 import { APP_CONFIG } from "../constants";
 import "../content/bootstrap.css";
 import { AVAILABLE_LANGUAGES, changeLanguage, type LanguageCode } from "../i18n";
-import { AssistantConfig } from "../util/ai/AssistantConfig";
+import { AgentConfig } from "../util/ai/AgentConfig";
 import { OpenAIService } from "../util/ai/OpenAIService";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { AppMode, ModeManager } from "../util/config/ModeManager";
-import { AssistantConfigStorageManager } from "../util/storage/AssistantConfigStorageManager";
+import { AgentConfigStorageManager } from "../util/storage/AgentConfigStorageManager";
 
-type TabType = "llm" | "assistants" | "progress" | "import-export";
-type AssistantSection = "general" | "exercise" | "evaluation" | "explanation";
+type TabType = "llm" | "agents" | "progress" | "import-export";
+type AgentSection = "general" | "exercise" | "evaluation" | "explanation";
 
 // Componentes reutilizables para campos de configuración
 interface ConfigFieldProps {
@@ -73,11 +73,11 @@ const Options: React.FC = () => {
 
     // Tab navigation
     const [activeTab, setActiveTab] = useState<TabType>("llm");
-    const [activeAssistantSection, setActiveAssistantSection] = useState<AssistantSection>("general");
+    const [activeAgentSection, setActiveAgentSection] = useState<AgentSection>("general");
 
-    // Assistant Configuration
-    const [assistantConfig, setAssistantConfig] = useState<AssistantConfig | null>(null);
-    const [assistantSaveMessage, setAssistantSaveMessage] = useState<string>("");
+    // Agent Configuration
+    const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
+    const [agentSaveMessage, setAgentSaveMessage] = useState<string>("");
 
     // Mode Configuration
     const [isUserTeacher, setIsUserTeacher] = useState<boolean>(false);
@@ -167,8 +167,8 @@ const Options: React.FC = () => {
             // Validar y cargar modelos
             validateAndLoadModels(providerIndex, savedModel, savedVisionModel, currentProvider.key);
 
-            // Cargar configuración de asistentes
-            await loadAssistantConfig();
+            // Cargar configuración de agentes
+            await loadAgentConfig();
 
             setIsConfigLoaded(true);
         };
@@ -176,9 +176,9 @@ const Options: React.FC = () => {
         loadConfiguration();
     }, []);
 
-    const loadAssistantConfig = async () => {
-        const config = await AssistantConfigStorageManager.loadConfig();
-        setAssistantConfig(config);
+    const loadAgentConfig = async () => {
+        const config = await AgentConfigStorageManager.loadConfig();
+        setAgentConfig(config);
     };
 
     const handleProviderChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -246,30 +246,30 @@ const Options: React.FC = () => {
         }
     };
 
-    const handleSaveAssistantConfig = async () => {
-        if (!assistantConfig) return;
+    const handleSaveAgentConfig = async () => {
+        if (!agentConfig) return;
 
         try {
-            await AssistantConfigStorageManager.saveConfig(assistantConfig);
-            setAssistantSaveMessage(t("options.assistants.buttons.saved"));
+            await AgentConfigStorageManager.saveConfig(agentConfig);
+            setAgentSaveMessage(t("options.agents.buttons.saved"));
 
             // Notificar al background script para recargar la configuración
-            chrome.runtime.sendMessage({ action: "reloadAssistantConfig" }).catch(error => {
+            chrome.runtime.sendMessage({ action: "reloadAgentConfig" }).catch(error => {
                 console.error("Error notifying background:", error);
             });
         } catch (error) {
-            console.error("Error saving assistant configuration:", error);
-            setAssistantSaveMessage(t("options.assistants.buttons.error"));
+            console.error("Error saving agent configuration:", error);
+            setAgentSaveMessage(t("options.agents.buttons.error"));
         }
     };
 
-    const updateAssistantField = (section: keyof AssistantConfig, field: string, value: string) => {
-        if (!assistantConfig) return;
+    const updateAgentField = (section: keyof AgentConfig, field: string, value: string) => {
+        if (!agentConfig) return;
 
-        setAssistantConfig({
-            ...assistantConfig,
+        setAgentConfig({
+            ...agentConfig,
             [section]: {
-                ...(assistantConfig[section] as any),
+                ...(agentConfig[section] as any),
                 [field]: value,
             },
         });
@@ -293,46 +293,46 @@ const Options: React.FC = () => {
         );
     }
 
-    const renderAssistantSection = () => {
-        if (!assistantConfig) return null;
+    const renderAgentSection = () => {
+        if (!agentConfig) return null;
 
-        switch (activeAssistantSection) {
+        switch (activeAgentSection) {
             case "general":
                 return (
                     <div>
-                        <h5 className="mb-3">{t("options.assistants.sections.general")}</h5>
+                        <h5 className="mb-3">{t("options.agents.sections.general")}</h5>
                         <ConfigTextField
-                            label={t("options.assistants.fields.subject.label")}
-                            value={assistantConfig.common.courseName}
-                            onChange={value => updateAssistantField("common", "courseName", value)}
-                            description={t("options.assistants.fields.subject.desc")}
+                            label={t("options.agents.fields.subject.label")}
+                            value={agentConfig.common.courseName}
+                            onChange={value => updateAgentField("common", "courseName", value)}
+                            description={t("options.agents.fields.subject.desc")}
                         />
                         <ConfigTextField
-                            label={t("options.assistants.fields.platform.label")}
-                            value={assistantConfig.common.platformName}
-                            onChange={value => updateAssistantField("common", "platformName", value)}
-                            description={t("options.assistants.fields.platform.desc")}
+                            label={t("options.agents.fields.platform.label")}
+                            value={agentConfig.common.platformName}
+                            onChange={value => updateAgentField("common", "platformName", value)}
+                            description={t("options.agents.fields.platform.desc")}
                         />
                         <ConfigTextField
-                            label={t("options.assistants.fields.institution.label")}
-                            value={assistantConfig.common.institutionName}
-                            onChange={value => updateAssistantField("common", "institutionName", value)}
-                            description={t("options.assistants.fields.institution.desc")}
+                            label={t("options.agents.fields.institution.label")}
+                            value={agentConfig.common.institutionName}
+                            onChange={value => updateAgentField("common", "institutionName", value)}
+                            description={t("options.agents.fields.institution.desc")}
                         />
 
                         <hr className="my-4" />
-                        <h5 className="mb-3">{t("options.assistants.headers.teacherPersonalization")}</h5>
+                        <h5 className="mb-3">{t("options.agents.headers.teacherPersonalization")}</h5>
                         <ConfigTextField
-                            label={t("options.assistants.fields.teacherName.label")}
-                            value={assistantConfig.common.teacherName}
-                            onChange={value => updateAssistantField("common", "teacherName", value)}
-                            description={t("options.assistants.fields.teacherName.desc")}
+                            label={t("options.agents.fields.teacherName.label")}
+                            value={agentConfig.common.teacherName}
+                            onChange={value => updateAgentField("common", "teacherName", value)}
+                            description={t("options.agents.fields.teacherName.desc")}
                         />
                         <ConfigTextArea
-                            label={t("options.assistants.fields.teacherTics.label")}
-                            value={assistantConfig.common.teacherTics}
-                            onChange={value => updateAssistantField("common", "teacherTics", value)}
-                            description={t("options.assistants.fields.teacherTics.desc")}
+                            label={t("options.agents.fields.teacherTics.label")}
+                            value={agentConfig.common.teacherTics}
+                            onChange={value => updateAgentField("common", "teacherTics", value)}
+                            description={t("options.agents.fields.teacherTics.desc")}
                             rows={3}
                         />
                     </div>
@@ -340,19 +340,19 @@ const Options: React.FC = () => {
             case "exercise":
                 return (
                     <div>
-                        <h5 className="mb-3">{t("options.assistants.headers.labContext")}</h5>
+                        <h5 className="mb-3">{t("options.agents.headers.labContext")}</h5>
                         <ConfigTextArea
-                            label={t("options.assistants.fields.labMaterial.label")}
-                            value={assistantConfig.exerciseAssistant.contextDescription}
-                            onChange={value => updateAssistantField("exerciseAssistant", "contextDescription", value)}
-                            description={t("options.assistants.fields.labMaterial.desc")}
+                            label={t("options.agents.fields.labMaterial.label")}
+                            value={agentConfig.exerciseAgent.contextDescription}
+                            onChange={value => updateAgentField("exerciseAgent", "contextDescription", value)}
+                            description={t("options.agents.fields.labMaterial.desc")}
                             rows={2}
                         />
                         <ConfigTextArea
-                            label={t("options.assistants.fields.exerciseCriteria.label")}
-                            value={assistantConfig.exerciseAssistant.exerciseCriteria}
-                            onChange={value => updateAssistantField("exerciseAssistant", "exerciseCriteria", value)}
-                            description={t("options.assistants.fields.exerciseCriteria.desc")}
+                            label={t("options.agents.fields.exerciseCriteria.label")}
+                            value={agentConfig.exerciseAgent.exerciseCriteria}
+                            onChange={value => updateAgentField("exerciseAgent", "exerciseCriteria", value)}
+                            description={t("options.agents.fields.exerciseCriteria.desc")}
                             rows={6}
                         />
                     </div>
@@ -360,33 +360,33 @@ const Options: React.FC = () => {
             case "evaluation":
                 return (
                     <div>
-                        <h5 className="mb-3">{t("options.assistants.headers.evaluator")}</h5>
+                        <h5 className="mb-3">{t("options.agents.headers.evaluator")}</h5>
                         <ConfigTextArea
-                            label={t("options.assistants.fields.role.label")}
-                            value={assistantConfig.evaluationAssistant.role}
-                            onChange={value => updateAssistantField("evaluationAssistant", "role", value)}
-                            description={t("options.assistants.fields.role.desc")}
+                            label={t("options.agents.fields.role.label")}
+                            value={agentConfig.evaluationAgent.role}
+                            onChange={value => updateAgentField("evaluationAgent", "role", value)}
+                            description={t("options.agents.fields.role.desc")}
                             rows={2}
                         />
                         <ConfigTextArea
-                            label={t("options.assistants.fields.evaluationCriteria.label")}
-                            value={assistantConfig.evaluationAssistant.evaluationCriteria}
-                            onChange={value => updateAssistantField("evaluationAssistant", "evaluationCriteria", value)}
-                            description={t("options.assistants.fields.evaluationCriteria.desc")}
+                            label={t("options.agents.fields.evaluationCriteria.label")}
+                            value={agentConfig.evaluationAgent.evaluationCriteria}
+                            onChange={value => updateAgentField("evaluationAgent", "evaluationCriteria", value)}
+                            description={t("options.agents.fields.evaluationCriteria.desc")}
                             rows={10}
                         />
                         <ConfigTextArea
-                            label={t("options.assistants.fields.scoringScale.label")}
-                            value={assistantConfig.evaluationAssistant.scoringScale}
-                            onChange={value => updateAssistantField("evaluationAssistant", "scoringScale", value)}
-                            description={t("options.assistants.fields.scoringScale.desc")}
+                            label={t("options.agents.fields.scoringScale.label")}
+                            value={agentConfig.evaluationAgent.scoringScale}
+                            onChange={value => updateAgentField("evaluationAgent", "scoringScale", value)}
+                            description={t("options.agents.fields.scoringScale.desc")}
                             rows={5}
                         />
                         <ConfigTextArea
-                            label={t("options.assistants.fields.feedbackFormat.label")}
-                            value={assistantConfig.evaluationAssistant.feedbackFormat}
-                            onChange={value => updateAssistantField("evaluationAssistant", "feedbackFormat", value)}
-                            description={t("options.assistants.fields.feedbackFormat.desc")}
+                            label={t("options.agents.fields.feedbackFormat.label")}
+                            value={agentConfig.evaluationAgent.feedbackFormat}
+                            onChange={value => updateAgentField("evaluationAgent", "feedbackFormat", value)}
+                            description={t("options.agents.fields.feedbackFormat.desc")}
                             rows={6}
                         />
                     </div>
@@ -394,35 +394,35 @@ const Options: React.FC = () => {
             case "explanation":
                 return (
                     <div>
-                        <h5 className="mb-3">{t("options.assistants.headers.solver")}</h5>
+                        <h5 className="mb-3">{t("options.agents.headers.solver")}</h5>
                         <ConfigTextArea
-                            label={t("options.assistants.fields.role.label")}
-                            value={assistantConfig.explanationAssistant.role}
-                            onChange={value => updateAssistantField("explanationAssistant", "role", value)}
-                            description={t("options.assistants.fields.role.desc")}
+                            label={t("options.agents.fields.role.label")}
+                            value={agentConfig.explanationAgent.role}
+                            onChange={value => updateAgentField("explanationAgent", "role", value)}
+                            description={t("options.agents.fields.role.desc")}
                             rows={2}
                         />
                         <ConfigTextArea
-                            label={t("options.assistants.fields.methodology.label")}
-                            value={assistantConfig.explanationAssistant.methodology}
-                            onChange={value => updateAssistantField("explanationAssistant", "methodology", value)}
-                            description={t("options.assistants.fields.methodology.desc")}
+                            label={t("options.agents.fields.methodology.label")}
+                            value={agentConfig.explanationAgent.methodology}
+                            onChange={value => updateAgentField("explanationAgent", "methodology", value)}
+                            description={t("options.agents.fields.methodology.desc")}
                             rows={15}
                         />
                         <ConfigTextArea
-                            label={t("options.assistants.fields.feedbackFormat.label")}
-                            value={assistantConfig.explanationAssistant.outputFormat}
-                            onChange={value => updateAssistantField("explanationAssistant", "outputFormat", value)}
-                            description={t("options.assistants.fields.feedbackFormat.desc")}
+                            label={t("options.agents.fields.feedbackFormat.label")}
+                            value={agentConfig.explanationAgent.outputFormat}
+                            onChange={value => updateAgentField("explanationAgent", "outputFormat", value)}
+                            description={t("options.agents.fields.feedbackFormat.desc")}
                             rows={6}
                         />
                         <ConfigTextArea
-                            label={t("options.assistants.fields.pickyExerciseConfig.label")}
-                            value={assistantConfig.explanationAssistant.pickyExerciseConfiguration || ""}
+                            label={t("options.agents.fields.pickyExerciseConfig.label")}
+                            value={agentConfig.explanationAgent.pickyExerciseConfiguration || ""}
                             onChange={value =>
-                                updateAssistantField("explanationAssistant", "pickyExerciseConfiguration", value)
+                                updateAgentField("explanationAgent", "pickyExerciseConfiguration", value)
                             }
-                            description={t("options.assistants.fields.pickyExerciseConfig.desc")}
+                            description={t("options.agents.fields.pickyExerciseConfig.desc")}
                             rows={4}
                         />
                     </div>
@@ -487,10 +487,10 @@ const Options: React.FC = () => {
                         {isUserTeacher && (
                             <li className="nav-item">
                                 <button
-                                    className={`nav-link ${activeTab === "assistants" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("assistants")}
+                                    className={`nav-link ${activeTab === "agents" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("agents")}
                                 >
-                                    {t("options.tabs.assistants")}
+                                    {t("options.tabs.agents")}
                                 </button>
                             </li>
                         )}
@@ -639,76 +639,76 @@ const Options: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Contenido de Asistentes */}
-                    {activeTab === "assistants" && (
+                    {/* Contenido de Agentes */}
+                    {activeTab === "agents" && (
                         <div>
-                            {assistantSaveMessage && (
+                            {agentSaveMessage && (
                                 <div
                                     className={`alert ${
-                                        assistantSaveMessage.includes("Error") ? "alert-danger" : "alert-success"
+                                        agentSaveMessage.includes("Error") ? "alert-danger" : "alert-success"
                                     } alert-dismissible fade show`}
                                     role="alert"
                                 >
-                                    {assistantSaveMessage}
+                                    {agentSaveMessage}
                                     <button
                                         type="button"
                                         className="btn-close"
-                                        onClick={() => setAssistantSaveMessage("")}
+                                        onClick={() => setAgentSaveMessage("")}
                                         aria-label={t("common.close")}
                                     ></button>
                                 </div>
                             )}
 
-                            {/* Sub-navegación para secciones de asistentes */}
+                            {/* Sub-navegación para secciones de agentes */}
                             <ul className="nav nav-pills mb-3">
                                 <li className="nav-item">
                                     <button
-                                        className={`nav-link ${activeAssistantSection === "general" ? "active" : ""}`}
-                                        onClick={() => setActiveAssistantSection("general")}
+                                        className={`nav-link ${activeAgentSection === "general" ? "active" : ""}`}
+                                        onClick={() => setActiveAgentSection("general")}
                                     >
-                                        {t("options.assistants.sections.general")}
+                                        {t("options.agents.sections.general")}
                                     </button>
                                 </li>
                                 <li className="nav-item">
                                     <button
-                                        className={`nav-link ${activeAssistantSection === "exercise" ? "active" : ""}`}
-                                        onClick={() => setActiveAssistantSection("exercise")}
+                                        className={`nav-link ${activeAgentSection === "exercise" ? "active" : ""}`}
+                                        onClick={() => setActiveAgentSection("exercise")}
                                     >
-                                        {t("options.assistants.sections.exercise")}
-                                    </button>
-                                </li>
-                                <li className="nav-item">
-                                    <button
-                                        className={`nav-link ${
-                                            activeAssistantSection === "evaluation" ? "active" : ""
-                                        }`}
-                                        onClick={() => setActiveAssistantSection("evaluation")}
-                                    >
-                                        {t("options.assistants.sections.evaluation")}
+                                        {t("options.agents.sections.exercise")}
                                     </button>
                                 </li>
                                 <li className="nav-item">
                                     <button
                                         className={`nav-link ${
-                                            activeAssistantSection === "explanation" ? "active" : ""
+                                            activeAgentSection === "evaluation" ? "active" : ""
                                         }`}
-                                        onClick={() => setActiveAssistantSection("explanation")}
+                                        onClick={() => setActiveAgentSection("evaluation")}
                                     >
-                                        {t("options.assistants.sections.explanation")}
+                                        {t("options.agents.sections.evaluation")}
+                                    </button>
+                                </li>
+                                <li className="nav-item">
+                                    <button
+                                        className={`nav-link ${
+                                            activeAgentSection === "explanation" ? "active" : ""
+                                        }`}
+                                        onClick={() => setActiveAgentSection("explanation")}
+                                    >
+                                        {t("options.agents.sections.explanation")}
                                     </button>
                                 </li>
                             </ul>
 
                             <div className="card">
                                 <div className="card-body">
-                                    {renderAssistantSection()}
+                                    {renderAgentSection()}
                                     <div className="mt-4">
                                         <button
                                             type="button"
                                             className="btn btn-primary me-2"
-                                            onClick={handleSaveAssistantConfig}
+                                            onClick={handleSaveAgentConfig}
                                         >
-                                            {t("options.assistants.buttons.save")}
+                                            {t("options.agents.buttons.save")}
                                         </button>
                                     </div>
                                 </div>
@@ -719,7 +719,7 @@ const Options: React.FC = () => {
                     {activeTab === "progress" && renderProgressTab()}
 
                     {/* Contenido de Importar/Exportar */}
-                    {activeTab === "import-export" && <ImportExportTab onDataChange={loadAssistantConfig} />}
+                    {activeTab === "import-export" && <ImportExportTab onDataChange={loadAgentConfig} />}
                 </div>
             </div>
         </div>

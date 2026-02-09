@@ -1,18 +1,18 @@
-import { AssistantConfig } from "./AssistantConfig";
-import { BaseAssistant } from "./BaseAssistant";
+import { AgentConfig } from "./AgentConfig";
+import { BaseAgent } from "./BaseAgent";
 import { EvaluationSchema, EvaluationSchemaType } from "./schemas";
 
-export { EvaluationAssistant };
+export { EvaluationAgent };
 
 /**
- * Asistente especializado en evaluar soluciones de ejercicios
+ * Agente especializado en evaluar soluciones de ejercicios
  */
-class EvaluationAssistant extends BaseAssistant {
+class EvaluationAgent extends BaseAgent {
 
     private static readonly TOOLS = [];
 
-    constructor(config: AssistantConfig) {
-        super(config, EvaluationAssistant.TOOLS);
+    constructor(config: AgentConfig) {
+        super(config, EvaluationAgent.TOOLS);
     }
 
     /**
@@ -35,7 +35,7 @@ class EvaluationAssistant extends BaseAssistant {
     ): Promise<EvaluationSchemaType> {
         console.log(`[evaluateSolution] Evaluating solution for: ${exerciseName}`);
 
-        const assistantConfig = this.config.evaluationAssistant;
+        const agentConfig = this.config.evaluationAgent;
 
         // Build pedagogical context
         const pedagogicalContext = concepts && concepts.length > 0
@@ -77,18 +77,18 @@ IMPORTANT:
 {importantNotes}`;
 
         const systemPromptVariables = {
-            role: assistantConfig.role,
-            taskDescription: assistantConfig.taskDescription,
-            evaluationCriteria: assistantConfig.evaluationCriteria,
-            scoringScale: assistantConfig.scoringScale,
-            feedbackFormat: assistantConfig.feedbackFormat,
+            role: agentConfig.role,
+            taskDescription: agentConfig.taskDescription,
+            evaluationCriteria: agentConfig.evaluationCriteria,
+            scoringScale: agentConfig.scoringScale,
+            feedbackFormat: agentConfig.feedbackFormat,
             contextNote: exerciseContext ? '- You can use the exercise context and example data to illustrate problems' : '',
             pedagogicalContext: pedagogicalContext,
             objectivesContext: objectivesContext,
             considerObjectives: considerObjectives,
             teacherPersonalization: this.buildTeacherPersonalization(),
             languageInstruction: this.buildLanguageInstruction(),
-            importantNotes: assistantConfig.importantNotes || ''
+            importantNotes: agentConfig.importantNotes || ''
         };
 
         const systemPrompt = this.buildPromptFromTemplate(systemPromptTemplate, systemPromptVariables);

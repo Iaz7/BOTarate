@@ -1,22 +1,22 @@
 import { getLLMLanguageInstruction } from "../../i18n/backend";
 import { Course } from "../egela/Course";
-import { AssistantConfig } from "./AssistantConfig";
+import { AgentConfig } from "./AgentConfig";
 import { OpenAIService } from "./OpenAIService";
 import { ToolFunctions } from "./ToolFunctions";
 
-export { BaseAssistant };
+export { BaseAgent };
 
 /**
- * Base class for AI assistants
+ * Base class for AI agents
  * Provides common functionality to handle courses and build modular prompts
  */
-abstract class BaseAssistant {
+abstract class BaseAgent {
     protected course: Course | null = null;
     protected openAIService: OpenAIService;
-    protected config: AssistantConfig;
+    protected config: AgentConfig;
     protected allowedTools: string[] = [];
 
-    constructor(config: AssistantConfig, allowedTools: string[]) {
+    constructor(config: AgentConfig, allowedTools: string[]) {
         this.openAIService = new OpenAIService();
         this.config = config;
         this.allowedTools = allowedTools;
@@ -77,7 +77,7 @@ abstract class BaseAssistant {
     }
 
     /**
-     * Tool executor shared by all assistants
+     * Tool executor shared by all agents
      * Provides access to getSectionContent, getPageContent, getResourceContent, explainExercise, solveExercise, getFilteredFileContent, and analyzeImage
      */
     protected async executeToolCall(
@@ -85,7 +85,7 @@ abstract class BaseAssistant {
         args: any
     ): Promise<string> {
         if (!this.allowedTools.includes(name)) {
-            throw new Error(`The assistant does not have access to the tool: ${name}`);
+            throw new Error(`The agent does not have access to the tool: ${name}`);
         }
         switch (name) {
             case 'getSectionContent':
@@ -103,7 +103,7 @@ abstract class BaseAssistant {
             case 'analyzeImage':
                 return await ToolFunctions.analyzeImage(args);
             case 'postExercises':
-                throw new Error('postExercises must be handled directly by the assistant');
+                throw new Error('postExercises must be handled directly by the agent');
             default:
                 throw new Error(`Unknown tool: ${name}`);
         }

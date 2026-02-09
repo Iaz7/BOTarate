@@ -1,6 +1,6 @@
 # Moodlia - Chrome Extension for Egela
 
-Moodlia is a Chrome extension designed to enhance the learning experience on the Egela platform (University of the Basque Country). It integrates an advanced AI assistant to help students with SQL exercises, provide course guidance, and track progress. For teachers, it offers tools to configure courses, labs, and exercises, tailoring the AI's assistance to their specific curriculum.
+Moodlia is a Chrome extension designed to enhance the learning experience on the Egela platform (University of the Basque Country). It integrates an advanced AI agent to help students with SQL exercises, provide course guidance, and track progress. For teachers, it offers tools to configure courses, labs, and exercises, tailoring the AI's support to their specific curriculum.
 
 # User Guide
 
@@ -49,17 +49,17 @@ To create a new configuration for your students:
 
 #### Course Chat
 
-The chat interface allows users to interact with the AI assistant.
+The chat interface allows users to interact with the AI agent.
 
 - **Ask Questions**: Users can ask questions about the course content.
-- **Context Awareness**: The assistant is aware of the current page content and exercises if a lab is open.
+- **Context Awareness**: The agent is aware of the current page content and exercises if a lab is open.
 
 #### Options Page
 
 Accessible by right-clicking the extension icon and selecting "Open settings".
 
 - **LLM Configuration**: Manage AI provider settings.
-- **Assistant Configuration**: Customize the behavior and prompts of the AI assistants (General, Course, Exercise, Evaluation, Explanation).
+- **Agent Configuration**: Customize the behavior and prompts of the AI agents (General, Course, Exercise, Evaluation, Explanation).
 - **Import/Export**: Manage configuration files and clear data.
 - **Language Selection**: Choose the interface and AI response language (English, Spanish, Basque/Euskara).
 
@@ -74,7 +74,7 @@ The extension supports multiple languages:
 The language selector is available in both the popup and the options page. Changing the language affects:
 
 - All user interface text
-- AI assistant responses (the LLM is instructed to respond in the selected language)
+- AI agent responses (the LLM is instructed to respond in the selected language)
 
 ### Teacher Features
 
@@ -109,7 +109,7 @@ Manage individual exercises within a lab.
 
 ### Student Features
 
-#### Chat Assistance
+#### Chat Support
 
 Students use the chat to get help with their coursework.
 
@@ -125,4 +125,4 @@ Displays a list of exercises on the current page.
 
 #### Progress Tracking
 
-Students can view their progress through the course, including completed labs and challenge exercises, ensuring they meet the criteria defined by the teacher.
+Students can view their progress through the course, including completed labs and challenge exercises, ensuring they meet the criteria defined by the teacher.\r\n\r\n

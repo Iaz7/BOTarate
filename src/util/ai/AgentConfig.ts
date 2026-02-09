@@ -1,13 +1,13 @@
 /**
- * Configuration for a specific assistant
+ * Configuration for a specific agent
  * Defines variables to be substituted in prompt templates
  */
-export interface AssistantConfig {
+export interface AgentConfig {
 
     /**
-     * Variables for exercise identification assistant
+     * Variables for exercise identification agent
      */
-    exerciseAssistant: {
+    exerciseAgent: {
         role: string;
         contextDescription: string;
         conceptsFieldDescription: string;
@@ -18,9 +18,9 @@ export interface AssistantConfig {
     };
 
     /**
-     * Variables for evaluation assistant
+     * Variables for evaluation agent
      */
-    evaluationAssistant: {
+    evaluationAgent: {
         role: string;
         taskDescription: string;
         evaluationCriteria: string;
@@ -30,9 +30,9 @@ export interface AssistantConfig {
     };
 
     /**
-     * Variables for explanation/tutorial assistant
+     * Variables for explanation/tutorial agent
      */
-    explanationAssistant: {
+    explanationAgent: {
         role: string;
         taskDescription: string;
         methodology: string;
@@ -44,7 +44,7 @@ export interface AssistantConfig {
     };
 
     /**
-     * Common configuration for all assistants
+     * Common configuration for all agents
      */
     common: {
         subjectName: string;

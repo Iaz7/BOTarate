@@ -1,16 +1,16 @@
 import { ChatStorageManager } from "../storage/ChatStorageManager";
-import { AssistantConfig } from "./AssistantConfig";
-import { BaseAssistant } from "./BaseAssistant";
+import { AgentConfig } from "./AgentConfig";
+import { BaseAgent } from "./BaseAgent";
 import type { Message } from "./OpenAIService";
 import { TOOLS } from "./Tools";
 
-export { CourseAssistant };
+export { CourseAgent };
 
 /**
- * Asistente para funcionalidad general del curso
+ * Agente para funcionalidad general del curso
  * Maneja conversaciones y herramientas relacionadas con el curso
  */
-class CourseAssistant extends BaseAssistant {
+class CourseAgent extends BaseAgent {
 
     private static readonly TOOLS = [
         'getSectionContent',
@@ -20,8 +20,8 @@ class CourseAssistant extends BaseAssistant {
         'solveExercise'
     ];
 
-    constructor(config: AssistantConfig) {
-        super(config, CourseAssistant.TOOLS);
+    constructor(config: AgentConfig) {
+        super(config, CourseAgent.TOOLS);
     }
 
     /**
@@ -29,13 +29,13 @@ class CourseAssistant extends BaseAssistant {
      */
     async loadChatHistory(): Promise<Message[]> {
         if (!this.course) {
-            console.log('[CourseAssistant] No hay curso activo, no se puede cargar el historial');
+            console.log('[CourseAgent] No hay curso activo, no se puede cargar el historial');
             return [];
         }
 
         const messages = await ChatStorageManager.getChatHistory(this.course.id);
         this.openAIService.setConversationHistory(messages);
-        console.log(`[CourseAssistant] Historial cargado: ${messages.length} mensajes`);
+        console.log(`[CourseAgent] Historial cargado: ${messages.length} mensajes`);
 
         return messages;
     }
@@ -45,13 +45,13 @@ class CourseAssistant extends BaseAssistant {
      */
     async saveChatHistory(): Promise<void> {
         if (!this.course) {
-            console.log('[CourseAssistant] No hay curso activo, no se puede guardar el historial');
+            console.log('[CourseAgent] No hay curso activo, no se puede guardar el historial');
             return;
         }
 
         const messages = this.openAIService.getConversationHistory();
         await ChatStorageManager.saveChatHistory(this.course.id, messages);
-        console.log(`[CourseAssistant] Historial guardado: ${messages.length} mensajes`);
+        console.log(`[CourseAgent] Historial guardado: ${messages.length} mensajes`);
     }
 
     /**
@@ -62,7 +62,7 @@ class CourseAssistant extends BaseAssistant {
 
         if (this.course) {
             await ChatStorageManager.clearChatHistory(this.course.id);
-            console.log('[CourseAssistant] Historial reiniciado y eliminado del storage');
+            console.log('[CourseAgent] Historial reiniciado y eliminado del storage');
         }
     }
 
@@ -176,7 +176,7 @@ AVAILABLE ACTIONS:
 - To explain an ALLOWED exercise (isChallenge: false): use the explainExercise tool with the exercise "index".
 - For the student to submit their solution (any exercise): use the solveExercise tool with the exercise "index".`;
         }        // Generic prompt template
-        const template = `You are an assistant in a Chrome extension whose goal is {role}.
+        const template = `You are an agent in a Chrome extension whose goal is {role}.
 
 {toolsDescription}
 
@@ -206,7 +206,7 @@ Below is the complete course structure with all available sections. Each section
 
         // Variables to substitute in the template
         const variables = {
-            role: 'Asistente basado en chat para ayudar a los estudiantes con el contenido y ejercicios de su curso en línea',
+            role: 'Agente basado en chat para ayudar a los estudiantes con el contenido y ejercicios de su curso en línea',
             toolsDescription: 'Tienes acceso a las herramientas getSectionContent, getPageContent, getResourceContent, explainExercise y solveExercise para consultar material del curso y trabajar con ejercicios.',
             exerciseContext: exerciseContext,
             courseContext: courseContext,
@@ -217,11 +217,11 @@ Below is the complete course structure with all available sections. Each section
     }
 
     /**
-     * Generates an assistant response using the current course
+     * Generates an agent response using the current course
      * @param userMessage User message
      * @param resetHistory If true, resets conversation history
      * @param exercises Optional list of exercises available on the current page
-     * @returns The final assistant response
+     * @returns The final agent response
      */
     async generateResponse(userMessage: string, resetHistory: boolean = false, exercises?: any[]): Promise<string> {
         if (resetHistory) {
@@ -251,7 +251,7 @@ Below is the complete course structure with all available sections. Each section
                     });
                 }
             } catch (error) {
-                console.error('[CourseAssistant] Error notifying tool calls:', error);
+                console.error('[CourseAgent] Error notifying tool calls:', error);
             }
         };
 

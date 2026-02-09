@@ -32,7 +32,7 @@
     "chatTab": {
         "placeholder": {
             "disabledModal": "Txata desgaituta (modala irekita)...",
-            "teacherMode": "Aldatu ikasle modura laborategian lan egiteko...",
+            "teacherMode": "Aldatu ikasle modura txata erabiltzeko...",
             "labBlocked": "Laborategia blokeatuta...",
             "loadingExercises": "Ariketak kargatzen...",
             "notConfigured": "Laborategia ez du irakasleak konfiguratu...",
@@ -55,7 +55,7 @@
                 "checkProgress": "Egiaztatu zure aurrerapena \"Nire aurrerapena\" fitxan"
             },
             "teacherModeTitle": "Irakasle modua aktibo",
-            "teacherModeDesc": "Irakasle moduan zaude. Laborategi honetako ariketan lan egiteko, ikasle modura aldatu behar duzu.",
+            "teacherModeDesc": "Irakasle moduan zaude. Txat agentea erabiltzeko, ikasle modura aldatu behar duzu.",
             "teacherModeAction": "Joan <strong>\"Modua\"</strong> etengailura zure modua aldatzeko.",
             "loadingExercises": "Kargatzen...",
             "searchingExercises": "Ariketak bilatzen...",
@@ -67,7 +67,7 @@
         },
         "roles": {
             "user": "Zu",
-            "assistant": "Laguntzailea"
+            "agent": "Agentea"
         },
         "buttons": {
             "send": "Bidali mezua",
@@ -137,10 +137,10 @@
         "title": "Konfigurazioa beharrezkoa",
         "requiredBoth": {
             "text": "Konfigurazioa beharrezkoa da luzapena erabiltzeko:",
-            "assistantConfig": "<strong>Laguntzailearen konfigurazioa:</strong> Inportatu irakasleak emandako konfigurazio fitxategia ikastaroko ariketa eta laborategiekin.",
+            "agentConfig": "<strong>Agentearen konfigurazioa:</strong> Inportatu irakasleak emandako konfigurazio fitxategia ikastaroko ariketa eta laborategiekin.",
             "llmConfig": "<strong>LLM konfigurazioa:</strong> Konfiguratu API gakoa eta AI hornitzailearen eredua luzapenaren aukeren orrian."
         },
-        "requiredExercise": "Ez da laguntzailearen konfiguraziorik aurkitu. Mesedez, inportatu irakasleak emandako konfigurazio fitxategia luzapena erabiltzen hasteko.",
+        "requiredExercise": "Ez da agentearen konfiguraziorik aurkitu. Mesedez, inportatu irakasleak emandako konfigurazio fitxategia luzapena erabiltzen hasteko.",
         "requiredLLM": {
             "text": "LLM ez dago konfiguratuta. Luzapena erabiltzeko beharrezkoa da:",
             "key": "AI hornitzailearen API gakoa konfiguratu (OpenAI, Google, etab.)",
@@ -153,7 +153,7 @@
     "options": {
         "tabs": {
             "llm": "LLM Konfigurazioa",
-            "assistants": "Laguntzaileak",
+            "agents": "Prompts",
             "progress": "Aurrerapena",
             "importExport": "Inportatu/Esportatu"
         },
@@ -171,16 +171,16 @@
             "saveSuccess": "Konfigurazioa behar bezala gorde da",
             "saveError": "Errorea konfigurazioa gordetzean"
         },
-        "assistants": {
-            "title": "Laguntzaileen Konfigurazioa",
+        "agents": {
+            "title": "Agenteen Konfigurazioa",
             "sections": {
-                "general": "Orokorra",
-                "exercise": "Ariketak",
-                "evaluation": "Ebaluazioa",
-                "explanation": "Azalpena"
+                "general": "Irakaslearen pertsonalizazioa",
+                "exercise": "Laborategiaren testuinguruaren erauzketa",
+                "evaluation": "Soluzioen ebaluatzailea",
+                "explanation": "Ariketen ebazlea"
             },
             "fields": {
-                "subject": { "label": "Irakasgaia", "desc": "Laguntzaileak konfiguratzen diren irakasgaiaren izena" },
+                "subject": { "label": "Irakasgaia", "desc": "Agenteak konfiguratzen diren irakasgaiaren izena" },
                 "platform": {
                     "label": "LMS Plataforma",
                     "desc": "Hezkuntza plataformaren izena (adib. Moodle, Canvas, Egela)"
@@ -201,7 +201,7 @@
                 },
                 "role": {
                     "label": "Rola",
-                    "desc": "Ikastaroaren testuinguruan laguntzailearen helburua/rola definitzen du"
+                    "desc": "Ikastaroaren testuinguruan agentearen helburua/rola definitzen du"
                 },
                 "evaluationCriteria": {
                     "label": "Ebaluazio irizpideak",
@@ -212,7 +212,7 @@
                     "label": "Feedback formatua",
                     "desc": "Feedbacka nola egituratu eta formatu behar den azaltzen duten argibideak"
                 },
-                "methodology": { "label": "Metodologia", "desc": "Laguntzaileak jarraitu behar duen metodologia" },
+                "methodology": { "label": "Metodologia", "desc": "Agenteak jarraitu behar duen metodologia" },
                 "pickyExerciseConfig": {
                     "label": "Ariketa zorrotzen konfigurazioa",
                     "desc": "Deskribatu LLM-k ariketa zorrotzen azalpenetan nahita sartu behar dituen errore motak. Adib.: 'Sartu akats sotilak SQL sintaxian edo kontsulten logikan'"
@@ -225,9 +225,9 @@
                 "solver": "Ariketa ebazlearen konfigurazioa"
             },
             "buttons": {
-                "save": "Gorde laguntzaileen konfigurazioa",
+                "save": "Gorde agenteen konfigurazioa",
                 "saving": "Gordetzen...",
-                "saved": "Laguntzaileen konfigurazioa ondo gorde da",
+                "saved": "Agenteen konfigurazioa ondo gorde da",
                 "error": "Errorea konfigurazioa gordetzean"
             }
         },
@@ -237,34 +237,38 @@
         "language": {
             "title": "Hizkuntza",
             "select": "Hautatu hizkuntza",
-            "description": "Hizkuntzak interfazean eta laguntzailearen erantzunetan eragina du"
+            "description": "Hizkuntzak interfazean eta agentearen erantzunetan eragina du"
         },
         "exerciseConfig": {
             "infoTitle": "Ariketen konfigurazioa",
-            "infoDesc": "Fitxa honetan <strong>erronka</strong> edo <strong>zorrotz</strong> diren ariketak zein diren konfiguratu dezakezu.",
+            "infoDesc": "Fitxa honetan <strong>ikasle bakarrik</strong> edo <strong>lagun faltsua</strong> diren ariketak zein diren konfiguratu dezakezu.",
             "infoList": {
-                "challenge": "<strong>Ariketa erronka:</strong> Ezin da azalpenik eskatu, baina soluzio-ebaluazioak bai.",
-                "picky": "<strong>Ariketa zorrotzak:</strong> Laguntzaileak nahita akatsak sartuko ditu azalpenean, ikasleak AA-k sortutako edukien berrikusketa kritikoa praktikatu dezan."
+                "challenge": "<strong>Ikasle bakarrik ariketak:</strong> Ezin da azalpenik eskatu, baina soluzio-ebaluazioak bai.",
+                "picky": "<strong>Lagun faltsua ariketak:</strong> Agenteak nahita erantzun okerra emango du, ikasleak AA-k sortutako edukien berrikusketa kritikoa praktikatu dezan."
             },
             "infoFooter": "Aldaketak gorde ondoren, sistemak automatikoki eguneratuko ditu murrizketak.",
             "noExercisesTitle": "Ez dago ariketarik eskuragarri",
-            "noExercisesDesc": "Orrian ariketak detektatzen direnean, zeintzuk diren erronka ariketak konfiguratu ahal izango duzu.",
+            "noExercisesDesc": "Orrian ariketak detektatzen direnean, zeintzuk diren ikasle bakarrik ariketak konfiguratu ahal izango duzu.",
+            "noLabOpenDesc": "Lehenik laborategia ireki behar duzu ariketak gehitu edo konfiguratu ahal izateko.",
             "table": {
                 "headerName": "Ariketaren izena",
-                "headerChallenge": "Erronka da",
-                "headerPicky": "Zorrotza da",
-                "badgeChallenge": "Erronka",
-                "badgePicky": "Zorrotza",
-                "switchChallengeOn": "Erronka da",
-                "switchChallengeOff": "Ez da erronka",
-                "switchPickyOn": "Zorrotza da",
-                "switchPickyOff": "Ez da zorrotza"
+                "headerChallenge": "Ikasle bakarrik da",
+                "headerPicky": "Lagun faltsua da",
+                "headerActions": "Ekintzak",
+                "badgeChallenge": "Ikasle bakarrik",
+                "badgePicky": "Lagun faltsua",
+                "switchChallengeOn": "Ikasle bakarrik da",
+                "switchChallengeOff": "Ez da ikasle bakarrik",
+                "switchPickyOn": "Lagun faltsua da",
+                "switchPickyOff": "Ez da lagun faltsua"
             },
             "unsavedTitle": "⚠️ Gorde gabeko aldaketak dituzu",
-            "unsavedDesc": "Sakatu \"Gorde aldaketak\" konfigurazioa aplikatzeko eta laguntzailea birsortzeko.",
+            "unsavedDesc": "Sakatu \"Gorde aldaketak\" konfigurazioa aplikatzeko eta agentea birsortzeko.",
             "save": "Gorde aldaketak",
             "saving": "Aldaketak gordetzen...",
-            "processing": "Konfigurazioa aplikatzen eta murrizketak eguneratzen..."
+            "processing": "Konfigurazioa aplikatzen eta murrizketak eguneratzen...",
+            "addExercise": "Ariketa gehitu",
+            "deleteConfirm": "Ziur zaude '{{name}}' ariketa ezabatu nahi duzula?"
         },
         "labConfig": {
             "loading": "Laborategiak kargatzen...",
@@ -275,13 +279,13 @@
             "infoList": {
                 "include": "<strong>Laborategia sartu:</strong> Gaitu hau laborategia analizatzeko eta ariketak ateratzeko. Hau beharrezkoa da beste konfigurazio aukerak erabili aurretik.",
                 "required": "<strong>Derrigorrezko laborategia:</strong> Derrigorrezko gisa markatutako laborategiak sekuentzialki desblokeatuko dira ikasleak aurreko laborategiko erronkak osatzen dituenean.",
-                "verbosity": "<strong>Hitzezko maila:</strong> Laguntzailearen azalpenen xehetasun maila kontrolatzen du (baxua, ertaina edo altua).",
-                "reasoning": "<strong>Arrazoibide ahalegina:</strong> Laguntzaileak bere arrazoibidea azaltzeko zenbat xehetasun eman behar duen konfiguratzen du (minimoa, baxua, ertaina edo altua)."
+                "verbosity": "<strong>Hitzezko maila:</strong> Agentearen azalpenen xehetasun maila kontrolatzen du (baxua, ertaina edo altua).",
+                "reasoning": "<strong>Arrazoibide ahalegina:</strong> Agenteak bere arrazoibidea azaltzeko zenbat xehetasun eman behar duen konfiguratzen du (minimoa, baxua, ertaina edo altua)."
             },
             "infoFooter": "Sakatu sartutako laborategi batean bere konfigurazio aukerak zabaltzeko.",
             "includeLabel": "Sartu",
             "requiredLabel": "Derrigorrezko laborategia",
-            "explanationConfig": "Azalpen laguntzailearen konfigurazioa:",
+            "explanationConfig": "Azalpen agentearen konfigurazioa:",
             "goToLab": "Laborategira joan",
             "unsavedTitle": "⚠️ Gorde gabeko aldaketak dituzu",
             "unsavedDesc": "Sakatu \"Gorde aldaketak\" konfigurazioa aplikatzeko.",
@@ -306,7 +310,51 @@
                 "reasoningLow": "Oinarrizko arrazoibidea",
                 "reasoningMedium": "Arrazoibide moderatua",
                 "reasoningHigh": "Arrazoibide zehatza pauso-pauso"
-            }
+            },
+            "editContext": "Ikusi / Editatu testuingurua",
+            "exercisesTitle": "Ariketak:",
+            "noExercises": "Ez dago ariketarik laboratorio honetan.",
+            "addExercise": "Ariketa gehitu",
+            "deleteExerciseConfirm": "Ziur zaude \"{{name}}\" ariketa ezabatu nahi duzula?"
+        },
+        "labContext": {
+            "title": "Laborategiaren testuingurua - {{name}}",
+            "tabs": {
+                "learningObjectives": "Ikaskuntza-helburuak",
+                "exercises": "Ariketak",
+                "concepts": "Kontzeptuak",
+                "exerciseContext": "Ariketen testuingurua"
+            },
+            "learningObjectives": {
+                "description": "Definitu ikasleek laboratorio honetan ikasi behar dutena.",
+                "placeholder": "Sartu laboratorio honen ikaskuntza-helburuak..."
+            },
+            "exercises": {
+                "description": "Laboratorio honetan identifikatutako ariketen zerrenda. Ariketak ariketen konfigurazio-fitxan konfiguratzen dira.",
+                "empty": "Ez dago ariketarik laboratorio honetan."
+            },
+            "concepts": {
+                "description": "Laboratorio honetan landutako kontzeptuen zerrenda. Kontzeptuak gehitu, editatu edo ezabatu ditzakezu.",
+                "placeholder": "Sartu kontzeptu berri bat...",
+                "add": "Gehitu",
+                "empty": "Oraindik ez da kontzepturik definitu."
+            },
+            "exerciseContext": {
+                "description": "Laboratorio honetako ariketa guztien testuinguru partekatua (adib.: datu-base eskema, zehaztapenak).",
+                "placeholder": "Sartu ariketen testuingurua..."
+            },
+            "save": "Aldaketak gorde",
+            "saving": "Gordetzen...",
+            "saveSuccess": "Testuingurua behar bezala gorde da.",
+            "saveError": "Errorea testuingurua gordetzean. Mesedez, saiatu berriro."
+        },
+        "exerciseEdit": {
+            "editTitle": "Ariketa editatu - {{name}}",
+            "addTitle": "Ariketa gehitu",
+            "name": "Ariketaren izena",
+            "namePlaceholder": "Sartu ariketaren izena...",
+            "statement": "Enuntziatua",
+            "statementPlaceholder": "Sartu ariketaren enuntziatua..."
         },
         "progress": {
             "loading": "Aurrerapen konfigurazioa kargatzen...",
@@ -333,7 +381,7 @@
         "importExport": {
             "export": {
                 "title": "Esportatu konfigurazioa",
-                "description": "Esportatu zure konfigurazio guztia (laguntzaileak, ariketak eta laborategiak) JSON fitxategi sinatua batera. Fitxategi hau segurtasun kopiak egiteko edo konfigurazioa beste nabigatzaile batera transferitzeko erabil dezakezu. Fitxategia eskuzko aldaketetatik babestuta dago.",
+                "description": "Esportatu zure konfigurazio guztia (agenteak, ariketak eta laborategiak) JSON fitxategi sinatua batera. Fitxategi hau segurtasun kopiak egiteko edo konfigurazioa beste nabigatzaile batera transferitzeko erabil dezakezu. Fitxategia eskuzko aldaketetatik babestuta dago.",
                 "button": "Esportatu konfigurazioa",
                 "processing": " Esportatzen..."
             },
@@ -361,7 +409,7 @@
                 "importError": "Ustekabeko errorea inportatzean: {{error}}",
                 "clearError": "Ustekabeko errorea ezabatzean: {{error}}"
             },
-            "confirmClear": "⚠️ OHARRA: Ekintza honek gordetako konfigurazio GUZTIA ezabatuko du, barne:\n\n- Laguntzaileen konfigurazioa\n- Identifikatutako ariketen datuak\n- Konfiguratutako laborategien datuak\n\nEkintza hau EZIN DA desegin. Ziur jarraitu nahi duzula?"
+            "confirmClear": "⚠️ OHARRA: Ekintza honek gordetako konfigurazio GUZTIA ezabatuko du, barne:\n\n- Agenteen konfigurazioa\n- Identifikatutako ariketen datuak\n- Konfiguratutako laborategien datuak\n\nEkintza hau EZIN DA desegin. Ziur jarraitu nahi duzula?"
         }
     },
     "sidebar": {
@@ -391,7 +439,7 @@
         "placeholderSQL": "Idatzi zure SQL kontsulta hemen...",
         "pickyWarning": {
             "title": "Ariketa zorrotz gisa markatua.",
-            "desc": "Azalpen honek nahitako akatsak izan ditzake. Berrikusi pausoak arretaz eta erabili zure pentsamendu kritikoa. Akats bat aurkitzen baduzu, galdetu laguntzaileari baieztatzeko."
+            "desc": "Azalpen honek nahitako akatsak izan ditzake. Berrikusi pausoak arretaz eta erabili zure pentsamendu kritikoa. Akats bat aurkitzen baduzu, galdetu agenteari baieztatzeko."
         }
     },
     "evaluation": {
@@ -441,7 +489,7 @@
             "waiting": "Azalpena kargatu zain...",
             "empty": "Azalpenari buruzko zalantzarik baduzu? Galdetu edozer.",
             "user": "Zu",
-            "assistant": "Laguntzailea",
+            "agent": "Agentea",
             "generating": "Erantzuna sortzen...",
             "placeholder": "Idatzi zure galdera...",
             "send": "Bidali galdera"

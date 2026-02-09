@@ -25,6 +25,9 @@ export const useLabConfigState = (courseId: string, isActive: boolean) => {
     );
     const [hasContextChanges, setHasContextChanges] = useState(false);
 
+    // Modal state
+    const [contextModalLabId, setContextModalLabId] = useState<string | null>(null);
+
     // Restaurar estado guardado (scroll y accordion) al montar
     useEffect(() => {
         if (isActive && courseId) {
@@ -137,5 +140,7 @@ export const useLabConfigState = (courseId: string, isActive: boolean) => {
         hasContextChanges,
         loadConfigFromStorage,
         handleScroll,
+        contextModalLabId,
+        setContextModalLabId,
     };
 };

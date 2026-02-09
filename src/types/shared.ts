@@ -51,11 +51,10 @@ export interface ToolCallInfo {
 }
 
 export interface ChatMessage {
-    role: 'user' | 'assistant' | 'system' | 'tool';
+    role: 'user' | 'agent' | 'system' | 'tool';
     content: string | null;
     id?: string;
     tool_calls?: ToolCallInfo[];
 }
 
 export { };
-

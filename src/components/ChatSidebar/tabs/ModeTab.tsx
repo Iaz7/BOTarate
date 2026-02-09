@@ -91,7 +91,7 @@ const ModeTab: React.FC<ModeTabProps> = ({ isUserTeacher, isTeacherMode, onModeT
                             </li>
                             <li className="mb-2">
                                 <i className="bi bi-check-circle-fill text-success me-2"></i>
-                                <strong>Assistant Configuration:</strong> Access to LLM settings and assistant behavior
+                                <strong>Agent Configuration:</strong> Access to LLM settings and agent behavior
                                 customization
                             </li>
                             <li className="mb-0">
@@ -122,8 +122,8 @@ const ModeTab: React.FC<ModeTabProps> = ({ isUserTeacher, isTeacherMode, onModeT
                             </li>
                             <li className="mb-2">
                                 <i className="bi bi-check-circle-fill text-primary me-2"></i>
-                                <strong>Chat Assistant:</strong> Ask for explanations, request solution evaluations, and
-                                get help with exercises
+                                <strong>Chat Agent:</strong> Ask for explanations, request solution evaluations, and get
+                                help with exercises
                             </li>
                             <li className="mb-2">
                                 <i className="bi bi-check-circle-fill text-primary me-2"></i>
@@ -137,8 +137,8 @@ const ModeTab: React.FC<ModeTabProps> = ({ isUserTeacher, isTeacherMode, onModeT
                             </li>
                             <li className="mb-0">
                                 <i className="bi bi-check-circle-fill text-primary me-2"></i>
-                                <strong>Exercise Context:</strong> The assistant is aware of the current lab's exercises
-                                and can provide targeted help
+                                <strong>Exercise Context:</strong> The agent is aware of the current lab's exercises and
+                                can provide targeted help
                             </li>
                         </ul>
                     </div>

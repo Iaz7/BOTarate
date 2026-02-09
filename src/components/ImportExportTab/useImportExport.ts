@@ -97,7 +97,7 @@ export const useImportExport = ({ onDataChange }: ImportExportTabProps) => {
      */
     const handleClearAll = async () => {
         const confirmed = confirm(
-            t('options.importExport.confirmClear', "⚠️ WARNING: This action will delete ALL saved configuration, including:\n\n- Assistant configuration\n- Identified exercise data\n- Configured lab data\n\nThis action CANNOT be undone. Are you sure you want to continue?")
+            t('options.importExport.confirmClear', "⚠️ WARNING: This action will delete ALL saved configuration, including:\n\n- Agent configuration\n- Identified exercise data\n- Configured lab data\n\nThis action CANNOT be undone. Are you sure you want to continue?")
         );
 
         if (!confirmed) return;

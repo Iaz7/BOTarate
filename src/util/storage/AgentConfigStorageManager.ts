@@ -1,17 +1,17 @@
-import { AssistantConfig } from '../ai/AssistantConfig';
+import { AgentConfig } from '../ai/AgentConfig';
 import { BaseStorageManager } from './BaseStorageManager';
 
-export { AssistantConfigStorageManager };
+export { AgentConfigStorageManager };
 
 /**
- * Storage manager for assistant configuration
- * Saves and loads custom assistant configuration from chrome.storage
+ * Storage manager for agent configuration
+ * Saves and loads custom agent configuration from chrome.storage
  */
-class AssistantConfigStorageManager extends BaseStorageManager {
-    private static readonly STORAGE_KEY_PREFIX = 'assistant_config_';
+class AgentConfigStorageManager extends BaseStorageManager {
+    private static readonly STORAGE_KEY_PREFIX = 'agent_config_';
     private static readonly CONFIG_KEY = 'main';
-    private static readonly defaultConfig: AssistantConfig = {
-        exerciseAssistant: {
+    private static readonly defaultConfig: AgentConfig = {
+        exerciseAgent: {
             role: "",
             contextDescription: "",
             conceptsFieldDescription: "",
@@ -19,7 +19,7 @@ class AssistantConfigStorageManager extends BaseStorageManager {
             exerciseCriteria: "",
             learningObjectivesGuidance: ""
         },
-        evaluationAssistant: {
+        evaluationAgent: {
             role: "",
             taskDescription: "",
             evaluationCriteria: "",
@@ -27,7 +27,7 @@ class AssistantConfigStorageManager extends BaseStorageManager {
             feedbackFormat: "",
             importantNotes: ""
         },
-        explanationAssistant: {
+        explanationAgent: {
             role: "",
             taskDescription: "",
             methodology: "",
@@ -44,37 +44,37 @@ class AssistantConfigStorageManager extends BaseStorageManager {
             teacherTics: ""
         }
     };
-    private static cachedConfig: AssistantConfig | null = null;
+    private static cachedConfig: AgentConfig | null = null;
 
     /**
-     * Loads assistant configuration from storage
+     * Loads agent configuration from storage
      * If no saved configuration exists, returns default configuration (SQL)
      */
-    static async loadConfig(): Promise<AssistantConfig> {
+    static async loadConfig(): Promise<AgentConfig> {
         try {
-            const result = await this.getData<AssistantConfig>(this.STORAGE_KEY_PREFIX, this.CONFIG_KEY);
+            const result = await this.getData<AgentConfig>(this.STORAGE_KEY_PREFIX, this.CONFIG_KEY);
 
             if (result) {
-                console.log("[AssistantConfigStorageManager] Configuration loaded from storage");
+                console.log("[AgentConfigStorageManager] Configuration loaded from storage");
                 // Extract only the configuration, without the timestamp
                 const { timestamp, ...config } = result;
-                this.cachedConfig = config as AssistantConfig;
+                this.cachedConfig = config as AgentConfig;
                 return this.cachedConfig;
             } else {
-                console.log("[AssistantConfigStorageManager] No saved configuration, using default values");
+                console.log("[AgentConfigStorageManager] No saved configuration, using default values");
                 this.cachedConfig = this.defaultConfig;
                 return this.defaultConfig;
             }
         } catch (error) {
-            console.error("[AssistantConfigStorageManager] Error loading configuration:", error);
+            console.error("[AgentConfigStorageManager] Error loading configuration:", error);
             return this.defaultConfig;
         }
     }
 
     /**
-     * Saves assistant configuration to storage
+     * Saves agent configuration to storage
      */
-    static async saveConfig(config: AssistantConfig): Promise<void> {
+    static async saveConfig(config: AgentConfig): Promise<void> {
         await this.saveData(this.STORAGE_KEY_PREFIX, this.CONFIG_KEY, config);
         this.cachedConfig = config;
     }
@@ -83,14 +83,14 @@ class AssistantConfigStorageManager extends BaseStorageManager {
      * Gets cached configuration (without accessing storage)
      * If no cache, returns default configuration
      */
-    static getCachedConfig(): AssistantConfig {
+    static getCachedConfig(): AgentConfig {
         return this.cachedConfig || this.defaultConfig;
     }
 
     /**
      * Gets default configuration
      */
-    static getDefaultConfig(): AssistantConfig {
+    static getDefaultConfig(): AgentConfig {
         return this.defaultConfig;
     }
 
@@ -98,7 +98,7 @@ class AssistantConfigStorageManager extends BaseStorageManager {
      * Updates a specific section of the configuration
      */
     static async updateSection(
-        section: keyof AssistantConfig,
+        section: keyof AgentConfig,
         data: any
     ): Promise<void> {
         const currentConfig = await this.loadConfig();

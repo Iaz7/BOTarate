@@ -1,6 +1,6 @@
 import { OpenAIService } from "../../util/ai/OpenAIService";
 import { ConfigManager } from "../../util/config/ConfigManager";
-import { initializeAssistants } from "../context";
+import { initializeAgents } from "../context";
 
 function updateConfigFromRequest(config: any): void {
     const { providerKeys, selectedProvider, selectedModel, selectedVisionModel } = config;
@@ -34,14 +34,14 @@ export function handleUpdateConfig(request: any, sendResponse: (response?: any) 
     return false;
 }
 
-export function handleReloadAssistantConfig(sendResponse: (response?: any) => void): boolean {
+export function handleReloadAgentConfig(sendResponse: (response?: any) => void): boolean {
     (async () => {
         try {
-            await initializeAssistants();
-            console.log("Configuración de asistentes recargada");
+            await initializeAgents();
+            console.log("Configuración de agentes recargada");
             sendResponse({ success: true });
         } catch (error: any) {
-            console.error("Error al recargar configuración de asistentes:", error);
+            console.error("Error al recargar configuración de agentes:", error);
             sendResponse({ success: false, error: error.message });
         }
     })();
@@ -69,11 +69,11 @@ export function handleCheckConfiguration(request: any, sendResponse: (response?:
                 configData.selectedModel &&
                 configData.selectedModel.trim() !== "";
 
-            // Verificar configuración de asistentes y datos
-            const hasAssistantConfig = Object.keys(allData).some(key => key.startsWith("assistant_config_"));
+            // Verificar configuración de agentes y datos
+            const hasAgentConfig = Object.keys(allData).some(key => key.startsWith("agent_config_"));
             const hasExerciseData = Object.keys(allData).some(key => key.startsWith("exercise_data_"));
             const hasLabData = Object.keys(allData).some(key => key.startsWith("lab_data_"));
-            const hasStudentConfig = hasAssistantConfig && (hasExerciseData || hasLabData);
+            const hasStudentConfig = hasAgentConfig && (hasExerciseData || hasLabData);
 
             sendResponse({
                 success: true,

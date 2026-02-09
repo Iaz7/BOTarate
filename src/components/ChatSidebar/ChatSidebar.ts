@@ -58,7 +58,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
     const isChatDisabled =
-        isAnyModalOpen || isGenerating || isLoadingExercises || isLabBlocked || (!!pageId && !hasExercisesLoaded) || (isTeacherMode && !!pageId);
+        isAnyModalOpen || isGenerating || isLoadingExercises || isLabBlocked || (!!pageId && !hasExercisesLoaded) || isTeacherMode;
 
     // Effect: Verificar modo y configuración
     useEffect(() => {
@@ -122,7 +122,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
             // Manejar notificaciones de tool calls en tiempo real
             if (message.action === "toolCallsUpdate" && message.toolCalls) {
                 const toolCallMessage: ChatMessage = {
-                    role: "assistant",
+                    role: "agent",
                     content: null,
                     id: `tool-${Date.now()}`,
                     tool_calls: message.toolCalls
@@ -203,9 +203,9 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
 
                 if (response && response.success && Array.isArray(response.messages)) {
                     const uiMessages: ChatMessage[] = response.messages
-                        .filter((m: any) => m.role === "user" || m.role === "assistant" || m.role === "tool")
+                        .filter((m: any) => m.role === "user" || m.role === "agent" || m.role === "tool")
                         .map((m: any, idx: number) => ({
-                            role: m.role as "user" | "assistant" | "tool",
+                            role: m.role as "user" | "agent" | "tool",
                             content: m.content,
                             id: `${m.role}-${Date.now()}-${idx}`,
                             tool_calls: m.tool_calls,
@@ -411,17 +411,17 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
                 exercises: exercises.length > 0 ? exercises : undefined,
             });
 
-            const assistantMessage: ChatMessage = {
-                role: "assistant",
+            const agentMessage: ChatMessage = {
+                role: "agent",
                 content: response,
-                id: `assistant-${Date.now()}`,
+                id: `agent-${Date.now()}`,
             };
 
-            setMessages(prev => [...prev, assistantMessage]);
+            setMessages(prev => [...prev, agentMessage]);
         } catch (error) {
             console.error("Error generating response:", error);
             const errorMessage: ChatMessage = {
-                role: "assistant",
+                role: "agent",
                 content: "Error generating response. Please try again.",
                 id: `error-${Date.now()}`,
             };

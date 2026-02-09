@@ -1,4 +1,4 @@
-export { EXERCISE_ASSISTANT_TOOLS, TOOLS };
+export { EXERCISE_AGENT_TOOLS, TOOLS };
 export type { ToolCall, ToolName, ToolResult };
 
 /**
@@ -226,10 +226,10 @@ const TOOLS = [
 ];
 
 /**
- * Herramientas disponibles específicamente para el ExerciseAssistant
+ * Herramientas disponibles específicamente para el ExerciseAgent
  * Incluye getFilteredFileContent para consultar archivos de texto y postExercises para enviar la respuesta
  */
-const EXERCISE_ASSISTANT_TOOLS = [
+const EXERCISE_AGENT_TOOLS = [
     {
         type: 'function',
         function: {

@@ -1,15 +1,15 @@
-import { AssistantConfig } from "./AssistantConfig";
-import { BaseAssistant } from "./BaseAssistant";
+import { AgentConfig } from "./AgentConfig";
+import { BaseAgent } from "./BaseAgent";
 import { ResponseOptions } from "./OpenAIService";
 import { ExplanationSchema, ExplanationSchemaType } from "./schemas";
 import { TOOLS } from "./Tools";
 
-export { ExplanationAssistant };
+export { ExplanationAgent };
 
 /**
- * Asistente especializado en generar explicaciones tutoriales para ejercicios
+ * Agente especializado en generar explicaciones tutoriales para ejercicios
  */
-class ExplanationAssistant extends BaseAssistant {
+class ExplanationAgent extends BaseAgent {
 
     private static readonly TOOLS = [
         'getPageContent',
@@ -17,8 +17,8 @@ class ExplanationAssistant extends BaseAssistant {
         'analyzeImage'
     ];
 
-    constructor(config: AssistantConfig) {
-        super(config, ExplanationAssistant.TOOLS);
+    constructor(config: AgentConfig) {
+        super(config, ExplanationAgent.TOOLS);
     }
 
     /**
@@ -71,7 +71,7 @@ class ExplanationAssistant extends BaseAssistant {
         pageId?: string,
         isPicky?: boolean
     ): string {
-        const assistantConfig = this.config.explanationAssistant;
+        const agentConfig = this.config.explanationAgent;
         const pedagogicalContext = this.buildPedagogicalContext(concepts, learningObjectives, progressSummary);
 
         // Build picky exercise instructions if applicable
@@ -110,18 +110,18 @@ PEDAGOGICAL CONTEXT:
 {pickyInstructions}`;
 
         const systemPromptVariables = {
-            role: assistantConfig.role,
-            taskDescription: assistantConfig.taskDescription,
-            methodology: assistantConfig.methodology,
-            outputFormat: assistantConfig.outputFormat,
+            role: agentConfig.role,
+            taskDescription: agentConfig.taskDescription,
+            methodology: agentConfig.methodology,
+            outputFormat: agentConfig.outputFormat,
             contextNote: exerciseContext ? '- Include concrete examples using the provided exercise context.' : '',
-            additionalRules: assistantConfig.additionalRules || '',
+            additionalRules: agentConfig.additionalRules || '',
             labContentToolsNote: this.buildLabContentToolsNote(),
             pageIdNote: pageId ? `Page ID: ${pageId}\n- Use this ID as the value for the 'pageId' parameter when calling getPageContent or getFilteredFileContent.` : '',
             ...pedagogicalContext,
             teacherPersonalization: this.buildTeacherPersonalization(),
             languageInstruction: this.buildLanguageInstruction(),
-            importantNotes: assistantConfig.importantNotes || '',
+            importantNotes: agentConfig.importantNotes || '',
             pickyInstructions: pickyInstructions
         };
 
@@ -132,8 +132,8 @@ PEDAGOGICAL CONTEXT:
      * Builds the instructions for picky exercises that require intentional mistakes
      */
     private buildPickyExerciseInstructions(): string {
-        const assistantConfig = this.config.explanationAssistant;
-        const pickyConfig = assistantConfig.pickyExerciseConfiguration || '';
+        const agentConfig = this.config.explanationAgent;
+        const pickyConfig = agentConfig.pickyExerciseConfiguration || '';
 
         return `CRITICAL - PICKY EXERCISE MODE:
 This is a "picky" exercise designed to train the student in critically reviewing AI-generated content.
@@ -240,7 +240,7 @@ NOTE: After generating the explanation, the student will have the opportunity to
      * Continues the conversation after generating an explanation
      * Allows the student to ask follow-up questions
      * @param userMessage Student question
-     * @returns Assistant response
+     * @returns Agent response
      */
     async continueConversation(userMessage: string): Promise<string> {
         console.log(`[continueConversation] Processing follow-up question`);
@@ -300,18 +300,18 @@ NOTE: After generating the explanation, the student will have the opportunity to
         // Reconstruct the original user prompt
         const userPrompt = this.buildExplanationUserPrompt(exerciseName, exerciseStatement, exerciseContext);
 
-        // Serialize the explanation as the assistant's original response
-        const assistantResponse = JSON.stringify(explanation, null, 2);
+        // Serialize the explanation as the agent's original response
+        const agentResponse = JSON.stringify(explanation, null, 2);
 
         // Reset and initialize context
         this.openAIService.resetConversation();
 
         // Build history exactly as it was after generateExplanation:
-        // system -> user (request) -> assistant (explanation JSON)
+        // system -> user (request) -> agent (explanation JSON)
         const history: any[] = [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
-            { role: 'assistant', content: assistantResponse }
+            { role: 'agent', content: agentResponse }
         ];
 
         // Restore any follow-up chat history

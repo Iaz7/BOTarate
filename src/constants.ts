@@ -10,5 +10,5 @@ export const APP_CONFIG = {
     VERSION: '1.0.0',
 
     /** Descripción de la extensión */
-    DESCRIPTION: 'AI powered extensión for teaching and learning assistance',
+    DESCRIPTION: 'AI powered extensión for teaching and learning support',
 } as const;

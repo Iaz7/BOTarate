@@ -1,4 +1,4 @@
-import { AssistantConfigStorageManager } from "./AssistantConfigStorageManager";
+import { AgentConfigStorageManager } from "./AgentConfigStorageManager";
 import { ExerciseStorageManager } from "./ExerciseStorageManager";
 import { LabStorageManager } from "./LabStorageManager";
 import { ProgressConfigStorageManager } from "./ProgressConfigStorageManager";
@@ -8,7 +8,7 @@ import { ProgressConfigStorageManager } from "./ProgressConfigStorageManager";
  */
 export interface ExportData {
     exportDate: string;
-    assistantConfig?: any;
+    agentConfig?: any;
     exerciseData: Array<{
         key: string;
         data: any;
@@ -40,7 +40,7 @@ export interface ImportExportResult {
 export class ImportExportManager {
     // Clave secreta para cifrar las exportaciones (hardcodeada para simplicidad)
     // NOTA: hardcodear la clave hace que el cifrado sea trivialmente reversible si alguien tiene acceso al código.
-    private static readonly SECRET_KEY = "egela-assistant-config-encryption-key-2024";
+    private static readonly SECRET_KEY = "egela-agent-config-encryption-key-2024";
 
     private static async getAesKey(): Promise<CryptoKey> {
         const encoder = new TextEncoder();
@@ -123,12 +123,12 @@ export class ImportExportManager {
                 data: allData[key],
             }));
 
-        // Get assistant configuration
-        const assistantConfig = await AssistantConfigStorageManager.loadConfig();
+        // Get agent configuration
+        const agentConfig = await AgentConfigStorageManager.loadConfig();
 
         return {
             exportDate: new Date().toISOString(),
-            assistantConfig,
+            agentConfig,
             exerciseData,
             labData,
             progressConfigData,
@@ -154,7 +154,7 @@ export class ImportExportManager {
 
             // Crear el nombre del archivo con fecha
             const date = new Date().toISOString().split("T")[0];
-            const filename = `egela-assistant-config-${date}.json`;
+            const filename = `egela-agent-config-${date}.json`;
 
             // Crear un enlace temporal y descargarlo
             const url = URL.createObjectURL(blob);
@@ -245,11 +245,11 @@ export class ImportExportManager {
 
             let importedCount = 0;
 
-            // Importar configuración de asistentes
-            if (parsedData.assistantConfig) {
-                await AssistantConfigStorageManager.saveConfig(parsedData.assistantConfig);
+            // Importar configuración de agentes
+            if (parsedData.agentConfig) {
+                await AgentConfigStorageManager.saveConfig(parsedData.agentConfig);
                 importedCount++;
-                console.log("[ImportExportManager] Configuración de asistentes importada");
+                console.log("[ImportExportManager] Configuración de agentes importada");
             }
 
             importedCount += await this.restoreCollection("exercise_data_", parsedData.exerciseData);
@@ -258,7 +258,7 @@ export class ImportExportManager {
 
             // Notificar al background script para recargar configuración
             try {
-                await chrome.runtime.sendMessage({ action: "reloadAssistantConfig" });
+                await chrome.runtime.sendMessage({ action: "reloadAgentConfig" });
             } catch (error) {
                 console.error("[ImportExportManager] Error notificando al background:", error);
             }
@@ -293,7 +293,7 @@ export class ImportExportManager {
         try {
             await ExerciseStorageManager.clearAllExerciseData();
             await LabStorageManager.clearAllLabData();
-            await AssistantConfigStorageManager.clearConfig();
+            await AgentConfigStorageManager.clearConfig();
             await ProgressConfigStorageManager.clearAll();
 
             console.log("[ImportExportManager] Todos los datos han sido eliminados");
@@ -319,20 +319,20 @@ export class ImportExportManager {
         exerciseCount: number;
         labCount: number;
         progressConfigCount: number;
-        hasAssistantConfig: boolean;
+        hasAgentConfig: boolean;
     }> {
         const allData = await chrome.storage.local.get(null);
 
         const exerciseCount = Object.keys(allData).filter(key => key.startsWith("exercise_data_")).length;
         const labCount = Object.keys(allData).filter(key => key.startsWith("lab_data_")).length;
         const progressConfigCount = Object.keys(allData).filter(key => key.startsWith("progress_config_")).length;
-        const hasAssistantConfig = Object.keys(allData).some(key => key.startsWith("assistant_config_"));
+        const hasAgentConfig = Object.keys(allData).some(key => key.startsWith("agent_config_"));
 
         return {
             exerciseCount,
             labCount,
             progressConfigCount,
-            hasAssistantConfig,
+            hasAgentConfig,
         };
     }
 }

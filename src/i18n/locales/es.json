@@ -32,7 +32,7 @@
     "chatTab": {
         "placeholder": {
             "disabledModal": "Chat deshabilitado (modal abierto)...",
-            "teacherMode": "Cambia a modo alumno para trabajar en el laboratorio...",
+            "teacherMode": "Cambia a modo alumno para usar el chat...",
             "labBlocked": "Laboratorio bloqueado...",
             "loadingExercises": "Cargando ejercicios...",
             "notConfigured": "Laboratorio no configurado por el profesor...",
@@ -55,7 +55,7 @@
                 "checkProgress": "Comprueba tu progreso en la pestaña \"Mi progreso\""
             },
             "teacherModeTitle": "Modo profesor activo",
-            "teacherModeDesc": "Estás en modo profesor. Para trabajar en los ejercicios de este laboratorio, debes cambiar a modo alumno.",
+            "teacherModeDesc": "Estás en modo profesor. Para usar el agente de chat, debes cambiar a modo alumno.",
             "teacherModeAction": "Ve al interruptor de <strong>\"Modo\"</strong> para cambiar tu modo.",
             "loadingExercises": "Cargando...",
             "searchingExercises": "Buscando ejercicios...",
@@ -67,7 +67,7 @@
         },
         "roles": {
             "user": "Tú",
-            "assistant": "Asistente"
+            "agent": "Agente"
         },
         "buttons": {
             "send": "Enviar mensaje",
@@ -137,10 +137,10 @@
         "title": "Configuración requerida",
         "requiredBoth": {
             "text": "Se requiere configuración para usar la extensión:",
-            "assistantConfig": "<strong>Configuración del asistente:</strong> Importa un archivo de configuración proporcionado por tu profesor con los ejercicios y laboratorios del curso.",
+            "agentConfig": "<strong>Configuración del agente:</strong> Importa un archivo de configuración proporcionado por tu profesor con los ejercicios y laboratorios del curso.",
             "llmConfig": "<strong>Configuración LLM:</strong> Configura la clave API y el modelo del proveedor de IA desde la página de opciones de la extensión."
         },
-        "requiredExercise": "No se encontró configuración del asistente. Por favor, importa un archivo de configuración proporcionado por tu profesor para comenzar a usar la extensión.",
+        "requiredExercise": "No se encontró configuración del agente. Por favor, importa un archivo de configuración proporcionado por tu profesor para comenzar a usar la extensión.",
         "requiredLLM": {
             "text": "El LLM no está configurado. Para usar la extensión necesitas:",
             "key": "Configurar la clave API del proveedor de IA (OpenAI, Google, etc.)",
@@ -153,7 +153,7 @@
     "options": {
         "tabs": {
             "llm": "Configuración LLM",
-            "assistants": "Asistentes",
+            "agents": "Prompts",
             "progress": "Progreso",
             "importExport": "Importar/Exportar"
         },
@@ -171,18 +171,18 @@
             "saveSuccess": "Configuración guardada correctamente",
             "saveError": "Error al guardar la configuración"
         },
-        "assistants": {
-            "title": "Configuración de Asistentes",
+        "agents": {
+            "title": "Configuración de Agentes",
             "sections": {
-                "general": "General",
-                "exercise": "Ejercicios",
-                "evaluation": "Evaluación",
-                "explanation": "Explicación"
+                "general": "Personalización del profesor",
+                "exercise": "Extracción de contexto de laboratorio",
+                "evaluation": "Evaluador de soluciones",
+                "explanation": "Solucionador de ejercicios"
             },
             "fields": {
                 "subject": {
                     "label": "Asignatura",
-                    "desc": "Nombre de la asignatura para la que se configuran los asistentes"
+                    "desc": "Nombre de la asignatura para la que se configuran los agentes"
                 },
                 "platform": {
                     "label": "Plataforma LMS",
@@ -202,7 +202,7 @@
                     "label": "Identificación de ejercicios",
                     "desc": "Criterios para identificar qué constituye un ejercicio y cómo debe extraerse"
                 },
-                "role": { "label": "Rol", "desc": "Define el rol (propósito) del asistente en el contexto del curso" },
+                "role": { "label": "Rol", "desc": "Define el rol (propósito) del agente en el contexto del curso" },
                 "evaluationCriteria": {
                     "label": "Criterios de evaluación",
                     "desc": "Criterios detallados para evaluar soluciones"
@@ -212,7 +212,7 @@
                     "label": "Formato de retroalimentación",
                     "desc": "Instrucciones sobre cómo estructurar y formatear la retroalimentación"
                 },
-                "methodology": { "label": "Metodología", "desc": "Metodología que debe seguir el asistente" },
+                "methodology": { "label": "Metodología", "desc": "Metodología que debe seguir el agente" },
                 "pickyExerciseConfig": {
                     "label": "Configuración de ejercicios tiquismiquis",
                     "desc": "Describe el tipo de errores que el LLM debe introducir intencionalmente en las explicaciones de ejercicios tiquismiquis. Ej: 'Introduce errores sutiles en la sintaxis SQL o en la lógica de las consultas'"
@@ -225,9 +225,9 @@
                 "solver": "Configuración del solucionador de ejercicios"
             },
             "buttons": {
-                "save": "Guardar configuración de asistentes",
+                "save": "Guardar configuración de agentes",
                 "saving": "Guardando...",
-                "saved": "Configuración de asistentes guardada correctamente",
+                "saved": "Configuración de agentes guardada correctamente",
                 "error": "Error al guardar la configuración"
             }
         },
@@ -237,34 +237,38 @@
         "language": {
             "title": "Idioma",
             "select": "Seleccionar idioma",
-            "description": "El idioma afecta a la interfaz y a las respuestas del asistente"
+            "description": "El idioma afecta a la interfaz y a las respuestas del agente"
         },
         "exerciseConfig": {
             "infoTitle": "Configuración de ejercicios",
-            "infoDesc": "En esta pestaña puedes configurar qué ejercicios son <strong>retos</strong> o <strong>tiquismiquis</strong>.",
+            "infoDesc": "En esta pestaña puedes configurar qué ejercicios son <strong>solo estudiante</strong> o <strong>falso amigo</strong>.",
             "infoList": {
-                "challenge": "<strong>Ejercicios reto:</strong> No se pueden pedir explicaciones, pero sí evaluaciones de solución.",
-                "picky": "<strong>Ejercicios tiquismiquis:</strong> El asistente introducirá errores intencionales en la explicación para que el alumno practique la revisión crítica de contenido generado por IA."
+                "challenge": "<strong>Ejercicios solo estudiante:</strong> No se pueden pedir explicaciones, pero sí evaluaciones de solución.",
+                "picky": "<strong>Ejercicios falso amigo:</strong> El agente dará una respuesta incorrecta intencionalmente para que el alumno practique la revisión crítica de contenido generado por IA."
             },
             "infoFooter": "Después de guardar los cambios, el sistema actualizará automáticamente las restricciones.",
             "noExercisesTitle": "No hay ejercicios disponibles",
-            "noExercisesDesc": "Cuando se detecten ejercicios en la página, podrás configurar cuáles son retos.",
+            "noExercisesDesc": "Cuando se detecten ejercicios en la página, podrás configurar cuáles son solo estudiante.",
+            "noLabOpenDesc": "Debes abrir un laboratorio primero para poder añadir o configurar ejercicios.",
             "table": {
                 "headerName": "Nombre del ejercicio",
-                "headerChallenge": "Es reto",
-                "headerPicky": "Es tiquismiquis",
-                "badgeChallenge": "Reto",
-                "badgePicky": "Tiquismiquis",
-                "switchChallengeOn": "Es reto",
-                "switchChallengeOff": "No es reto",
-                "switchPickyOn": "Es tiquismiquis",
-                "switchPickyOff": "No es tiquismiquis"
+                "headerChallenge": "Es solo estudiante",
+                "headerPicky": "Es falso amigo",
+                "headerActions": "Acciones",
+                "badgeChallenge": "Solo estudiante",
+                "badgePicky": "Falso amigo",
+                "switchChallengeOn": "Es solo estudiante",
+                "switchChallengeOff": "No es solo estudiante",
+                "switchPickyOn": "Es falso amigo",
+                "switchPickyOff": "No es falso amigo"
             },
             "unsavedTitle": "⚠️ Tienes cambios sin guardar",
-            "unsavedDesc": "Haz clic en \"Guardar cambios\" para aplicar la configuración y regenerar el asistente.",
+            "unsavedDesc": "Haz clic en \"Guardar cambios\" para aplicar la configuración y regenerar el agente.",
             "save": "Guardar cambios",
             "saving": "Guardando cambios...",
-            "processing": "Aplicando configuración y actualizando restricciones..."
+            "processing": "Aplicando configuración y actualizando restricciones...",
+            "addExercise": "Añadir ejercicio",
+            "deleteConfirm": "¿Estás seguro de que quieres eliminar el ejercicio '{{name}}'?"
         },
         "labConfig": {
             "loading": "Cargando laboratorios...",
@@ -275,13 +279,13 @@
             "infoList": {
                 "include": "<strong>Incluir laboratorio:</strong> Habilita esto para analizar el laboratorio y extraer ejercicios. Es necesario antes de poder usar otras configuraciones.",
                 "required": "<strong>Laboratorio requerido:</strong> Los laboratorios marcados como requeridos se desbloquearán secuencialmente cuando el estudiante complete los desafíos del anterior.",
-                "verbosity": "<strong>Nivel de verbosidad:</strong> Controla el nivel de detalle en las explicaciones del asistente (bajo, medio o alto).",
-                "reasoning": "<strong>Esfuerzo de razonamiento:</strong> Configura cuánto detalle debe poner el asistente en explicar su razonamiento (mínimo, bajo, medio o alto)."
+                "verbosity": "<strong>Nivel de verbosidad:</strong> Controla el nivel de detalle en las explicaciones del agente (bajo, medio o alto).",
+                "reasoning": "<strong>Esfuerzo de razonamiento:</strong> Configura cuánto detalle debe poner el agente en explicar su razonamiento (mínimo, bajo, medio o alto)."
             },
             "infoFooter": "Haz clic en un laboratorio incluido para expandir sus opciones de configuración.",
             "includeLabel": "Incluir",
             "requiredLabel": "Laboratorio requerido",
-            "explanationConfig": "Configuración del asistente de explicación:",
+            "explanationConfig": "Configuración del agente de explicación:",
             "goToLab": "Ir al laboratorio",
             "unsavedTitle": "⚠️ Tienes cambios sin guardar",
             "unsavedDesc": "Haz clic en \"Guardar cambios\" para aplicar la configuración.",
@@ -306,7 +310,51 @@
                 "reasoningLow": "Razonamiento básico",
                 "reasoningMedium": "Razonamiento moderado",
                 "reasoningHigh": "Razonamiento detallado paso a paso"
-            }
+            },
+            "editContext": "Ver / Editar contexto",
+            "exercisesTitle": "Ejercicios:",
+            "noExercises": "No hay ejercicios en este laboratorio.",
+            "addExercise": "Añadir ejercicio",
+            "deleteExerciseConfirm": "¿Estás seguro de que quieres eliminar el ejercicio \"{{name}}\"?"
+        },
+        "labContext": {
+            "title": "Contexto del laboratorio - {{name}}",
+            "tabs": {
+                "learningObjectives": "Objetivos de aprendizaje",
+                "exercises": "Ejercicios",
+                "concepts": "Conceptos",
+                "exerciseContext": "Contexto de ejercicios"
+            },
+            "learningObjectives": {
+                "description": "Define lo que los estudiantes deben aprender en este laboratorio.",
+                "placeholder": "Introduce los objetivos de aprendizaje de este laboratorio..."
+            },
+            "exercises": {
+                "description": "Lista de ejercicios identificados en este laboratorio. Los ejercicios se configuran desde la pestaña de configuración de ejercicios.",
+                "empty": "No hay ejercicios en este laboratorio."
+            },
+            "concepts": {
+                "description": "Lista de conceptos trabajados en este laboratorio. Puedes añadir, editar o eliminar conceptos.",
+                "placeholder": "Introduce un nuevo concepto...",
+                "add": "Añadir",
+                "empty": "Aún no hay conceptos definidos."
+            },
+            "exerciseContext": {
+                "description": "Contexto compartido para todos los ejercicios de este laboratorio (ej: esquema de base de datos, especificaciones).",
+                "placeholder": "Introduce el contexto de los ejercicios..."
+            },
+            "save": "Guardar cambios",
+            "saving": "Guardando...",
+            "saveSuccess": "Contexto guardado correctamente.",
+            "saveError": "Error al guardar el contexto. Por favor, inténtalo de nuevo."
+        },
+        "exerciseEdit": {
+            "editTitle": "Editar ejercicio - {{name}}",
+            "addTitle": "Añadir ejercicio",
+            "name": "Nombre del ejercicio",
+            "namePlaceholder": "Introduce el nombre del ejercicio...",
+            "statement": "Enunciado",
+            "statementPlaceholder": "Introduce el enunciado del ejercicio..."
         },
         "progress": {
             "loading": "Cargando configuración de progreso...",
@@ -333,7 +381,7 @@
         "importExport": {
             "export": {
                 "title": "Exportar configuración",
-                "description": "Exporta toda tu configuración (asistentes, ejercicios y laboratorios) a un archivo JSON firmado. Puedes usar este archivo para hacer copias de seguridad o transferir la configuración a otro navegador. El archivo está protegido contra modificaciones manuales.",
+                "description": "Exporta toda tu configuración (agentes, ejercicios y laboratorios) a un archivo JSON firmado. Puedes usar este archivo para hacer copias de seguridad o transferir la configuración a otro navegador. El archivo está protegido contra modificaciones manuales.",
                 "button": "Exportar configuración",
                 "processing": " Exportando..."
             },
@@ -361,7 +409,7 @@
                 "importError": "Error inesperado al importar: {{error}}",
                 "clearError": "Error inesperado al limpiar: {{error}}"
             },
-            "confirmClear": "⚠️ ADVERTENCIA: Esta acción eliminará TODA la configuración guardada, incluyendo:\n\n- Configuración de asistentes\n- Datos de ejercicios identificados\n- Datos de laboratorios configurados\n\nEsta acción NO SE PUEDE deshacer. ¿Estás seguro de que deseas continuar?"
+            "confirmClear": "⚠️ ADVERTENCIA: Esta acción eliminará TODA la configuración guardada, incluyendo:\n\n- Configuración de agentes\n- Datos de ejercicios identificados\n- Datos de laboratorios configurados\n\nEsta acción NO SE PUEDE deshacer. ¿Estás seguro de que deseas continuar?"
         }
     },
 
@@ -385,7 +433,7 @@
         "placeholderSQL": "Escribe tu consulta SQL aquí...",
         "pickyWarning": {
             "title": "Ejercicio marcado como tiquismiquis.",
-            "desc": "Esta explicación puede contener errores intencionales. Revisa los pasos con cuidado y usa tu pensamiento crítico. Si encuentras un error, pregúntale al asistente para confirmarlo."
+            "desc": "Esta explicación puede contener errores intencionales. Revisa los pasos con cuidado y usa tu pensamiento crítico. Si encuentras un error, pregúntale al agente para confirmarlo."
         }
     },
     "evaluation": {
@@ -435,7 +483,7 @@
             "waiting": "Esperando a que cargue la explicación...",
             "empty": "¿Tienes alguna duda sobre la explicación? Pregúntame lo que sea.",
             "user": "Tú",
-            "assistant": "Asistente",
+            "agent": "Agente",
             "generating": "Generando respuesta...",
             "placeholder": "Escribe tu pregunta...",
             "send": "Enviar pregunta"

@@ -4,7 +4,7 @@ import { LabStorageManager } from "./LabStorageManager";
 
 /**
  * Storage manager for exercise lists
- * Saves and retrieves exercise lists identified by ExerciseAssistant
+ * Saves and retrieves exercise lists identified by ExerciseAgent
  */
 export class ExerciseStorageManager extends BaseStorageManager {
     private static readonly STORAGE_KEY_PREFIX = 'exercise_data_';
@@ -134,7 +134,7 @@ export class ExerciseStorageManager extends BaseStorageManager {
      * Gets accumulated concepts from current lab and all previous required labs
      * This combines concepts from all labs up to and including the specified pageId,
      * removing duplicates while preserving the order of first occurrence.
-     * 
+     *
      * @param courseId Course ID
      * @param pageId Current page/lab ID
      * @returns Array of unique concepts from current and previous labs
@@ -197,5 +197,65 @@ export class ExerciseStorageManager extends BaseStorageManager {
         }
 
         return orderedConcepts;
+    }
+
+    /**
+     * Updates the learning objectives for a page
+     */
+    static async updateLearningObjectives(pageId: string, learningObjectives: string): Promise<void> {
+        const data = await this.getExerciseData(pageId);
+        if (!data) throw new Error(`No exercise data found for page ${pageId}`);
+        await this.saveExerciseData(pageId, data.exercises, data.exerciseContext, data.concepts, learningObjectives);
+    }
+
+    /**
+     * Updates the exercise context for a page
+     */
+    static async updateExerciseContext(pageId: string, exerciseContext: string): Promise<void> {
+        const data = await this.getExerciseData(pageId);
+        if (!data) throw new Error(`No exercise data found for page ${pageId}`);
+        await this.saveExerciseData(pageId, data.exercises, exerciseContext, data.concepts, data.learningObjectives);
+    }
+
+    /**
+     * Updates the concepts list for a page
+     */
+    static async updateConcepts(pageId: string, concepts: string[]): Promise<void> {
+        const data = await this.getExerciseData(pageId);
+        if (!data) throw new Error(`No exercise data found for page ${pageId}`);
+        await this.saveExerciseData(pageId, data.exercises, data.exerciseContext, concepts, data.learningObjectives);
+    }
+
+    /**
+     * Adds a new exercise to a page
+     */
+    static async addExercise(pageId: string, exercise: { name: string; statement: string }): Promise<void> {
+        const data = await this.getExerciseData(pageId);
+        if (!data) throw new Error(`No exercise data found for page ${pageId}`);
+        data.exercises.push({ ...exercise, allowed: true, isPicky: false });
+        await this.saveExerciseData(pageId, data.exercises, data.exerciseContext, data.concepts, data.learningObjectives);
+    }
+
+    /**
+     * Removes an exercise from a page
+     */
+    static async removeExercise(pageId: string, exerciseName: string): Promise<void> {
+        const data = await this.getExerciseData(pageId);
+        if (!data) throw new Error(`No exercise data found for page ${pageId}`);
+        const filtered = data.exercises.filter(ex => ex.name !== exerciseName);
+        await this.saveExerciseData(pageId, filtered, data.exerciseContext, data.concepts, data.learningObjectives);
+    }
+
+    /**
+     * Updates an exercise's name and statement
+     */
+    static async updateExercise(pageId: string, oldName: string, updatedExercise: { name: string; statement: string }): Promise<void> {
+        const data = await this.getExerciseData(pageId);
+        if (!data) throw new Error(`No exercise data found for page ${pageId}`);
+        const exercise = data.exercises.find(ex => ex.name === oldName);
+        if (!exercise) throw new Error(`Exercise ${oldName} not found`);
+        exercise.name = updatedExercise.name;
+        exercise.statement = updatedExercise.statement;
+        await this.saveExerciseData(pageId, data.exercises, data.exerciseContext, data.concepts, data.learningObjectives);
     }
 }

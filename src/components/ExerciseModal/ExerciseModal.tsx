@@ -165,7 +165,7 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({
                                             <strong>
                                                 {message.role === "user"
                                                     ? t("explanation.chat.user")
-                                                    : t("explanation.chat.assistant")}
+                                                    : t("explanation.chat.agent")}
                                             </strong>
                                         </div>
                                         <div style={{ fontSize: "0.9rem" }}>

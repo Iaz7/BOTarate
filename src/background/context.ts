@@ -1,55 +1,55 @@
-import { AssistantConfig } from "../util/ai/AssistantConfig";
-import { CourseAssistant } from "../util/ai/CourseAssistant";
-import { EvaluationAssistant } from "../util/ai/EvaluationAssistant";
-import { ExerciseAssistant } from "../util/ai/ExerciseAssistant";
-import { ExplanationAssistant } from "../util/ai/ExplanationAssistant";
-import { AssistantConfigStorageManager } from "../util/storage/AssistantConfigStorageManager";
+import { AgentConfig } from "../util/ai/AgentConfig";
+import { CourseAgent } from "../util/ai/CourseAgent";
+import { EvaluationAgent } from "../util/ai/EvaluationAgent";
+import { ExerciseAgent } from "../util/ai/ExerciseAgent";
+import { ExplanationAgent } from "../util/ai/ExplanationAgent";
+import { AgentConfigStorageManager } from "../util/storage/AgentConfigStorageManager";
 import { getCachedCourse } from "./handlers/dataHandlers";
 
 let isConfigLoaded = false;
-let assistantsConfig: AssistantConfig;
-let courseAssistant: CourseAssistant;
-let exerciseAssistant: ExerciseAssistant;
-let explanationAssistant: ExplanationAssistant;
-let evaluationAssistant: EvaluationAssistant;
+let agentsConfig: AgentConfig;
+let courseAgent: CourseAgent;
+let exerciseAgent: ExerciseAgent;
+let explanationAgent: ExplanationAgent;
+let evaluationAgent: EvaluationAgent;
 
-export async function initializeAssistants(): Promise<void> {
-    assistantsConfig = await AssistantConfigStorageManager.loadConfig();
+export async function initializeAgents(): Promise<void> {
+    agentsConfig = await AgentConfigStorageManager.loadConfig();
 
-    courseAssistant = new CourseAssistant(assistantsConfig);
-    exerciseAssistant = new ExerciseAssistant(assistantsConfig);
-    explanationAssistant = new ExplanationAssistant(assistantsConfig);
-    evaluationAssistant = new EvaluationAssistant(assistantsConfig);
+    courseAgent = new CourseAgent(agentsConfig);
+    exerciseAgent = new ExerciseAgent(agentsConfig);
+    explanationAgent = new ExplanationAgent(agentsConfig);
+    evaluationAgent = new EvaluationAgent(agentsConfig);
 
-    console.log("Asistentes inicializados con configuración cargada");
+    console.log("Agentes inicializados con configuración cargada");
 }
 
-export function getCourseAssistant(): CourseAssistant {
-    if (!courseAssistant) {
-        throw new Error("El asistente de cursos no ha sido inicializado");
+export function getCourseAgent(): CourseAgent {
+    if (!courseAgent) {
+        throw new Error("El agente de cursos no ha sido inicializado");
     }
-    return courseAssistant;
+    return courseAgent;
 }
 
-export function getExerciseAssistant(): ExerciseAssistant {
-    if (!exerciseAssistant) {
-        throw new Error("El asistente de ejercicios no ha sido inicializado");
+export function getExerciseAgent(): ExerciseAgent {
+    if (!exerciseAgent) {
+        throw new Error("El agente de ejercicios no ha sido inicializado");
     }
-    return exerciseAssistant;
+    return exerciseAgent;
 }
 
-export function getExplanationAssistant(): ExplanationAssistant {
-    if (!explanationAssistant) {
-        throw new Error("El asistente de explicaciones no ha sido inicializado");
+export function getExplanationAgent(): ExplanationAgent {
+    if (!explanationAgent) {
+        throw new Error("El agente de explicaciones no ha sido inicializado");
     }
-    return explanationAssistant;
+    return explanationAgent;
 }
 
-export function getEvaluationAssistant(): EvaluationAssistant {
-    if (!evaluationAssistant) {
-        throw new Error("El asistente de evaluaciones no ha sido inicializado");
+export function getEvaluationAgent(): EvaluationAgent {
+    if (!evaluationAgent) {
+        throw new Error("El agente de evaluaciones no ha sido inicializado");
     }
-    return evaluationAssistant;
+    return evaluationAgent;
 }
 
 export function markConfigLoaded(): void {
@@ -65,24 +65,24 @@ export function isConfigReady(): boolean {
 }
 
 /**
- * Creates a new ExerciseAssistant instance for parallel context generation
+ * Creates a new ExerciseAgent instance for parallel context generation
  * Each instance has its own OpenAIService to allow parallel API calls
  */
-export function createExerciseAssistant(): ExerciseAssistant {
-    if (!assistantsConfig) {
-        throw new Error("Assistant config not loaded");
+export function createExerciseAgent(): ExerciseAgent {
+    if (!agentsConfig) {
+        throw new Error("Agent config not loaded");
     }
-    const assistant = new ExerciseAssistant(assistantsConfig);
+    const agent = new ExerciseAgent(agentsConfig);
     let cachedCourse = getCachedCourse();
     if (cachedCourse) {
-        assistant.setCourse(cachedCourse);
+        agent.setCourse(cachedCourse);
     }
-    return assistant;
+    return agent;
 }
 
-export function getAssistantsConfig(): AssistantConfig {
-    if (!assistantsConfig) {
-        throw new Error("Assistant config not loaded");
+export function getAgentsConfig(): AgentConfig {
+    if (!agentsConfig) {
+        throw new Error("Agent config not loaded");
     }
-    return assistantsConfig;
+    return agentsConfig;
 }
