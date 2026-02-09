@@ -432,7 +432,7 @@
             "saveError": "Errorea garapen-konfigurazioa gordetzean"
         }
     },
-    "sidebar": {
+    "chat": {
         "title": "Txata",
         "placeholder": "Idatzi zure mezua...",
         "send": "Bidali",
@@ -444,7 +444,7 @@
         "loading": "Ariketak kargatzen...",
         "noExercises": "Ez dago ariketa erabilgarririk",
         "noExercisesDesc": "Orrian ariketak detektatzen direnean, hemen agertuko dira gordetako azalpen eta ebaluazioekin batera.",
-        "challenge": "Erronka",
+        "challenge": "Ikasle bakarrik",
         "picky": "Zorrotza",
         "viewExplanation": "Ikusi azalpena",
         "viewEvaluations": "Ikusi ebaluazioak",

@@ -172,7 +172,17 @@ ${exerciseContext ? `Exercise context:\n\`\`\`\n${exerciseContext}\n\`\`\`` : ''
 
 Before generating the explanation, consider consulting the course theory material to ensure your explanation aligns with what has been taught in class.
 
-NOTE: After generating the explanation, the student will have the opportunity to ask follow-up questions about the provided explanation.`;
+NOTE: After generating the explanation, the student will have the opportunity to ask follow-up questions about the provided explanation.
+
+IMPORTANT - UNDERSTANDING STEP REFERENCES:
+When displaying your explanation to the student, each step in your 'steps' array is automatically numbered in the user interface:
+- steps[0] is shown as "Step 1" (or "Paso 1" in Spanish, or "1. urratsa" in Basque)
+- steps[1] is shown as "Step 2" (or "Paso 2" in Spanish, or "2. urratsa" in Basque)
+- And so on...
+
+Therefore, when the student asks about "step 2" or "paso 2" or "2. urratsa" in follow-up questions, they are referring to steps[1] (the second element in your array). When they ask about "step 1" or "paso 1" or "1. urratsa", they mean steps[0] (the first element).
+
+Since you can ONLY answer questions about THIS SPECIFIC EXERCISE (not other exercises or subjects), if a student mentions a step number, they are ALWAYS referring to one of the steps in your explanation. You should NEVER ask which exercise or subject they are referring to - the context is always this exercise. Simply identify which step they mean based on the number they mention (remembering the 1-based numbering shown to students vs your 0-based array indexing).`;
     }
 
     /**

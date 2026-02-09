@@ -44,15 +44,8 @@ export const MODEL_LIST: ModelConfig[] = [
         supportsReasoning: false
     },
     {
-        name: "moonshotai/kimi-k2-instruct-0905",
-        supportsText: true,
-        supportsVision: false,
-        supportsVerbosity: false,
-        supportsReasoning: false
-    },
-    {
         name: "meta-llama/llama-4-scout-17b-16e-instruct",
-        supportsText: true,
+        supportsText: false,
         supportsVision: true,
         supportsVerbosity: false,
         supportsReasoning: false

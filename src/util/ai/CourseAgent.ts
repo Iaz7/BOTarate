@@ -1,3 +1,4 @@
+import { getLLMExerciseResponseInstructions } from "../../i18n/backend";
 import { ChatStorageManager } from "../storage/ChatStorageManager";
 import { AgentConfig } from "./AgentConfig";
 import { BaseAgent } from "./BaseAgent";
@@ -191,11 +192,7 @@ IMPORTANT INSTRUCTIONS:
 
 {exerciseContext}
 
-RESPONSE FORMAT:
-In the following cases, respond as follows:
-- If you call explainExercise, just respond with: "I have opened the explanation for exercise {exercise name} for you." in the same language as the user.
-- If you call solveExercise, just respond with: "I have opened the solution form for exercise {exercise name}." in the same language as the user.
-- If you do not need to use any tool, respond normally.
+{exerciseResponseFormat}
 
 COURSE INFORMATION:
 Below is the complete course structure with all available sections. Each section has a unique ID that you must use when you need to get its detailed content.
@@ -209,6 +206,7 @@ Below is the complete course structure with all available sections. Each section
             role: 'Agente basado en chat para ayudar a los estudiantes con el contenido y ejercicios de su curso en línea',
             toolsDescription: 'Tienes acceso a las herramientas getSectionContent, getPageContent, getResourceContent, explainExercise y solveExercise para consultar material del curso y trabajar con ejercicios.',
             exerciseContext: exerciseContext,
+            exerciseResponseFormat: getLLMExerciseResponseInstructions(),
             courseContext: courseContext,
             languageInstruction: this.buildLanguageInstruction()
         };

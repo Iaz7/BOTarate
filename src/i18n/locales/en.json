@@ -429,7 +429,7 @@
             "saveError": "Error saving development configuration"
         }
     },
-    "sidebar": {
+    "chat": {
         "title": "Chat",
         "placeholder": "Type your message...",
         "send": "Send",
@@ -441,7 +441,7 @@
         "loading": "Loading exercises...",
         "noExercises": "No exercises available",
         "noExercisesDesc": "When exercises are detected on the page, they will appear here along with any saved explanations and evaluations.",
-        "challenge": "Challenge",
+        "challenge": "Student only",
         "picky": "Picky",
         "viewExplanation": "View explanation",
         "viewEvaluations": "View evaluations",

@@ -150,7 +150,6 @@ class OpenAIService {
             messages: this.conversationHistory,
             tools: tools ?? TOOLS,
             tool_choice: 'auto',
-            max_completion_tokens: 32768
         });
 
         const choice = response.choices[0];
@@ -268,7 +267,6 @@ class OpenAIService {
             model: modelName,
             messages: this.conversationHistory,
             response_format: responseFormat,
-            max_completion_tokens: 32768
         };
 
         // Add native parameters if model supports them

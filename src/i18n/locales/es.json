@@ -435,13 +435,19 @@
             "saveError": "Error al guardar la configuración de desarrollo"
         }
     },
-
+    "chat": {
+        "title": "Chat",
+        "placeholder": "Escribe tu mensaje...",
+        "send": "Enviar",
+        "clearHistory": "Limpiar historial",
+        "newChat": "Nueva conversación"
+    },
     "exercises": {
         "title": "Ejercicios",
         "loading": "Cargando ejercicios...",
         "noExercises": "No hay ejercicios disponibles",
         "noExercisesDesc": "Cuando se detecten ejercicios en la página, aparecerán aquí junto con las explicaciones y evaluaciones guardadas.",
-        "challenge": "Reto",
+        "challenge": "Solo estudiante",
         "picky": "Tiquismiquis",
         "viewExplanation": "Ver explicación",
         "viewEvaluations": "Ver evaluaciones",

@@ -59,7 +59,7 @@ const ExercisesTab: React.FC<ExercisesTabProps> = ({
                 const hasExplanation = exercisesWithExplanations.includes(exercise.name);
                 const hasEvaluation = exercisesWithEvaluations.includes(exercise.name);
                 const isChallenge = exercise.allowed === false;
-                const isPicky = exercise.isPicky === true;
+                // const isPicky = exercise.isPicky === true; // No mostrar para estudiantes
 
                 return (
                     <div
@@ -73,9 +73,9 @@ const ExercisesTab: React.FC<ExercisesTabProps> = ({
                                 {isChallenge && (
                                     <span className="badge bg-warning text-dark ms-2">{t("exercises.challenge")}</span>
                                 )}
-                                {isPicky && (
+                                {/* {isPicky && (
                                     <span className="badge bg-info text-dark ms-2">{t("exercises.picky")}</span>
-                                )}
+                                )} */}
                             </div>
                             <div className="d-flex gap-2">
                                 {hasExplanation && (
