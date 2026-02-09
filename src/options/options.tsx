@@ -10,6 +10,7 @@ import { OpenAIService } from "../util/ai/OpenAIService";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { AppMode, ModeManager } from "../util/config/ModeManager";
 import { AgentConfigStorageManager } from "../util/storage/AgentConfigStorageManager";
+import { ModeStorageManager } from "../util/storage/ModeStorageManager";
 
 interface CourseInfo {
     id: string;
@@ -93,6 +94,10 @@ const Options: React.FC = () => {
     const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(true);
     const [courseError, setCourseError] = useState<string>("");
     const [isCheckingRole, setIsCheckingRole] = useState<boolean>(false);
+
+    // Dev mode configuration
+    const [devForceTeacherRole, setDevForceTeacherRole] = useState<boolean>(false);
+    const [devSaveMessage, setDevSaveMessage] = useState<string>("");
 
     const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newLang = e.target.value as LanguageCode;
@@ -190,6 +195,17 @@ const Options: React.FC = () => {
         };
 
         loadConfiguration();
+    }, []);
+
+    // Cargar configuración de desarrollo
+    useEffect(() => {
+        if (APP_CONFIG.IS_DEV) {
+            const loadDevConfig = async () => {
+                const config = await ModeStorageManager.getDevModeConfig();
+                setDevForceTeacherRole(config.forceTeacherRole);
+            };
+            loadDevConfig();
+        }
     }, []);
 
     // Cuando se selecciona un curso, verificar el rol y cargar config de agentes
@@ -339,6 +355,22 @@ const Options: React.FC = () => {
         } catch (error) {
             console.error("Error saving agent configuration:", error);
             setAgentSaveMessage(t("options.agents.buttons.error"));
+        }
+    };
+
+    const handleSaveDevConfig = async () => {
+        try {
+            await ModeStorageManager.saveDevModeConfig({ forceTeacherRole: devForceTeacherRole });
+            setDevSaveMessage(t("options.devMode.saveSuccess"));
+
+            // Clear message after 3 seconds
+            setTimeout(() => setDevSaveMessage(""), 3000);
+        } catch (error) {
+            console.error("Error saving dev config:", error);
+            setDevSaveMessage(t("options.devMode.saveError"));
+
+            // Clear message after 3 seconds
+            setTimeout(() => setDevSaveMessage(""), 3000);
         }
     };
 
@@ -847,6 +879,72 @@ const Options: React.FC = () => {
                             courseId={selectedCourseId || undefined}
                             onDataChange={() => loadAgentConfig(selectedCourseId || undefined)}
                         />
+                    )}
+
+                    {/* Sección de desarrollo - Solo visible en modo dev */}
+                    {APP_CONFIG.IS_DEV && (
+                        <div className="card mb-4 border-warning">
+                            <div className="card-header bg-warning bg-opacity-10">
+                                <h5 className="card-title mb-0">
+                                    <span className="badge bg-warning text-dark me-2">DEV</span>
+                                    {t("options.devMode.title")}
+                                </h5>
+                            </div>
+                            <div className="card-body">
+                                <div className="alert alert-info mb-3">
+                                    <small>{t("options.devMode.description")}</small>
+                                </div>
+
+                                {devSaveMessage && (
+                                    <div
+                                        className={`alert ${
+                                            devSaveMessage.includes("Error") ? "alert-danger" : "alert-success"
+                                        } alert-dismissible fade show`}
+                                        role="alert"
+                                    >
+                                        {devSaveMessage}
+                                        <button
+                                            type="button"
+                                            className="btn-close"
+                                            onClick={() => setDevSaveMessage("")}
+                                            aria-label={t("common.close")}
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="mb-3">
+                                    <div className="form-check form-switch">
+                                        <input
+                                            className="form-check-input"
+                                            type="checkbox"
+                                            role="switch"
+                                            id="devForceTeacherRole"
+                                            checked={devForceTeacherRole}
+                                            onChange={e => setDevForceTeacherRole(e.target.checked)}
+                                        />
+                                        <label className="form-check-label fw-bold" htmlFor="devForceTeacherRole">
+                                            {t("options.devMode.forceTeacherRole.label")}
+                                        </label>
+                                    </div>
+                                    <div className="form-text">{t("options.devMode.forceTeacherRole.description")}</div>
+                                    <div className="mt-2">
+                                        <small
+                                            className={`badge ${devForceTeacherRole ? "bg-success" : "bg-secondary"}`}
+                                        >
+                                            {devForceTeacherRole
+                                                ? t("options.devMode.forceTeacherRole.enabled")
+                                                : t("options.devMode.forceTeacherRole.disabled")}
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div className="mt-3">
+                                    <button type="button" className="btn btn-warning" onClick={handleSaveDevConfig}>
+                                        {t("options.devMode.save")}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>

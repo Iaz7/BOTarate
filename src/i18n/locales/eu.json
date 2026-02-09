@@ -417,6 +417,19 @@
                 "clearError": "Ustekabeko errorea ezabatzean: {{error}}"
             },
             "confirmClear": "⚠️ OHARRA: Ekintza honek gordetako konfigurazio GUZTIA ezabatuko du, barne:\n\n- Agenteen konfigurazioa\n- Identifikatutako ariketen datuak\n- Konfiguratutako laborategien datuak\n\nEkintza hau EZIN DA desegin. Ziur jarraitu nahi duzula?"
+        },
+        "devMode": {
+            "title": "Garatzaileentzako aukerak",
+            "description": "Atal hau garapen moduan soilik ikusgai dago (npm run dev).",
+            "forceTeacherRole": {
+                "label": "Irakasle-rola behartu",
+                "description": "Gaituta dagoenean, luzapenak beti irakasletzat identifikatuko zaitu eGelan egiaztatu gabe. Erabilgarria garapenean eta probetan.",
+                "enabled": "Gaituta - Irakasle-rola behartuko da",
+                "disabled": "Desgaituta - Rola eGelan egiaztatuko da"
+            },
+            "save": "Gorde garapen-konfigurazioa",
+            "saveSuccess": "Garapen-konfigurazioa ondo gorde da",
+            "saveError": "Errorea garapen-konfigurazioa gordetzean"
         }
     },
     "sidebar": {

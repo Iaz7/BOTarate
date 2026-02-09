@@ -211,6 +211,16 @@ export function handleCheckUserRole(request: any, sendResponse: (response?: any)
 
             const courseId = course.id;
 
+            // In dev mode, check if we should force teacher role
+            if (import.meta.env.DEV) {
+                const devConfig = await ModeStorageManager.getDevModeConfig();
+                if (devConfig.forceTeacherRole) {
+                    console.log(`[handleCheckUserRole] DEV MODE: Forcing teacher role for course ${courseId}`);
+                    sendResponse({ success: true, isTeacher: true });
+                    return;
+                }
+            }
+
             // Verificar si hay un caché válido del rol del usuario para este curso
             const cachedRole = await ModeStorageManager.getUserRoleForCourse(courseId);
 
@@ -368,6 +378,16 @@ export function handleCheckUserRoleForCourse(request: any, sendResponse: (respon
             if (!courseId) {
                 sendResponse({ success: false, error: 'courseId is required', isTeacher: false });
                 return;
+            }
+
+            // In dev mode, check if we should force teacher role
+            if (import.meta.env.DEV) {
+                const devConfig = await ModeStorageManager.getDevModeConfig();
+                if (devConfig.forceTeacherRole) {
+                    console.log(`[handleCheckUserRoleForCourse] DEV MODE: Forcing teacher role for course ${courseId}`);
+                    sendResponse({ success: true, isTeacher: true });
+                    return;
+                }
             }
 
             // Check per-course cache first

@@ -11,4 +11,7 @@ export const APP_CONFIG = {
 
     /** Descripción de la extensión */
     DESCRIPTION: 'AI powered extensión for teaching and learning support',
+
+    /** Development mode flag */
+    IS_DEV: import.meta.env.DEV,
 } as const;

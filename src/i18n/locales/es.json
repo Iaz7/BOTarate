@@ -420,6 +420,19 @@
                 "clearError": "Error inesperado al limpiar: {{error}}"
             },
             "confirmClear": "⚠️ ADVERTENCIA: Esta acción eliminará TODA la configuración guardada, incluyendo:\n\n- Configuración de agentes\n- Datos de ejercicios identificados\n- Datos de laboratorios configurados\n\nEsta acción NO SE PUEDE deshacer. ¿Estás seguro de que deseas continuar?"
+        },
+        "devMode": {
+            "title": "Opciones de desarrollo",
+            "description": "Esta sección solo está visible en modo desarrollo (npm run dev).",
+            "forceTeacherRole": {
+                "label": "Forzar rol de profesor",
+                "description": "Cuando está activado, la extensión siempre te identificará como profesor sin verificar en eGela. Útil para desarrollo y pruebas.",
+                "enabled": "Activado - Se forzará el rol de profesor",
+                "disabled": "Desactivado - Se verificará el rol en eGela"
+            },
+            "save": "Guardar configuración de desarrollo",
+            "saveSuccess": "Configuración de desarrollo guardada correctamente",
+            "saveError": "Error al guardar la configuración de desarrollo"
         }
     },
 

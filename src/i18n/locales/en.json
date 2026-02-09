@@ -414,6 +414,19 @@
                 "clearError": "Unexpected error clearing: {{error}}"
             },
             "confirmClear": "⚠️ WARNING: This action will delete ALL saved configuration, including:\n\n- Agent configuration\n- Identified exercise data\n- Configured lab data\n\nThis action CANNOT be undone. Are you sure you want to continue?"
+        },
+        "devMode": {
+            "title": "Developer options",
+            "description": "This section is only visible in development mode (npm run dev).",
+            "forceTeacherRole": {
+                "label": "Force teacher role",
+                "description": "When enabled, the extension will always identify you as a teacher without checking eGela. Useful for development and testing.",
+                "enabled": "Enabled - Teacher role will be forced",
+                "disabled": "Disabled - Role will be verified in eGela"
+            },
+            "save": "Save development configuration",
+            "saveSuccess": "Development configuration saved successfully",
+            "saveError": "Error saving development configuration"
         }
     },
     "sidebar": {

@@ -13,6 +13,10 @@ interface UserRoleData {
     isTeacher: boolean;
 }
 
+interface DevModeConfig {
+    forceTeacherRole: boolean;
+}
+
 /**
  * Storage manager for operation mode and user role
  */
@@ -21,6 +25,7 @@ export class ModeStorageManager extends BaseStorageManager {
     private static readonly USER_ROLE_STORAGE_KEY = "user_role";
     private static readonly USER_ROLE_COURSE_PREFIX = "user_role_course_";
     private static readonly USER_ROLE_CACHE_DURATION = 3600000; // 1 hour in milliseconds
+    private static readonly DEV_MODE_CONFIG_KEY = "dev_mode_config";
 
     /**
      * Saves the current operation mode
@@ -129,5 +134,22 @@ export class ModeStorageManager extends BaseStorageManager {
     static async clearAll(): Promise<void> {
         await this.removeData("", this.MODE_STORAGE_KEY);
         await this.removeData("", this.USER_ROLE_STORAGE_KEY);
+    }
+
+    /**
+     * Saves dev mode configuration
+     * @param config Dev mode configuration
+     */
+    static async saveDevModeConfig(config: DevModeConfig): Promise<void> {
+        await this.saveData("", this.DEV_MODE_CONFIG_KEY, config);
+    }
+
+    /**
+     * Gets dev mode configuration
+     * @returns Dev mode configuration or default values
+     */
+    static async getDevModeConfig(): Promise<DevModeConfig> {
+        const data = await this.getData<DevModeConfig>("", this.DEV_MODE_CONFIG_KEY);
+        return data ?? { forceTeacherRole: false };
     }
 }
