@@ -37,6 +37,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
         messagesEndRef,
         isChatDisabled,
         inputRef,
+        courseLoadError,
         handleConfigLoaded,
         handleModeToggle,
         handleExplanationClick,
@@ -199,6 +200,33 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                                 </span>
                             </div>
                             <p className="text-muted">{t("sidebar.checkingConfig", "Checking configuration...")}</p>
+                        </div>
+                    </div>
+                ) : courseLoadError ? (
+                    <div className="d-flex align-items-center justify-content-center loading-container">
+                        <div className="text-center px-4" style={{ maxWidth: "400px" }}>
+                            <div className="mb-4">
+                                <svg
+                                    width="64"
+                                    height="64"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="text-danger"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                </svg>
+                            </div>
+                            <h5 className="mb-3">{t("sidebar.courseLoadError", "Error loading course")}</h5>
+                            <p className="text-muted mb-4">{courseLoadError}</p>
+                            <button className="btn btn-primary" onClick={() => window.location.reload()}>
+                                {t("sidebar.reloadPage", "Reload page")}
+                            </button>
                         </div>
                     </div>
                 ) : needsConfiguration || missingLLMConfig ? (

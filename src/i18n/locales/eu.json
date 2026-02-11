@@ -117,7 +117,9 @@
         "tooltips": {
             "labBlocked": "Ez dago erabilgarri laborategia blokeatuta dagoen bitartean"
         },
-        "checkingConfig": "Konfigurazioa egiaztatzen..."
+        "checkingConfig": "Konfigurazioa egiaztatzen...",
+        "courseLoadError": "Errorea ikasgaia kargatzean",
+        "reloadPage": "Orria berritu"
     },
     "noExercisesMessage": {
         "title": "Ez da ariketarik aurkitu",

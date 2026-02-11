@@ -117,7 +117,9 @@
         "tooltips": {
             "labBlocked": "No disponible mientras el laboratorio esté bloqueado"
         },
-        "checkingConfig": "Comprobando configuración..."
+        "checkingConfig": "Comprobando configuración...",
+        "courseLoadError": "Error al cargar la asignatura",
+        "reloadPage": "Recargar página"
     },
     "noExercisesMessage": {
         "title": "No se encontraron ejercicios",

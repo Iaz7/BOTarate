@@ -18,6 +18,8 @@ export interface ChatSidebarProps {
     isAnyModalOpen?: boolean;
     hasExercisesLoaded?: boolean;
     onIdentifyExercises?: () => void;
+    isLoadingCourse?: boolean;
+    courseLoadError?: string | null;
 }
 
 export type TabType = "chat" | "exercises" | "config" | "labs" | "progress";
@@ -32,6 +34,8 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
         onOpenEvaluation,
         isAnyModalOpen = false,
         hasExercisesLoaded = false,
+        isLoadingCourse = false,
+        courseLoadError = null,
     } = props;
 
     const savedState = SidebarStateStorageManager.getSidebarState();
@@ -63,6 +67,19 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
     // Effect: Verificar modo y configuración
     useEffect(() => {
         const checkModeAndConfiguration = async () => {
+            // Si el curso está cargando, no ejecutar esta verificación aún
+            if (isLoadingCourse) {
+                setIsCheckingConfig(true);
+                return;
+            }
+
+            // Si hay un error al cargar el curso, mostrar ese error directamente
+            if (courseLoadError) {
+                setIsCheckingConfig(false);
+                setMissingLLMConfig(true); // Usar esta flag para mostrar el error
+                return;
+            }
+
             setIsCheckingConfig(true);
             try {
                 ModeManager.clearCache();
@@ -104,7 +121,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
         };
 
         checkModeAndConfiguration();
-    }, [reloadKey]);
+    }, [reloadKey, isLoadingCourse, courseLoadError]);
 
     // Effect: Escuchar mensajes de recarga y tool calls
     useEffect(() => {
@@ -481,6 +498,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
         messagesEndRef,
         isChatDisabled,
         inputRef,
+        courseLoadError,
         // Handlers
         handleConfigLoaded,
         handleModeToggle,

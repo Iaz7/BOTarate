@@ -117,7 +117,9 @@
         "tooltips": {
             "labBlocked": "Not available while lab is blocked"
         },
-        "checkingConfig": "Checking configuration..."
+        "checkingConfig": "Checking configuration...",
+        "courseLoadError": "Error loading course",
+        "reloadPage": "Reload page"
     },
     "noExercisesMessage": {
         "title": "No exercises found",

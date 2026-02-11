@@ -8,7 +8,7 @@ import { ExerciseEditModalProps } from "./types";
 
 const ExerciseEditModal: React.FC<ExerciseEditModalProps> = props => {
     const { t } = useTranslation();
-    const { name, setName, statement, setStatement, isSaving, error, hasChanges, handleSave } =
+    const { name, setName, statement, setStatement, isSaving, error, successMessage, hasChanges, handleSave } =
         useExerciseEditModal(props);
 
     useModalKeyboard(props.isOpen, props.onClose);
@@ -77,15 +77,30 @@ const ExerciseEditModal: React.FC<ExerciseEditModalProps> = props => {
                         </div>
                         {error && (
                             <div className="alert alert-danger py-2" role="alert">
+                                <i className="bi bi-exclamation-triangle me-2"></i>
                                 {error}
+                            </div>
+                        )}
+                        {successMessage && (
+                            <div className="alert alert-success py-2" role="alert">
+                                <i className="bi bi-check-circle me-2"></i>
+                                {successMessage}
                             </div>
                         )}
                     </div>
                     <div className="modal-footer">
-                        <button className="btn btn-secondary" onClick={props.onClose} disabled={isSaving}>
+                        <button
+                            className="btn btn-secondary"
+                            onClick={props.onClose}
+                            disabled={isSaving || !!successMessage}
+                        >
                             {t("common.cancel")}
                         </button>
-                        <button className="btn btn-primary" onClick={handleSave} disabled={isSaving || !hasChanges}>
+                        <button
+                            className="btn btn-primary"
+                            onClick={handleSave}
+                            disabled={isSaving || !hasChanges || !!successMessage}
+                        >
                             {isSaving ? (
                                 <>
                                     <output className="spinner-border spinner-border-sm me-2">

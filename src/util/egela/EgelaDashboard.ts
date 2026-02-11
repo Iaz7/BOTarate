@@ -1,4 +1,5 @@
 import { parseHTML } from 'linkedom';
+import { checkTeacherStatus } from './common';
 
 export interface EgelaCourseInfo {
     id: string;
@@ -50,104 +51,6 @@ export async function getUserCourses(): Promise<EgelaCourseInfo[]> {
  * @returns true if the user is a teacher in this course
  */
 export async function isUserTeacherInCourse(courseId: string): Promise<boolean> {
-    // 1. Get current user's email from profile
-    const profileUrl = 'https://egela.ehu.eus/user/profile.php';
-    const profileResponse = await fetch(profileUrl);
-    if (!profileResponse.ok) {
-        throw new Error(`[isUserTeacherInCourse] Error fetching profile: ${profileResponse.status}`);
-    }
-    if (profileResponse.url?.includes('egela.ehu.eus/login/index.php')) {
-        throw new Error('EgelaSessionExpired');
-    }
-    const profileHtml = await profileResponse.text();
-    const { document: profileDoc } = parseHTML(profileHtml);
-
-    const emailElement = profileDoc.querySelector(
-        '#region-main-box > div > div.col-md-4 > div > div.userinfo.my-2 > ul > li > dl > dd > a'
-    );
-    if (!emailElement) {
-        throw new Error('[isUserTeacherInCourse] Could not get current user email');
-    }
-    const currentUserEmail = emailElement.textContent?.trim();
-    if (!currentUserEmail) {
-        throw new Error('[isUserTeacherInCourse] Current user email is empty');
-    }
-
-    // 2. Get course participants
-    const participantsUrl = `https://egela.ehu.eus/user/index.php?id=${courseId}`;
-    const participantsResponse = await fetch(participantsUrl);
-    if (!participantsResponse.ok) {
-        throw new Error(`[isUserTeacherInCourse] Error fetching participants: ${participantsResponse.status}`);
-    }
-    if (participantsResponse.url?.includes('egela.ehu.eus/login/index.php')) {
-        throw new Error('EgelaSessionExpired');
-    }
-    const participantsHtml = await participantsResponse.text();
-    const { document: participantsDoc } = parseHTML(participantsHtml);
-
-    // 3. Find current user in participants list and check role
-    let userIndex = 0;
-    while (true) {
-        const userNameCellId = `user-index-participants-${courseId}_r${userIndex}_c1`;
-        const userNameCell = participantsDoc.querySelector(`#${userNameCellId}`);
-
-        if (!userNameCell) {
-            // No more users
-            throw new Error(`[isUserTeacherInCourse] User ${currentUserEmail} not found in participants`);
-        }
-
-        const userProfileLink = userNameCell.querySelector('a');
-        if (!userProfileLink) {
-            userIndex++;
-            continue;
-        }
-
-        const userProfileUrl = userProfileLink.getAttribute('href');
-        if (!userProfileUrl) {
-            userIndex++;
-            continue;
-        }
-
-        const userProfileResponse = await fetch(userProfileUrl);
-        if (!userProfileResponse.ok) {
-            userIndex++;
-            continue;
-        }
-        if (userProfileResponse.url?.includes('egela.ehu.eus/login/index.php')) {
-            throw new Error('EgelaSessionExpired');
-        }
-        const userProfileHtml = await userProfileResponse.text();
-        const { document: userProfileDoc } = parseHTML(userProfileHtml);
-
-        const userEmailElement = userProfileDoc.querySelector(
-            '#region-main-box > div > div.col-md-4 > div > div.userinfo.my-2 > ul > li > dl > dd > a'
-        );
-        const userEmail = userEmailElement?.textContent?.trim();
-
-        if (userEmail === currentUserEmail) {
-            const userRoleCellIdWithSpan = `user-index-participants-${courseId}_r${userIndex}_c3 > span > a`;
-            const userRoleCellWithSpan = participantsDoc.querySelector(`#${userRoleCellIdWithSpan}`);
-
-            const userRoleCellId = `user-index-participants-${courseId}_r${userIndex}_c2`;
-            const userRoleCell = participantsDoc.querySelector(`#${userRoleCellId}`);
-
-            let role = '';
-
-            if (userRoleCellWithSpan) {
-                role = userRoleCellWithSpan.textContent?.trim() || '';
-            } else if (userRoleCell) {
-                role = userRoleCell.textContent?.trim() || '';
-            } else {
-                throw new Error(`[isUserTeacherInCourse] Could not get role for user ${currentUserEmail}`);
-            }
-
-            const isTeacher = [
-                'Teacher', 'Profesor', 'Irakaslea', 'Docente',
-                'Eskuz matrikulatutako ikaslea', 'Estudiante manual', 'Manual enrollment student'
-            ].includes(role);
-            return isTeacher;
-        }
-
-        userIndex++;
-    }
+    const result = await checkTeacherStatus(courseId);
+    return result.isTeacher;
 }

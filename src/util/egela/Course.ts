@@ -3,6 +3,7 @@ import { CourseSection } from "./CourseSection";
 import { FileData, FileManager } from "./FileManager";
 import { PageParser } from "./PageParser";
 import { SectionParser } from "./SectionParser";
+import { checkTeacherStatus } from "./common";
 
 export { Course };
 
@@ -284,116 +285,7 @@ class Course {
      */
     async isCurrentUserTeacher(): Promise<boolean> {
         console.log(`[isCurrentUserTeacher] Verificando rol del usuario en curso ${this.id}`);
-
-        // 1. Obtener el correo electrónico del usuario actual desde su perfil
-        const profileUrl = 'https://egela.ehu.eus/user/profile.php';
-        const profileResponse = await fetch(profileUrl);
-        if (!profileResponse.ok) {
-            throw new Error(`[isCurrentUserTeacher] Error al obtener perfil: ${profileResponse.status}`);
-        }
-        if (profileResponse.url && profileResponse.url.includes('egela.ehu.eus/login/index.php')) {
-            throw new Error('[isCurrentUserTeacher] EgelaSessionExpired: sesión expirada (login)');
-        }
-        const profileHtml = await profileResponse.text();
-        const { document: profileDoc } = parseHTML(profileHtml);
-
-        // Selector para obtener el correo del usuario actual
-        const emailElement = profileDoc.querySelector('#region-main-box > div > div.col-md-4 > div > div.userinfo.my-2 > ul > li > dl > dd > a');
-        if (!emailElement) {
-            throw new Error('[isCurrentUserTeacher] No se pudo obtener el correo del usuario actual');
-        }
-
-        const currentUserEmail = emailElement.textContent?.trim();
-        if (!currentUserEmail) {
-            throw new Error('[isCurrentUserTeacher] El correo del usuario actual está vacío');
-        }
-
-        console.log(`[isCurrentUserTeacher] Correo del usuario actual: ${currentUserEmail}`);
-
-        // 2. Obtener la lista de participantes del curso
-        const participantsUrl = `https://egela.ehu.eus/user/index.php?id=${this.id}`;
-        const participantsResponse = await fetch(participantsUrl);
-        if (!participantsResponse.ok) {
-            throw new Error(`[isCurrentUserTeacher] Error al obtener participantes: ${participantsResponse.status}`);
-        }
-        if (participantsResponse.url && participantsResponse.url.includes('egela.ehu.eus/login/index.php')) {
-            throw new Error('[isCurrentUserTeacher] EgelaSessionExpired: sesión expirada (login)');
-        }
-        const participantsHtml = await participantsResponse.text();
-        const { document: participantsDoc } = parseHTML(participantsHtml);
-
-        // 3. Buscar el usuario actual en la lista de participantes
-        let userIndex = 0;
-        while (true) {
-            const userNameCellId = `user-index-participants-${this.id}_r${userIndex}_c1`;
-            const userNameCell = participantsDoc.querySelector(`#${userNameCellId}`);
-
-            if (!userNameCell) {
-                // No hay más usuarios en la lista
-                throw new Error(`[isCurrentUserTeacher] Usuario ${currentUserEmail} no encontrado en la lista de participantes`);
-            }
-
-            // Obtener el enlace al perfil del usuario
-            const userProfileLink = userNameCell.querySelector('a');
-            if (!userProfileLink) {
-                userIndex++;
-                continue;
-            }
-
-            const userProfileUrl = userProfileLink.getAttribute('href');
-            if (!userProfileUrl) {
-                userIndex++;
-                continue;
-            }
-
-            // Obtener el correo del usuario desde su perfil
-            const userProfileResponse = await fetch(userProfileUrl);
-            if (!userProfileResponse.ok) {
-                userIndex++;
-                continue;
-            }
-            if (userProfileResponse.url && userProfileResponse.url.includes('egela.ehu.eus/login/index.php')) {
-                throw new Error('[isCurrentUserTeacher] EgelaSessionExpired: sesión expirada (login)');
-            }
-            const userProfileHtml = await userProfileResponse.text();
-            const { document: userProfileDoc } = parseHTML(userProfileHtml);
-
-            const userEmailElement = userProfileDoc.querySelector('#region-main-box > div > div.col-md-4 > div > div.userinfo.my-2 > ul > li > dl > dd > a');
-            const userEmail = userEmailElement?.textContent?.trim();
-
-            // Si es el usuario actual, obtener su rol
-            if (userEmail === currentUserEmail) {
-                const userRoleCellIdWithSpan = `user-index-participants-${this.id}_r${userIndex}_c3 > span > a`;
-                const userRoleCellWithSpan = participantsDoc.querySelector(`#${userRoleCellIdWithSpan}`);
-
-                const userRoleCellId = `user-index-participants-${this.id}_r${userIndex}_c2`; // puede haber un span en medio, no directamente texto
-                // hacer con dos selectors, si encuentra uno con span usar ese, sino el que está ahora
-                const userRoleCell = participantsDoc.querySelector(`#${userRoleCellId}`);
-
-                let role: string = '';
-
-                if (userRoleCellWithSpan) {
-                    role = userRoleCellWithSpan.textContent?.trim();
-                }
-                else if (userRoleCell) {
-                    role = userRoleCell.textContent?.trim() || '';
-                }
-                else {
-                    throw new Error(`[isCurrentUserTeacher] No se pudo obtener el rol para el usuario ${currentUserEmail}`);
-                }
-
-                console.log(`[isCurrentUserTeacher] Rol encontrado: ${role}`);
-
-                // Verificar si el rol es "Profesor" (o variaciones)
-                const isTeacher =
-                    [
-                        'Teacher', 'Profesor', 'Irakaslea', 'Docente',
-                        'Eskuz matrikulatutako ikaslea', 'Estudiante manual', 'Manual enrollment student' // TODO: Eliminar esto. Solo para que yo pueda probar sin ser profesor
-                    ].includes(role);
-                return isTeacher;
-            }
-
-            userIndex++;
-        }
+        const result = await checkTeacherStatus(this.id);
+        return result.isTeacher;
     }
 }

@@ -14,6 +14,7 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
     // Modal states for exercise management
     const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
     const [isAddingExercise, setIsAddingExercise] = useState(false);
+    const [needsRefresh, setNeedsRefresh] = useState(false);
 
     useEffect(() => {
         setHasUnsavedChanges(!configsAreEqual(exerciseConfig, originalConfig));
@@ -35,6 +36,14 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
             loadConfigFromStorage();
         }
     }, [isActive, pageId]);
+
+    // Actualizar la lista cuando se marca como necesario
+    useEffect(() => {
+        if (needsRefresh && pageId) {
+            loadConfigFromStorage();
+            setNeedsRefresh(false);
+        }
+    }, [needsRefresh, pageId]);
 
     const loadConfigFromStorage = async () => {
         try {
@@ -155,10 +164,7 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
     };
 
     const refreshExercises = async () => {
-        await loadConfigFromStorage();
-        if (onConfigUpdate) {
-            onConfigUpdate();
-        }
+        setNeedsRefresh(true);
     };
 
     return {

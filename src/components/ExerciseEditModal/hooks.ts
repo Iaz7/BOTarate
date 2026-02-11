@@ -13,9 +13,11 @@ export const useExerciseEditModal = ({
     const [statement, setStatement] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && !isInitialized) {
             if (isAddMode) {
                 setName("");
                 setStatement("");
@@ -24,8 +26,12 @@ export const useExerciseEditModal = ({
                 setStatement(exercise.statement);
             }
             setError(null);
+            setSuccessMessage(null);
+            setIsInitialized(true);
+        } else if (!isOpen) {
+            setIsInitialized(false);
         }
-    }, [isOpen, exercise, isAddMode]);
+    }, [isOpen, exercise, isAddMode, isInitialized]);
 
     const hasChanges = isAddMode
         ? name.trim().length > 0
@@ -38,6 +44,7 @@ export const useExerciseEditModal = ({
         }
         setIsSaving(true);
         setError(null);
+        setSuccessMessage(null);
         try {
             if (isAddMode) {
                 await chrome.runtime.sendMessage({
@@ -53,12 +60,25 @@ export const useExerciseEditModal = ({
                     exercise: { name: name.trim(), statement: statement.trim() },
                 });
             }
-            if (onExerciseUpdate) onExerciseUpdate();
-            onClose();
+
+            // Terminar el estado de guardado
+            setIsSaving(false);
+
+            // Mostrar mensaje de éxito
+            setSuccessMessage(isAddMode ? "Exercise added successfully" : "Exercise updated successfully");
+
+            // Actualizar la lista de ejercicios inmediatamente
+            if (onExerciseUpdate) {
+                onExerciseUpdate();
+            }
+
+            // Cerrar el modal después de mostrar el mensaje por 2 segundos
+            setTimeout(() => {
+                onClose();
+            }, 2000);
         } catch (err) {
             console.error("Error saving exercise:", err);
             setError("Error saving exercise");
-        } finally {
             setIsSaving(false);
         }
     };
@@ -70,6 +90,7 @@ export const useExerciseEditModal = ({
         setStatement,
         isSaving,
         error,
+        successMessage,
         hasChanges,
         handleSave,
     };

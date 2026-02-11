@@ -23,6 +23,41 @@ interface Exercise {
 
 type ViewState = "loading" | "chat" | "hidden";
 
+// Helper para verificar si estamos en una página donde no debe cargarse la extensión
+const shouldNotLoadExtension = (): boolean => {
+    const url = globalThis.location.href;
+    const pathname = globalThis.location.pathname;
+
+    // No cargar en la página principal de Egela
+    if (url === "https://egela.ehu.eus/" || url === "https://egela.ehu.eus") {
+        return true;
+    }
+
+    // No cargar en la página de login
+    if (pathname.includes("/login/")) {
+        return true;
+    }
+
+    // No cargar si solo estamos en el dominio raíz
+    if (pathname === "/" || pathname === "") {
+        return true;
+    }
+
+    // Solo cargar en páginas de cursos y recursos de módulos
+    // Permitir: /course/view.php (página del curso)
+    if (pathname.includes("/course/view.php")) {
+        return false;
+    }
+
+    // Permitir: /mod/*  (recursos y actividades dentro de cursos: páginas, tareas, cuestionarios, etc.)
+    if (pathname.includes("/mod/")) {
+        return false;
+    }
+
+    // Excluir todo lo demás (perfiles de usuario, calificaciones, etc.)
+    return true;
+};
+
 // Helper para obtener el pageId de la URL actual
 const getPageIdFromUrl = (): string | null => {
     if (!globalThis.location.href.includes(PAGE_VIEW_HREF)) {
@@ -37,6 +72,8 @@ const ExtensionContent: React.FC = () => {
     const [course, setCourse] = useState<Course | null>(null);
     const [courseName, setCourseName] = useState<string>("Cargando...");
     const [courseId, setCourseId] = useState<string | null>(null);
+    const [isLoadingCourse, setIsLoadingCourse] = useState<boolean>(true);
+    const [courseLoadError, setCourseLoadError] = useState<string | null>(null);
     const [providerName, setProviderName] = useState<string>("");
     const [modelName, setModelName] = useState<string>("");
     const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -90,21 +127,41 @@ const ExtensionContent: React.FC = () => {
     }, [exercises, pendingModalOpen, pendingSolutionModalOpen, openExerciseModalForIndex]);
 
     useEffect(() => {
-        const waitForSessionStorage = (timeoutMs: number = 5000, intervalMs: number = 200) => {
-            return new Promise<void>(resolve => {
+        // Extraer el courseId de la URL actual
+        const extractCourseIdFromUrl = (url: string): string | null => {
+            try {
+                const urlObj = new URL(url);
+                if (url.includes("egela.ehu.eus/course/view.php?id=")) {
+                    return urlObj.searchParams.get("id");
+                }
+            } catch (error) {
+                console.error("[content] Error parsing URL:", error);
+            }
+            return null;
+        };
+
+        const waitForCourseInSessionStorage = (
+            courseId: string,
+            timeoutMs: number = 15000,
+            intervalMs: number = 50,
+        ) => {
+            return new Promise<boolean>(resolve => {
                 const start = Date.now();
-                console.log("[content] Starting wait for sessionStorage...");
+                console.log(`[content] Waiting for course ${courseId} in sessionStorage...`);
                 const check = () => {
                     const elapsed = Date.now() - start;
-                    const keysCount = sessionStorage.length;
 
-                    // Esperar hasta que haya más de 1 clave O se alcance el timeout
-                    if (keysCount > 1) {
-                        console.log(`[content] SessionStorage ready with ${keysCount} keys`);
-                        resolve();
+                    // Buscar la clave específica del curso
+                    const courseKey = Object.keys(sessionStorage).find(key =>
+                        key.endsWith(`/course/${courseId}/staticState`),
+                    );
+
+                    if (courseKey) {
+                        console.log(`[content] Course ${courseId} found in sessionStorage after ${elapsed}ms`);
+                        resolve(true);
                     } else if (elapsed >= timeoutMs) {
-                        console.warn(`[content] Timeout reached (${timeoutMs}ms) with ${keysCount} keys`);
-                        resolve();
+                        console.warn(`[content] Timeout reached (${timeoutMs}ms) waiting for course ${courseId}`);
+                        resolve(false);
                     } else {
                         setTimeout(check, intervalMs);
                     }
@@ -114,13 +171,33 @@ const ExtensionContent: React.FC = () => {
         };
 
         const loadCourseData = async () => {
-            // Esperar a que sessionStorage tenga datos (más de 1 clave)
-            await waitForSessionStorage(10000, 100);
+            // No intentar cargar si estamos en páginas excluidas
+            if (shouldNotLoadExtension()) {
+                setIsLoadingCourse(false);
+                return;
+            }
+
+            setIsLoadingCourse(true);
+            setCourseLoadError(null);
 
             try {
+                // Extraer el courseId de la URL
+                const currentCourseId = extractCourseIdFromUrl(globalThis.location.href);
+
+                if (currentCourseId) {
+                    // Esperar a que el curso específico esté en sessionStorage
+                    const courseFound = await waitForCourseInSessionStorage(currentCourseId, 15000, 50);
+
+                    if (!courseFound) {
+                        throw new Error(
+                            "No se ha podido cargar los datos de la asignatura. Intenta recargar la página.",
+                        );
+                    }
+                }
+
                 console.log(`[content] Serializing sessionStorage with ${sessionStorage.length} keys`);
 
-                // Serializar sessionStorage completo a un objeto (después de esperar a que esté disponible)
+                // Serializar sessionStorage completo a un objeto
                 const sessionStorageData: Record<string, string> = {};
                 for (let i = 0; i < sessionStorage.length; i++) {
                     const key = sessionStorage.key(i);
@@ -140,7 +217,7 @@ const ExtensionContent: React.FC = () => {
 
                 if (response.success && response.course) {
                     setCourse(response.course);
-                    setCourseId(response.course.id); // Guardar el ID del curso
+                    setCourseId(response.course.id);
 
                     // Obtener el nombre del curso desde la página
                     const courseTitle =
@@ -148,6 +225,7 @@ const ExtensionContent: React.FC = () => {
                     setCourseName(courseTitle);
 
                     console.log("[content] Course data loaded:", response.course);
+                    setIsLoadingCourse(false);
 
                     // Detectar si estamos en una página de ejercicios
                     const pageId = getPageIdFromUrl();
@@ -159,12 +237,14 @@ const ExtensionContent: React.FC = () => {
                         await loadExercisesFromCache(pageId);
                     }
                 } else {
-                    console.log("[content] Could not load course:", response.error);
-                    setCourseName("Error loading course");
+                    throw new Error(response.error || "No se ha podido cargar los datos de la asignatura");
                 }
             } catch (error) {
                 console.error("[content] Error loading course data:", error);
+                const errorMessage = error instanceof Error ? error.message : "Error loading course";
                 setCourseName("Error loading course");
+                setCourseLoadError(errorMessage);
+                setIsLoadingCourse(false);
             }
         };
 
@@ -467,8 +547,13 @@ const ExtensionContent: React.FC = () => {
         await generateExercises(pageId);
     };
 
-    // No mostrar nada si está oculto o si no hay curso
-    if (viewState === "hidden" || !course) return null;
+    // No mostrar nada si está oculto
+    if (viewState === "hidden") return null;
+
+    // No mostrar la extensión en páginas excluidas (index, login)
+    if (shouldNotLoadExtension()) {
+        return null;
+    }
 
     // Renderizar según el estado
     return (
@@ -486,6 +571,8 @@ const ExtensionContent: React.FC = () => {
                     onEvaluationGenerated={handleEvaluationGenerated}
                     isAnyModalOpen={isModalOpen || isSolutionModalOpen || isEvaluationListModalOpen}
                     hasExercisesLoaded={exercises.length > 0}
+                    isLoadingCourse={isLoadingCourse}
+                    courseLoadError={courseLoadError}
                     key={`${reloadExplanationsKey}-${reloadEvaluationsKey}-${reloadSidebarKey}`} // Re-renderizar cuando cambie cualquier trigger
                 />
             )}
