@@ -84,7 +84,12 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
             try {
                 ModeManager.clearCache();
 
-                const response = await chrome.runtime.sendMessage({ action: "checkUserRole" });
+                // Si hay courseId, usar checkUserRoleForCourse para evitar problemas con el curso en caché
+                const message = courseId
+                    ? { action: "checkUserRoleForCourse", courseId }
+                    : { action: "checkUserRole" };
+
+                const response = await chrome.runtime.sendMessage(message);
                 const userIsTeacher = response?.success ? response.isTeacher : false;
                 setIsUserTeacher(userIsTeacher);
 

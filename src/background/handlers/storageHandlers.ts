@@ -197,10 +197,19 @@ export function handleSaveChatHistory(request: any, sendResponse: (response?: an
     return true;
 }
 
+/**
+ * Checks if the current user is a teacher.
+ * @deprecated Use handleCheckUserRoleForCourse instead for better reliability
+ */
 export function handleCheckUserRole(request: any, sendResponse: (response?: any) => void): boolean {
     (async () => {
         try {
-            // Si no hay caché válido, verificar el rol en Egela
+            // If courseId is provided in the request, use it directly
+            if (request.courseId) {
+                return handleCheckUserRoleForCourse(request, sendResponse);
+            }
+
+            // Otherwise, try to get courseId from cached course
             const course: Course = getCachedCourse();
 
             if (!course) {
@@ -209,43 +218,8 @@ export function handleCheckUserRole(request: any, sendResponse: (response?: any)
                 return;
             }
 
-            const courseId = course.id;
-
-            // In dev mode, check if we should force teacher role
-            if (import.meta.env.DEV) {
-                const devConfig = await ModeStorageManager.getDevModeConfig();
-                if (devConfig.forceTeacherRole) {
-                    console.log(`[handleCheckUserRole] DEV MODE: Forcing teacher role for course ${courseId}`);
-                    sendResponse({ success: true, isTeacher: true });
-                    return;
-                }
-            }
-
-            // Verificar si hay un caché válido del rol del usuario para este curso
-            const cachedRole = await ModeStorageManager.getUserRoleForCourse(courseId);
-
-            if (cachedRole && cachedRole.isValid) {
-                console.log(`[handleCheckUserRole] Usando caché del rol para curso ${courseId}: ${cachedRole.isTeacher ? 'Profesor' : 'Alumno'}`);
-                sendResponse({ success: true, isTeacher: cachedRole.isTeacher });
-                return;
-            }
-
-            // Verificar el rol del usuario
-            let isTeacher;
-            try {
-                isTeacher = await course.isCurrentUserTeacher();
-            } catch (error: any) {
-                console.error('[handleCheckUserRole] Error al verificar rol del usuario en Egela:', error);
-                sendResponse({ success: false, error: error.message, isTeacher: false });
-                return;
-            }
-
-            console.log(`[handleCheckUserRole] Usuario es profesor en curso ${courseId}: ${isTeacher}`);
-
-            // Guardar en caché para este curso
-            await ModeStorageManager.saveUserRoleForCourse(courseId, isTeacher);
-
-            sendResponse({ success: true, isTeacher });
+            // Delegate to handleCheckUserRoleForCourse with the courseId
+            return handleCheckUserRoleForCourse({ courseId: course.id }, sendResponse);
         } catch (error: any) {
             console.error('[handleCheckUserRole] Error general al verificar rol del usuario:', error);
             sendResponse({ success: false, error: error.message, isTeacher: false });
