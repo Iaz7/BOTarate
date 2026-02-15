@@ -28,18 +28,15 @@ import {
     handleGetProgressConfig
 } from "./handlers/dataHandlers";
 import {
-    handleAddExercise,
     handleCheckUserRole,
     handleCheckUserRoleForCourse,
     handleGetLabConfig,
     handleGetUserCourses,
     handleRemoveChallengeExercisesExplanations,
-    handleRemoveExercise,
     handleRemoveExerciseData,
     handleSaveChatHistory,
     handleSaveProgressConfig,
     handleUpdateConcepts,
-    handleUpdateExercise,
     handleUpdateExerciseAllowed,
     handleUpdateExerciseContext,
     handleUpdateExercisePicky,
@@ -164,12 +161,6 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleUpdateExerciseContext(request, sendResponse);
         case "updateConcepts":
             return handleUpdateConcepts(request, sendResponse);
-        case "addExercise":
-            return handleAddExercise(request, sendResponse);
-        case "removeExercise":
-            return handleRemoveExercise(request, sendResponse);
-        case "updateExercise":
-            return handleUpdateExercise(request, sendResponse);
         case "setLanguage":
             setLanguage(request.language)
                 .then(() => sendResponse({ success: true }))

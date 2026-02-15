@@ -13,7 +13,6 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
 
     // Modal states for exercise management
     const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
-    const [isAddingExercise, setIsAddingExercise] = useState(false);
     const [needsRefresh, setNeedsRefresh] = useState(false);
 
     useEffect(() => {
@@ -143,25 +142,7 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
         }
     };
 
-    const handleDeleteExercise = async (exerciseName: string) => {
-        try {
-            await chrome.runtime.sendMessage({
-                action: "removeExercise",
-                pageId: pageId,
-                exerciseName,
-            });
 
-            // Reload config after deletion
-            await loadConfigFromStorage();
-
-            if (onConfigUpdate) {
-                onConfigUpdate();
-            }
-        } catch (error) {
-            console.error("Error deleting exercise:", error);
-            setErrorMessage("Error deleting exercise. Please try again.");
-        }
-    };
 
     const refreshExercises = async () => {
         setNeedsRefresh(true);
@@ -178,9 +159,6 @@ export const useExerciseConfig = ({ exercises, pageId, onConfigUpdate, isActive 
         handleSaveChanges,
         editingExercise,
         setEditingExercise,
-        isAddingExercise,
-        setIsAddingExercise,
-        handleDeleteExercise,
         refreshExercises,
     };
 };

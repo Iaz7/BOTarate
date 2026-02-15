@@ -226,36 +226,5 @@ export class ExerciseStorageManager extends BaseStorageManager {
         await this.saveExerciseData(pageId, data.exercises, data.exerciseContext, concepts, data.learningObjectives);
     }
 
-    /**
-     * Adds a new exercise to a page
-     */
-    static async addExercise(pageId: string, exercise: { name: string; statement: string }): Promise<void> {
-        const data = await this.getExerciseData(pageId);
-        if (!data) throw new Error(`No exercise data found for page ${pageId}`);
-        data.exercises.push({ ...exercise, allowed: true, isPicky: false });
-        await this.saveExerciseData(pageId, data.exercises, data.exerciseContext, data.concepts, data.learningObjectives);
-    }
 
-    /**
-     * Removes an exercise from a page
-     */
-    static async removeExercise(pageId: string, exerciseName: string): Promise<void> {
-        const data = await this.getExerciseData(pageId);
-        if (!data) throw new Error(`No exercise data found for page ${pageId}`);
-        const filtered = data.exercises.filter(ex => ex.name !== exerciseName);
-        await this.saveExerciseData(pageId, filtered, data.exerciseContext, data.concepts, data.learningObjectives);
-    }
-
-    /**
-     * Updates an exercise's name and statement
-     */
-    static async updateExercise(pageId: string, oldName: string, updatedExercise: { name: string; statement: string }): Promise<void> {
-        const data = await this.getExerciseData(pageId);
-        if (!data) throw new Error(`No exercise data found for page ${pageId}`);
-        const exercise = data.exercises.find(ex => ex.name === oldName);
-        if (!exercise) throw new Error(`Exercise ${oldName} not found`);
-        exercise.name = updatedExercise.name;
-        exercise.statement = updatedExercise.statement;
-        await this.saveExerciseData(pageId, data.exercises, data.exerciseContext, data.concepts, data.learningObjectives);
-    }
 }

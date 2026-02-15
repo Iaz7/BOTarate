@@ -300,50 +300,7 @@ export function handleUpdateConcepts(request: any, sendResponse: (response?: any
     return true;
 }
 
-export function handleAddExercise(request: any, sendResponse: (response?: any) => void): boolean {
-    const { pageId, exercise } = request;
-    (async () => {
-        try {
-            await ExerciseStorageManager.addExercise(pageId, exercise);
-            console.log(`Ejercicio añadido a página ${pageId}: ${exercise.name}`);
-            sendResponse({ success: true });
-        } catch (error: any) {
-            console.error('Error al añadir ejercicio:', error);
-            sendResponse({ success: false, error: error.message });
-        }
-    })();
-    return true;
-}
 
-export function handleRemoveExercise(request: any, sendResponse: (response?: any) => void): boolean {
-    const { pageId, exerciseName } = request;
-    (async () => {
-        try {
-            await ExerciseStorageManager.removeExercise(pageId, exerciseName);
-            console.log(`Ejercicio eliminado de página ${pageId}: ${exerciseName}`);
-            sendResponse({ success: true });
-        } catch (error: any) {
-            console.error('Error al eliminar ejercicio:', error);
-            sendResponse({ success: false, error: error.message });
-        }
-    })();
-    return true;
-}
-
-export function handleUpdateExercise(request: any, sendResponse: (response?: any) => void): boolean {
-    const { pageId, oldName, exercise } = request;
-    (async () => {
-        try {
-            await ExerciseStorageManager.updateExercise(pageId, oldName, exercise);
-            console.log(`Ejercicio actualizado en página ${pageId}: ${oldName} -> ${exercise.name}`);
-            sendResponse({ success: true });
-        } catch (error: any) {
-            console.error('Error al actualizar ejercicio:', error);
-            sendResponse({ success: false, error: error.message });
-        }
-    })();
-    return true;
-}
 
 /**
  * Fetches the user's course list from the eGela dashboard.
