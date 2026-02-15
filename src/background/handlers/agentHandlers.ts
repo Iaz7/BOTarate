@@ -231,6 +231,7 @@ export function handleEvaluateSolution(request: any, sendResponse: (response?: a
                 await EvaluationStorageManager.saveEvaluation(
                     pageId,
                     exerciseName,
+                    exerciseStatement,
                     studentSolution,
                     evaluation
                 );

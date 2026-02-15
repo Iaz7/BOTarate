@@ -534,6 +534,12 @@ const ExtensionContent: React.FC = () => {
     const handleEvaluationGenerated = () => {
         // Incrementar el trigger para forzar recarga en ChatSidebar
         setReloadEvaluationsKey(prev => prev + 1);
+
+        // Abrir el modal de lista de evaluaciones para el ejercicio actual
+        if (exercises.length > 0 && exercises[selectedExerciseIndex]) {
+            setSelectedEvaluationExerciseName(exercises[selectedExerciseIndex].name);
+            setIsEvaluationListModalOpen(true);
+        }
     };
 
     const handleIdentifyExercises = async () => {
