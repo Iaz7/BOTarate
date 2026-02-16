@@ -72,7 +72,7 @@ const EvaluationListModal: React.FC<EvaluationListModalProps> = ({ exerciseName,
                             <div className="list-group">
                                 {evaluations.map((evaluation, index) => (
                                     <button
-                                        key={index}
+                                        key={`${evaluation.timestamp}-${evaluation.score}-${index}`}
                                         type="button"
                                         className={`list-group-item list-group-item-action ${
                                             selectedEvaluation === evaluation ? "active" : ""

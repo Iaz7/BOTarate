@@ -77,8 +77,14 @@
             "withName": "📦 \"{{name}}\" baliabidea irakurtzen...",
             "generic": "📦 Baliabidea irakurtzen..."
         },
-        "explainExercise": "💡 {{index}} ariketa azaltzen...",
-        "solveExercise": "📝 {{index}} ariketaren soluzio formularioa irekitzen...",
+        "explainExercise": {
+            "withName": "💡 \"{{name}}\" ariketa azaltzen...",
+            "default": "💡 {{index}} ariketa azaltzen..."
+        },
+        "solveExercise": {
+            "withName": "📝 \"{{name}}\" ariketaren soluzio formularioa irekitzen...",
+            "default": "📝 {{index}} ariketaren soluzio formularioa irekitzen..."
+        },
         "getFilteredFileContent": "🔍 Fitxategian bilatzen...",
         "analyzeImage": {
             "withName": "🖼️ \"{{name}}\" irudia aztertzen...",

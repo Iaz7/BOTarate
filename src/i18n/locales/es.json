@@ -77,8 +77,14 @@
             "withName": "📦 Leyendo recurso \"{{name}}\"...",
             "generic": "📦 Leyendo recurso..."
         },
-        "explainExercise": "💡 Explicando ejercicio {{index}}...",
-        "solveExercise": "📝 Abriendo formulario de solución para ejercicio {{index}}...",
+        "explainExercise": {
+            "withName": "💡 Explicando ejercicio \"{{name}}\"...",
+            "default": "💡 Explicando ejercicio {{index}}..."
+        },
+        "solveExercise": {
+            "withName": "📝 Abriendo formulario de solución para ejercicio \"{{name}}\"...",
+            "default": "📝 Abriendo formulario de solución para ejercicio {{index}}..."
+        },
         "getFilteredFileContent": "🔍 Buscando en archivo...",
         "analyzeImage": {
             "withName": "🖼️ Analizando imagen \"{{name}}\"...",

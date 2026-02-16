@@ -77,8 +77,14 @@
             "withName": "📦 Reading resource \"{{name}}\"...",
             "generic": "📦 Reading resource..."
         },
-        "explainExercise": "💡 Explaining exercise {{index}}...",
-        "solveExercise": "📝 Opening solution form for exercise {{index}}...",
+        "explainExercise": {
+            "withName": "💡 Explaining exercise \"{{name}}\"...",
+            "default": "💡 Explaining exercise {{index}}..."
+        },
+        "solveExercise": {
+            "withName": "📝 Opening solution form for exercise \"{{name}}\"...",
+            "default": "📝 Opening solution form for exercise {{index}}..."
+        },
         "getFilteredFileContent": "🔍 Searching in file...",
         "analyzeImage": {
             "withName": "🖼️ Analyzing image \"{{name}}\"...",

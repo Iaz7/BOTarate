@@ -301,14 +301,63 @@ export function handleInitializeExplanationChat(request: any, sendResponse: (res
     return true;
 }
 
+async function restoreExplanationContext(
+    pageId: string,
+    exerciseName: string,
+    courseId?: string,
+    chatHistory?: Array<{ role: string; content: string }>
+): Promise<void> {
+    const explanationAgent = getExplanationAgent();
+    const explanation = await ExplanationStorageManager.getExplanation(pageId, exerciseName);
+
+    if (!explanation) {
+        throw new Error(t("errors.loadingExplanation"));
+    }
+
+    const exerciseData = await ExerciseStorageManager.getExerciseData(pageId);
+    let concepts: string[] | undefined = undefined;
+    let learningObjectives: string | undefined = undefined;
+    let isPicky = false;
+
+    if (exerciseData) {
+        concepts = exerciseData.concepts;
+        learningObjectives = exerciseData.learningObjectives;
+        const exercise = exerciseData.exercises.find(ex => ex.name === exerciseName);
+        isPicky = exercise?.isPicky === true;
+    }
+
+    const progressSummary = await buildProgressSummary(courseId);
+
+    const safeChatHistory = (chatHistory || explanation.chatHistory || [])
+        .filter(msg => (msg.role === "user" || msg.role === "assistant") && typeof msg.content === "string")
+        .map(msg => ({ role: msg.role, content: msg.content }));
+
+    await explanationAgent.initializeContextForFollowUp(
+        explanation.exerciseName,
+        explanation.exerciseStatement,
+        { steps: explanation.steps },
+        explanation.exerciseContext,
+        concepts,
+        learningObjectives,
+        progressSummary,
+        safeChatHistory,
+        pageId,
+        isPicky
+    );
+}
+
 export function handleSendExplanationChatMessage(request: any, sendResponse: (response?: any) => void): boolean {
-    const { message } = request;
+    const { message, pageId, exerciseName, courseId, chatHistory } = request;
     const explanationAgent = getExplanationAgent();
 
     console.log(`Procesando mensaje de chat de explicación: ${message}`);
 
     (async () => {
         try {
+            if (pageId && exerciseName) {
+                await restoreExplanationContext(pageId, exerciseName, courseId, chatHistory);
+            }
+
             const response = await explanationAgent.continueConversation(message);
             sendResponse({ success: true, response });
         } catch (error: any) {

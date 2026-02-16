@@ -99,7 +99,10 @@ const useToolMessageTranslator = (exercises?: Exercise[]) => {
                     }
                 }
 
-                return t("tools.explainExercise", { index: index, defaultValue: `💡 Explaining exercise ${index}...` });
+                return t("tools.explainExercise.default", {
+                    index: index,
+                    defaultValue: `💡 Explaining exercise ${index}...`,
+                });
             }
             case "solveExercise": {
                 const index = args.index || args.exerciseIndex;
@@ -114,7 +117,7 @@ const useToolMessageTranslator = (exercises?: Exercise[]) => {
                     }
                 }
 
-                return t("tools.solveExercise", {
+                return t("tools.solveExercise.default", {
                     index: index,
                     defaultValue: `📝 Opening solution form for exercise ${index}...`,
                 });
