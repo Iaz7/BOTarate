@@ -26,8 +26,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
         isLoadingExplanations,
         isLoadingEvaluations,
         exercises,
-        isLabBlocked,
-        isCheckingBlocked,
         isTeacherMode,
         isUserTeacher,
         needsConfiguration,
@@ -133,15 +131,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                                             onClick={() => setActiveTab("exercises")}
                                             type="button"
                                             role="tab"
-                                            disabled={isLabBlocked}
-                                            title={
-                                                isLabBlocked
-                                                    ? t(
-                                                          "sidebar.tooltips.labBlocked",
-                                                          "Not available while lab is blocked",
-                                                      )
-                                                    : ""
-                                            }
                                         >
                                             {t("sidebar.tabs.exercises", "Exercises")}
                                             {(exercisesWithExplanations.length > 0 ||
@@ -260,8 +249,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = props => {
                         inputValue={inputValue}
                         isGenerating={isGenerating}
                         isChatDisabled={isChatDisabled}
-                        isCheckingBlocked={isCheckingBlocked}
-                        isLabBlocked={isLabBlocked}
                         isLoadingExercises={props.isLoadingExercises || false}
                         pageId={props.pageId}
                         hasExercisesLoaded={props.hasExercisesLoaded}

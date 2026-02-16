@@ -208,6 +208,9 @@ export const useExerciseConfig = ({ exercises, pageId, courseId, onConfigUpdate,
 
     const refreshExercises = async () => {
         setNeedsRefresh(true);
+        if (onConfigUpdate) {
+            await onConfigUpdate();
+        }
     };
 
     return {

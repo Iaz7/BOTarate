@@ -8,6 +8,7 @@ import SolutionModal from "../components/SolutionModal";
 import i18n, { i18nInitialized } from "../i18n";
 import { ConfigManager } from "../util/config/ConfigManager";
 import { Course } from "../util/egela/Course";
+import { detectCurrentCourseSectionNumber } from "../util/egela/SectionDetection";
 import { extractPdfTextFromBase64 } from "../util/pdf/PdfExtractor";
 // @ts-ignore: allow importing CSS as a side-effect in this content script
 import "./bootstrap.css";
@@ -115,17 +116,14 @@ const ExtensionContent: React.FC = () => {
         // Si estamos en la vista de sección del curso (/course/view.php?id=X&section=N)
         const pathname = globalThis.location.pathname;
         if (pathname.includes("/course/view.php")) {
-            const urlParams = new URLSearchParams(globalThis.location.search);
-            const sectionParam = urlParams.get("section");
-            if (sectionParam) {
-                const sectionNumber = parseInt(sectionParam, 10);
-                if (!isNaN(sectionNumber)) {
-                    const section = course.sections.find(s => s.section === sectionNumber);
-                    if (section) {
-                        return { pageName: section.title, currentSectionId: section.id };
-                    }
+            const sectionNumber = detectCurrentCourseSectionNumber(globalThis.location.href, document);
+            if (sectionNumber !== undefined) {
+                const section = course.sections.find(s => s.section === sectionNumber);
+                if (section) {
+                    return { pageName: section.title, currentSectionId: section.id };
                 }
             }
+
             return { pageName: undefined, currentSectionId: undefined };
         }
 

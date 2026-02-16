@@ -1,7 +1,6 @@
 export { default } from './ChatSidebar.tsx';
 import { useEffect, useRef, useState } from "react";
 import { AppMode, ModeManager } from "../../util/config/ModeManager";
-import { ProgressManager } from "../../util/progress/ProgressManager";
 import { SidebarStateStorageManager } from "../../util/storage/SidebarStateStorageManager";
 
 import type { ChatMessage, Exercise } from "../../types/shared";
@@ -61,8 +60,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
     const [isLoadingExplanations, setIsLoadingExplanations] = useState(false);
     const [isLoadingEvaluations, setIsLoadingEvaluations] = useState(false);
     const [exercises, setExercises] = useState<Exercise[]>([]);
-    const [isLabBlocked, setIsLabBlocked] = useState<boolean>(false);
-    const [isCheckingBlocked, setIsCheckingBlocked] = useState<boolean>(true);
+
     const [isTeacherMode, setIsTeacherMode] = useState<boolean>(false);
     const [isUserTeacher, setIsUserTeacher] = useState<boolean>(false);
     const [needsConfiguration, setNeedsConfiguration] = useState<boolean>(false);
@@ -73,7 +71,7 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
     const isChatDisabled =
-        isAnyModalOpen || isGenerating || isLoadingExercises || isLabBlocked || (!!pageId && !hasExercisesLoaded) || isTeacherMode;
+        isAnyModalOpen || isGenerating || isLoadingExercises || (!!pageId && !hasExercisesLoaded) || isTeacherMode;
 
     // Effect: Corregir pestaña activa si no es válida para el contexto actual
     useEffect(() => {
@@ -229,34 +227,6 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
             console.error("Error guardando estado del sidebar:", error);
         }
     }, [isCollapsed, activeTab]);
-
-    // Effect: Verificar si el lab está bloqueado
-    useEffect(() => {
-        const checkLabBlocked = async () => {
-            if (!pageId || !courseId) {
-                setIsLabBlocked(false);
-                setIsCheckingBlocked(false);
-                return;
-            }
-
-            setIsCheckingBlocked(true);
-            try {
-                if (isUserTeacher) {
-                    setIsLabBlocked(false);
-                } else {
-                    const blocked = await ProgressManager.isLabBlocked(pageId, courseId);
-                    setIsLabBlocked(blocked);
-                }
-            } catch (error) {
-                console.error("[ChatSidebar] Error checking if lab is blocked:", error);
-                setIsLabBlocked(false);
-            } finally {
-                setIsCheckingBlocked(false);
-            }
-        };
-
-        checkLabBlocked();
-    }, [pageId, courseId, isUserTeacher]);
 
     // Effect: Cargar ejercicios cuando haya pageId
     useEffect(() => {
@@ -549,8 +519,6 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
         isLoadingExplanations,
         isLoadingEvaluations,
         exercises,
-        isLabBlocked,
-        isCheckingBlocked,
         isTeacherMode,
         isUserTeacher,
         needsConfiguration,

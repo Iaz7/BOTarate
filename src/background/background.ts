@@ -24,8 +24,7 @@ import {
     handleGetExerciseList,
     handleGetExercisesWithEvaluations,
     handleGetExercisesWithExplanations,
-    handleGetLabData,
-    handleGetProgressConfig
+    handleGetLabData
 } from "./handlers/dataHandlers";
 import {
     handleCheckUserRole,
@@ -35,13 +34,12 @@ import {
     handleRemoveChallengeExercisesExplanations,
     handleRemoveExerciseData,
     handleSaveChatHistory,
-    handleSaveProgressConfig,
     handleUpdateConcepts,
+    handleUpdateExercise,
     handleUpdateExerciseAllowed,
     handleUpdateExerciseContext,
     handleUpdateExercisePicky,
     handleUpdateLabReasoningEffort,
-    handleUpdateLabRequired,
     handleUpdateLabVerbosity,
     handleUpdateLearningObjectives
 } from "./handlers/storageHandlers";
@@ -105,6 +103,8 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleGetExercisesWithExplanations(request, sendResponse);
         case "removeExerciseData":
             return handleRemoveExerciseData(request, sendResponse);
+        case "updateExercise":
+            return handleUpdateExercise(request, sendResponse);
         case "updateExerciseAllowed":
             return handleUpdateExerciseAllowed(request, sendResponse);
         case "updateExercisePicky":
@@ -115,18 +115,12 @@ function processMessage(request: any, sender: chrome.runtime.MessageSender, send
             return handleRemoveChallengeExercisesExplanations(request, sendResponse);
         case "getLabData":
             return handleGetLabData(request, sendResponse);
-        case "getProgressConfig":
-            return handleGetProgressConfig(request, sendResponse);
-        case "updateLabRequired":
-            return handleUpdateLabRequired(request, sendResponse);
         case "updateLabVerbosity":
             return handleUpdateLabVerbosity(request, sendResponse);
         case "updateLabReasoningEffort":
             return handleUpdateLabReasoningEffort(request, sendResponse);
         case "getLabConfig":
             return handleGetLabConfig(request, sendResponse);
-        case "saveProgressConfig":
-            return handleSaveProgressConfig(request, sendResponse);
         case "evaluateSolution":
             return handleEvaluateSolution(request, sendResponse);
         case "getExercisesWithEvaluations":

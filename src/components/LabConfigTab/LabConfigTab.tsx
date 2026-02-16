@@ -57,13 +57,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, sectionLabIds, on
         return labs.filter(lab => labIdSet.has(lab.id));
     }, [labs, sectionLabIds]);
 
-    const {
-        handleToggleGenerateContext,
-        handleToggleRequired,
-        handleVerbosityChange,
-        handleReasoningChange,
-        toggleExpand,
-    } = createHandlers(
+    const { handleToggleGenerateContext, handleVerbosityChange, handleReasoningChange, toggleExpand } = createHandlers(
         labConfig,
         setLabConfig,
         pendingChanges,
@@ -149,7 +143,6 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, sectionLabIds, on
                 <p className="mb-2">{renderHTML(t("options.labConfig.infoDesc"))}</p>
                 <ul className="mb-2 small">
                     <li>{renderHTML(t("options.labConfig.infoList.include"))}</li>
-                    <li>{renderHTML(t("options.labConfig.infoList.required"))}</li>
                     <li>{renderHTML(t("options.labConfig.infoList.verbosity"))}</li>
                     <li>{renderHTML(t("options.labConfig.infoList.reasoning"))}</li>
                 </ul>
@@ -160,7 +153,6 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, sectionLabIds, on
                 {filteredLabs.map((lab, index) => {
                     const config = labConfig.get(lab.id);
                     const contextState = labContextState.get(lab.id);
-                    const isRequired = config?.required ?? false;
                     const verbosity = config?.verbosity ?? "medium";
                     const reasoningEffort = config?.reasoningEffort ?? "medium";
                     const isExpanded = expandedLab === lab.id;
@@ -186,7 +178,10 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, sectionLabIds, on
                                 <span className={`lab-name ${!hasContext ? "inactive" : ""}`}>{lab.name}</span>
 
                                 {/* Switch container */}
-                                <div className="lab-switch-row" onClick={e => e.stopPropagation()}>
+                                <div
+                                    className={`lab-switch-row ${isGenerating ? "is-generating" : ""}`}
+                                    onClick={e => e.stopPropagation()}
+                                >
                                     {isGenerating ? (
                                         <span className="spinner-border spinner-border-sm text-primary" role="status">
                                             <span className="visually-hidden">{t("options.labConfig.generating")}</span>
@@ -302,32 +297,6 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, sectionLabIds, on
                             </div>
                             {isExpanded && (
                                 <div className="lab-config-body" id={`lab-${lab.id}`}>
-                                    {/* Toggle Requerido */}
-                                    <div className="mb-3 d-flex align-items-center justify-content-between">
-                                        <label
-                                            className={`form-label small mb-0 ${
-                                                hasContext ? "text-muted" : "text-muted opacity-50"
-                                            }`}
-                                            htmlFor={`switch-lab-${lab.id}`}
-                                        >
-                                            {t("options.labConfig.requiredLabel")}
-                                        </label>
-                                        <div className="form-check form-switch">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                role="switch"
-                                                id={`switch-lab-${lab.id}`}
-                                                checked={isRequired}
-                                                onChange={() => handleToggleRequired(lab.id)}
-                                                disabled={isDisabled || !hasContext}
-                                                style={{ cursor: hasContext ? "pointer" : "not-allowed" }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <hr className="my-2" />
-
                                     <p className={`small mb-2 ${hasContext ? "text-muted" : "text-muted opacity-50"}`}>
                                         <strong>{t("options.labConfig.explanationConfig")}</strong>
                                     </p>

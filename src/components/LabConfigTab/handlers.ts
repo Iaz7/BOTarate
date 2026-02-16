@@ -30,29 +30,6 @@ export const createHandlers = (
         setHasUnsavedChanges(true);
     };
 
-    const handleToggleRequired = (labId: string) => {
-        const currentConfig = labConfig.get(labId);
-        const newValue = !(currentConfig?.required ?? false);
-
-        setLabConfig(prev => {
-            const newConfig = new Map(prev);
-            const current = newConfig.get(labId);
-            if (current) {
-                newConfig.set(labId, { ...current, required: newValue });
-            }
-            return newConfig;
-        });
-
-        setPendingChanges(prev => {
-            const newChanges = new Map(prev);
-            const current = newChanges.get(labId) || {};
-            newChanges.set(labId, { ...current, required: newValue });
-            return newChanges;
-        });
-
-        setHasUnsavedChanges(true);
-    };
-
     const handleVerbosityChange = (labId: string, verbosity: VerbosityLevel) => {
         setLabConfig(prev => {
             const newConfig = new Map(prev);
@@ -114,7 +91,6 @@ export const createHandlers = (
 
     return {
         handleToggleGenerateContext,
-        handleToggleRequired,
         handleVerbosityChange,
         handleReasoningChange,
         toggleExpand,

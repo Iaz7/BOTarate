@@ -4,8 +4,24 @@ import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManage
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
 import { LabStorageManager, ReasoningEffort, VerbosityLevel } from "../../util/storage/LabStorageManager";
 import { ModeStorageManager } from "../../util/storage/ModeStorageManager";
-import { ProgressConfigStorageManager } from "../../util/storage/ProgressConfigStorageManager";
 import { getCachedCourse } from "./dataHandlers";
+
+export function handleUpdateExercise(request: any, sendResponse: (response?: any) => void): boolean {
+    const { pageId, oldName, exercise } = request;
+
+    (async () => {
+        try {
+            await ExerciseStorageManager.updateExercise(pageId, oldName, exercise);
+            console.log(`Ejercicio actualizado en página ${pageId}: ${oldName} -> ${exercise?.name}`);
+            sendResponse({ success: true });
+        } catch (error: any) {
+            console.error("Error al actualizar ejercicio:", error);
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+
+    return true;
+}
 
 export function handleRemoveExerciseData(request: any, sendResponse: (response?: any) => void): boolean {
     const { pageId } = request;
@@ -84,23 +100,6 @@ export function handleRemoveChallengeExercisesExplanations(request: any, sendRes
     return true;
 }
 
-export function handleUpdateLabRequired(request: any, sendResponse: (response?: any) => void): boolean {
-    const { courseId, labId, required } = request;
-
-    (async () => {
-        try {
-            await LabStorageManager.updateLabRequired(courseId, labId, required);
-            console.log(`Estado 'required' actualizado para laboratorio ${labId}: ${required}`);
-            sendResponse({ success: true });
-        } catch (error: any) {
-            console.error('Error al actualizar estado de laboratorio:', error);
-            sendResponse({ success: false, error: error.message });
-        }
-    })();
-
-    return true;
-}
-
 export function handleUpdateLabVerbosity(request: any, sendResponse: (response?: any) => void): boolean {
     const { courseId, labId, verbosity } = request;
 
@@ -149,29 +148,6 @@ export function handleGetLabConfig(request: any, sendResponse: (response?: any) 
             }
         } catch (error: any) {
             console.error('Error al obtener configuración del laboratorio:', error);
-            sendResponse({ success: false, error: error.message });
-        }
-    })();
-
-    return true;
-}
-
-export function handleSaveProgressConfig(request: any, sendResponse: (response?: any) => void): boolean {
-    const { config, courseId } = request;
-
-    (async () => {
-        try {
-            const sanitizedConfig = {
-                minScoreToPass: Math.min(Math.max(Number(config?.minScoreToPass ?? 5), 0), 10),
-                minChallengesPercentage: Math.min(Math.max(Number(config?.minChallengesPercentage ?? 100), 0), 100),
-            };
-
-            await ProgressConfigStorageManager.saveConfig(sanitizedConfig, courseId);
-            const logSuffix = courseId ? ' para curso ' + courseId : '';
-            console.log('Configuración de progreso guardada' + logSuffix);
-            sendResponse({ success: true, config: sanitizedConfig });
-        } catch (error: any) {
-            console.error("Error al guardar configuración de progreso:", error);
             sendResponse({ success: false, error: error.message });
         }
     })();

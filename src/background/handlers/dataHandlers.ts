@@ -5,7 +5,6 @@ import { EvaluationStorageManager } from "../../util/storage/EvaluationStorageMa
 import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManager";
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
 import { Lab, LabStorageManager } from "../../util/storage/LabStorageManager";
-import { ProgressConfigStorageManager } from "../../util/storage/ProgressConfigStorageManager";
 import { createExerciseAgent, getCourseAgent, getEvaluationAgent, getExerciseAgent, getExplanationAgent, initializeAgents } from "../context";
 
 let cachedCourse: Course;
@@ -208,27 +207,6 @@ export function handleGetLabData(request: any, sendResponse: (response?: any) =>
     return true;
 }
 
-export function handleGetProgressConfig(request: any, sendResponse: (response?: any) => void): boolean {
-    const { courseId } = request || {};
-    (async () => {
-        try {
-            const storedConfig = await ProgressConfigStorageManager.getConfig(courseId);
-            if (storedConfig) {
-                const { timestamp, ...config } = storedConfig;
-                sendResponse({ success: true, config, timestamp });
-            } else {
-                const defaultConfig = ProgressConfigStorageManager.getDefaultConfig();
-                sendResponse({ success: true, config: defaultConfig, isDefault: true });
-            }
-        } catch (error: any) {
-            console.error("Error al obtener configuración de progreso:", error);
-            sendResponse({ success: false, error: error.message });
-        }
-    })();
-
-    return true;
-}
-
 export function handleGetExercisesWithEvaluations(request: any, sendResponse: (response?: any) => void): boolean {
     const { pageId } = request;
 
@@ -289,7 +267,6 @@ async function initializeLabDataIfNeeded(course: Course): Promise<void> {
             labs.push({
                 id: resource.id,
                 name: resource.name,
-                required: false,
                 sectionId: section.id
             });
         }

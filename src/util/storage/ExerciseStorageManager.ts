@@ -106,6 +106,52 @@ export class ExerciseStorageManager extends BaseStorageManager {
     }
 
     /**
+     * Updates an existing exercise identified by oldName
+     */
+    static async updateExercise(
+        pageId: string,
+        oldName: string,
+        exercise: { name: string; statement: string }
+    ): Promise<void> {
+        const data = await this.getExerciseData(pageId);
+        if (!data) {
+            throw new Error(`No exercise data found for page ${pageId}`);
+        }
+
+        const index = data.exercises.findIndex(ex => ex.name === oldName);
+        if (index === -1) {
+            throw new Error(`No exercise found with name "${oldName}"`);
+        }
+
+        const trimmedName = exercise.name.trim();
+        const trimmedStatement = exercise.statement.trim();
+
+        if (!trimmedName) {
+            throw new Error("Exercise name is required");
+        }
+
+        const duplicate = data.exercises.some((ex, exIndex) => ex.name === trimmedName && exIndex !== index);
+        if (duplicate) {
+            throw new Error(`An exercise named "${trimmedName}" already exists`);
+        }
+
+        const current = data.exercises[index];
+        data.exercises[index] = {
+            ...current,
+            name: trimmedName,
+            statement: trimmedStatement,
+        };
+
+        await this.saveExerciseData(
+            pageId,
+            data.exercises,
+            data.exerciseContext,
+            data.concepts,
+            data.learningObjectives
+        );
+    }
+
+    /**
      * Updates the "picky" status of a specific exercise
      */
     static async updateExercisePicky(pageId: string, exerciseName: string, isPicky: boolean): Promise<void> {
@@ -149,25 +195,13 @@ export class ExerciseStorageManager extends BaseStorageManager {
 
         const allLabs = labData.labs;
 
-        // Filter only required labs (labs with context that are marked as required)
-        const requiredLabs = allLabs.filter((lab: Lab) => lab.required);
-
-        // Find index of current lab in required labs
-        const currentLabIndex = requiredLabs.findIndex((lab: Lab) => lab.id === pageId);
+        // Find index of current lab
+        const currentLabIndex = allLabs.findIndex((lab: Lab) => lab.id === pageId);
 
         // Get labs up to and including the current one
-        // If current lab is not in required labs, we include all required labs before it by order
-        let labsToInclude: Lab[];
-        if (currentLabIndex >= 0) {
-            labsToInclude = requiredLabs.slice(0, currentLabIndex + 1);
-        } else {
-            // Current lab is not required - include all required labs that come before it in allLabs
-            const currentIndexInAll = allLabs.findIndex((lab: Lab) => lab.id === pageId);
-            labsToInclude = requiredLabs.filter((_, idx) => {
-                const labInAll = allLabs.findIndex((l: Lab) => l.id === requiredLabs[idx].id);
-                return labInAll < currentIndexInAll;
-            });
-        }
+        const labsToInclude = currentLabIndex >= 0
+            ? allLabs.slice(0, currentLabIndex + 1)
+            : allLabs;
 
         // Collect concepts from all previous labs, maintaining order
         const conceptsSet = new Set<string>();

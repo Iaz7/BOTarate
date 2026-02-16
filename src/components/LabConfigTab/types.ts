@@ -11,7 +11,6 @@ export interface LabConfigTabProps {
 }
 
 export interface PendingChanges {
-    required?: boolean;
     verbosity?: VerbosityLevel;
     reasoningEffort?: ReasoningEffort;
 }
@@ -23,7 +22,6 @@ export interface LabContextState {
 }
 
 export interface LabConfig {
-    required: boolean;
     verbosity: VerbosityLevel;
     reasoningEffort: ReasoningEffort;
 }

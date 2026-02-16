@@ -1,100 +1,54 @@
 import { t } from "../../i18n/backend";
-import { Lab } from "../../types/shared";
 import { EvaluationStorageManager } from "../../util/storage/EvaluationStorageManager";
 import { ExerciseStorageManager } from "../../util/storage/ExerciseStorageManager";
 import { ExplanationStorageManager } from "../../util/storage/ExplanationStorageManager";
 import { LabStorageManager } from "../../util/storage/LabStorageManager";
 import { getCourseAgent, getEvaluationAgent, getExplanationAgent } from "../context";
 
+/**
+ * Builds a summary of the student's progress across all labs in the course.
+ * Used to provide context to the LLM about what the student has already completed.
+ */
 async function buildProgressSummary(courseId?: string): Promise<string | undefined> {
     if (!courseId) {
         return undefined;
     }
 
-    const requiredLabs = await getRequiredLabs(courseId);
-    if (!requiredLabs || requiredLabs.length === 0) {
+    const labData = await LabStorageManager.getLabData(courseId);
+    const labs = labData?.labs;
+    if (!labs || labs.length === 0) {
         return undefined;
     }
 
-    const { completedLabs, completedExercises } = await collectLabCompletionData(requiredLabs);
-    if (completedLabs.length === 0 && completedExercises.size === 0) {
-        return t("llmPrompts.progressSummary.noProgress") + "\n";
-    }
-
-    return formatProgressSummary(completedLabs, completedExercises);
-}
-
-async function getRequiredLabs(courseId: string): Promise<Lab[] | undefined> {
-    const labData = await LabStorageManager.getLabData(courseId);
-    return labData?.labs?.filter(lab => lab.required);
-}
-
-async function collectLabCompletionData(labs: Lab[]): Promise<{ completedLabs: string[]; completedExercises: Map<string, string[]>; }> {
-    const completedLabs: string[] = [];
     const completedExercises: Map<string, string[]> = new Map();
 
     for (const lab of labs) {
-        const result = await analyzeLabCompletion(lab);
-        if (!result) {
-            continue;
+        const exerciseData = await ExerciseStorageManager.getExerciseData(lab.id);
+        if (!exerciseData) continue;
+
+        const completedInLab: string[] = [];
+        for (const exercise of exerciseData.exercises) {
+            const evaluations = await EvaluationStorageManager.getEvaluations(lab.id, exercise.name);
+            if (evaluations && evaluations.length > 0) {
+                const bestScore = Math.max(...evaluations.map((e: any) => e.score));
+                if (bestScore >= 5) {
+                    completedInLab.push(exercise.name);
+                }
+            }
         }
 
-        if (result.allCompleted) {
-            completedLabs.push(lab.name);
-        }
-
-        if (result.completedExercises.length > 0) {
-            completedExercises.set(lab.name, result.completedExercises);
-        }
-    }
-
-    return { completedLabs, completedExercises };
-}
-
-async function analyzeLabCompletion(lab: Lab): Promise<{ allCompleted: boolean; completedExercises: string[] } | undefined> {
-    const exerciseData = await ExerciseStorageManager.getExerciseData(lab.id);
-    if (!exerciseData) {
-        return undefined;
-    }
-
-    const challengeExercises = exerciseData.exercises.filter((ex: any) => ex.allowed === false);
-    if (challengeExercises.length === 0) {
-        return undefined;
-    }
-
-    let allCompleted = true;
-    const completedInLab: string[] = [];
-
-    for (const exercise of challengeExercises) {
-        const evaluations = await EvaluationStorageManager.getEvaluations(lab.id, exercise.name);
-        if (!evaluations || evaluations.length === 0) {
-            allCompleted = false;
-            continue;
-        }
-
-        const bestScore = Math.max(...evaluations.map((e: any) => e.score));
-        if (bestScore >= 5) {
-            completedInLab.push(exercise.name);
-        } else {
-            allCompleted = false;
+        if (completedInLab.length > 0) {
+            completedExercises.set(lab.name, completedInLab);
         }
     }
 
-    return { allCompleted, completedExercises: completedInLab };
-}
-
-function formatProgressSummary(completedLabs: string[], completedExercises: Map<string, string[]>): string {
-    let summary = "";
-
-    if (completedLabs.length > 0) {
-        summary += `- ${t("llmPrompts.progressSummary.completedLabs")}: ${completedLabs.join(", ")}\n`;
+    if (completedExercises.size === 0) {
+        return t("llmPrompts.progressSummary.noProgress") + "\n";
     }
 
-    if (completedExercises.size > 0) {
-        summary += `- ${t("llmPrompts.progressSummary.completedExercises")}:\n`;
-        for (const [labName, exercises] of completedExercises) {
-            summary += `  * ${labName}: ${exercises.join(", ")}\n`;
-        }
+    let summary = `- ${t("llmPrompts.progressSummary.completedExercises")}:\n`;
+    for (const [labName, exercises] of completedExercises) {
+        summary += `  * ${labName}: ${exercises.join(", ")}\n`;
     }
 
     return summary;
