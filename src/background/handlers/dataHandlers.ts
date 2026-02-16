@@ -289,7 +289,8 @@ async function initializeLabDataIfNeeded(course: Course): Promise<void> {
             labs.push({
                 id: resource.id,
                 name: resource.name,
-                required: false
+                required: false,
+                sectionId: section.id
             });
         }
     }

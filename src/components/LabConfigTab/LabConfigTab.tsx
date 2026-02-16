@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import LabContextModal from "../LabContextModal";
 import { createHandlers } from "./handlers";
@@ -8,7 +8,7 @@ import { ReasoningSelector, VerbositySelector } from "./selectors";
 import { LabConfigTabProps } from "./types";
 import { handleSaveChanges } from "./utils";
 
-const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, isActive }) => {
+const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, sectionLabIds, onConfigUpdate, isActive }) => {
     const { t } = useTranslation();
 
     // Función auxiliar para renderizar HTML seguro
@@ -47,6 +47,15 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
         contextModalLabId,
         setContextModalLabId,
     } = useLabConfigState(courseId, isActive);
+
+    // Filtrar labs por los IDs de la sección actual
+    const filteredLabs = useMemo(() => {
+        // Si no hay filtro de sección (undefined), mostrar todos los labs
+        if (sectionLabIds === undefined) return labs;
+        // Si hay filtro de sección (incluso si está vacío), filtrar por esos IDs
+        const labIdSet = new Set(sectionLabIds);
+        return labs.filter(lab => labIdSet.has(lab.id));
+    }, [labs, sectionLabIds]);
 
     const {
         handleToggleGenerateContext,
@@ -116,11 +125,16 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
         );
     }
 
-    if (labs.length === 0) {
+    if (filteredLabs.length === 0) {
+        const inSection = sectionLabIds !== undefined;
         return (
             <div className="alert alert-info" role="alert">
-                <strong>{t("options.labConfig.noLabsTitle")}</strong>
-                <p className="mb-0 mt-2 small">{t("options.labConfig.noLabsDesc")}</p>
+                <strong>
+                    {t(inSection ? "options.labConfig.noLabsInSectionTitle" : "options.labConfig.noLabsTitle")}
+                </strong>
+                <p className="mb-0 mt-2 small">
+                    {t(inSection ? "options.labConfig.noLabsInSectionDesc" : "options.labConfig.noLabsDesc")}
+                </p>
             </div>
         );
     }
@@ -143,7 +157,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
             </div>
 
             <div className="accordion" id="labAccordion">
-                {labs.map((lab, index) => {
+                {filteredLabs.map((lab, index) => {
                     const config = labConfig.get(lab.id);
                     const contextState = labContextState.get(lab.id);
                     const isRequired = config?.required ?? false;
@@ -168,14 +182,10 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                                 onClick={() => canExpand && toggleExpand(lab.id)}
                                 style={{ minHeight: "48px" }}
                             >
-                                {/* Lab number */}
-                                <span className="badge bg-secondary lab-number-badge">#{index + 1}</span>
-
                                 {/* Lab name */}
                                 <span className={`lab-name ${!hasContext ? "inactive" : ""}`}>{lab.name}</span>
 
                                 {/* Switch container */}
-
                                 <div className="lab-switch-row" onClick={e => e.stopPropagation()}>
                                     {isGenerating ? (
                                         <span className="spinner-border spinner-border-sm text-primary" role="status">
@@ -254,34 +264,41 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                                     )}
                                 </div>
 
-                                {/* Expand icon */}
-                                <div className="lab-expand-icon ms-2" style={{ display: "flex", alignItems: "center" }}>
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="16"
-                                        height="16"
-                                        fill="currentColor"
-                                        className={`bi bi-chevron-${
-                                            canExpand ? (isExpanded ? "up" : "down") : "right"
-                                        }`}
-                                        viewBox="0 0 16 16"
+                                {/* Expand icon - solo visible si está incluido con éxito */}
+                                {canExpand && (
+                                    <div
+                                        className="lab-expand-icon"
                                         style={{
-                                            color: "#495057", // Default color for visibility
+                                            display: "flex",
+                                            alignItems: "center",
+                                            marginLeft: "4px",
                                         }}
                                     >
-                                        {isExpanded ? (
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M1.646 10.854a.5.5 0 0 0 .708 0l6-6a.5.5 0 0 0-.708-.708l-6 6a.5.5 0 0 0 0 .708zm12.708 0a.5.5 0 0 0 0-.708l-6-6a.5.5 0 1 0-.708.708l6 6a.5.5 0 0 0 .708 0z"
-                                            />
-                                        ) : (
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M1.646 5.146a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708zm12.708 0a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708l6-6a.5.5 0 0 1 .708 0z"
-                                            />
-                                        )}
-                                    </svg>
-                                </div>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="16"
+                                            height="16"
+                                            fill="currentColor"
+                                            className={`bi bi-chevron-${isExpanded ? "up" : "down"}`}
+                                            viewBox="0 0 16 16"
+                                            style={{
+                                                color: "#495057",
+                                            }}
+                                        >
+                                            {isExpanded ? (
+                                                <path
+                                                    fillRule="evenodd"
+                                                    d="M1.646 10.854a.5.5 0 0 0 .708 0l6-6a.5.5 0 0 0-.708-.708l-6 6a.5.5 0 0 0 0 .708zm12.708 0a.5.5 0 0 0 0-.708l-6-6a.5.5 0 1 0-.708.708l6 6a.5.5 0 0 0 .708 0z"
+                                                />
+                                            ) : (
+                                                <path
+                                                    fillRule="evenodd"
+                                                    d="M1.646 5.146a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708zm12.708 0a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708l6-6a.5.5 0 0 1 .708 0z"
+                                                />
+                                            )}
+                                        </svg>
+                                    </div>
+                                )}
                             </div>
                             {isExpanded && (
                                 <div className="lab-config-body" id={`lab-${lab.id}`}>
@@ -338,7 +355,7 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, onConfigUpdate, i
                                     {/* Edit Context Button */}
                                     <div className="mb-2">
                                         <button
-                                            className="btn btn-outline-secondary btn-sm w-100"
+                                            className="btn btn-outline-primary btn-sm"
                                             onClick={e => {
                                                 e.stopPropagation();
                                                 setContextModalLabId(lab.id);

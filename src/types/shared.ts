@@ -5,6 +5,7 @@ export interface Lab {
     id: string;
     name: string;
     required: boolean;
+    sectionId?: string;
     verbosity?: VerbosityLevel;
     reasoningEffort?: ReasoningEffort;
 }

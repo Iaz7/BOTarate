@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import ChatSidebar from "../components/ChatSidebar";
@@ -94,6 +94,70 @@ const ExtensionContent: React.FC = () => {
     const [pendingModalOpen, setPendingModalOpen] = useState<{ index: number; fromCache: boolean } | null>(null);
     const [pendingSolutionModalOpen, setPendingSolutionModalOpen] = useState<number | null>(null);
     const identifyingExercisesRef = React.useRef<boolean>(false);
+
+    // Derivar pageName y sectionId del curso y la página actual
+    const { pageName, currentSectionId } = useMemo(() => {
+        if (!course) {
+            return { pageName: undefined, currentSectionId: undefined };
+        }
+
+        // Si estamos en un lab (page), buscar por pageId
+        if (currentPageId) {
+            for (const section of course.sections) {
+                const resource = section.resources.find(r => r.id === currentPageId);
+                if (resource) {
+                    return { pageName: resource.name, currentSectionId: section.id };
+                }
+            }
+            return { pageName: undefined, currentSectionId: undefined };
+        }
+
+        // Si estamos en la vista de sección del curso (/course/view.php?id=X&section=N)
+        const pathname = globalThis.location.pathname;
+        if (pathname.includes("/course/view.php")) {
+            const urlParams = new URLSearchParams(globalThis.location.search);
+            const sectionParam = urlParams.get("section");
+            if (sectionParam) {
+                const sectionNumber = parseInt(sectionParam, 10);
+                if (!isNaN(sectionNumber)) {
+                    const section = course.sections.find(s => s.section === sectionNumber);
+                    if (section) {
+                        return { pageName: section.title, currentSectionId: section.id };
+                    }
+                }
+            }
+            return { pageName: undefined, currentSectionId: undefined };
+        }
+
+        // Si estamos en un recurso tipo /mod/ (no page), buscar por id del módulo
+        if (pathname.includes("/mod/")) {
+            const urlParams = new URLSearchParams(globalThis.location.search);
+            const modId = urlParams.get("id");
+            if (modId) {
+                for (const section of course.sections) {
+                    const resource = section.resources.find(r => r.id === modId);
+                    if (resource) {
+                        return { pageName: resource.name, currentSectionId: section.id };
+                    }
+                }
+            }
+        }
+
+        return { pageName: undefined, currentSectionId: undefined };
+    }, [course, currentPageId]);
+
+    // IDs de los labs que pertenecen a la sección actual
+    const sectionLabIds = useMemo(() => {
+        if (!course || !currentSectionId) return undefined;
+        const section = course.sections?.find(s => s.id === currentSectionId);
+        if (!section) return [];
+        return section.resources?.filter(r => r.module === "page").map(r => r.id) || [];
+    }, [course, currentSectionId]);
+
+    // Nombre a mostrar debajo del título
+    const displayName = useMemo(() => {
+        return pageName ?? undefined;
+    }, [pageName]);
 
     const openExerciseModalForIndex = useCallback(
         (exerciseIndex: number, fromCache: boolean): boolean => {
@@ -571,6 +635,8 @@ const ExtensionContent: React.FC = () => {
                     onClose={handleCloseExtension}
                     isLoadingExercises={isLoadingExercises}
                     pageId={currentPageId || undefined}
+                    pageName={displayName}
+                    sectionLabIds={sectionLabIds}
                     onOpenExplanation={handleOpenExplanationFromCache}
                     onExplanationGenerated={handleExplanationGenerated}
                     onOpenEvaluation={handleOpenEvaluationList}

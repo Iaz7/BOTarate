@@ -111,7 +111,7 @@
             "chat": "Txata",
             "exercises": "Ariketak",
             "progress": "Nire aurrerapena",
-            "configureCourse": "Irakasgaia konfiguratu",
+            "configureCourse": "Sekzioa konfiguratu",
             "configureLab": "Laborategia konfiguratu"
         },
         "tooltips": {
@@ -261,15 +261,15 @@
             "noLabOpenDesc": "Lehenik laborategia ireki behar duzu ariketak gehitu edo konfiguratu ahal izateko.",
             "table": {
                 "headerName": "Ariketaren izena",
-                "headerChallenge": "Ikasle bakarrik da",
-                "headerPicky": "Lagun faltsua da",
+                "headerChallenge": "Ikasle bakarrik",
+                "headerPicky": "Lagun faltsua",
                 "headerActions": "Ekintzak",
                 "badgeChallenge": "Ikasle bakarrik",
                 "badgePicky": "Lagun faltsua",
-                "switchChallengeOn": "Ikasle bakarrik da",
-                "switchChallengeOff": "Ez da ikasle bakarrik",
-                "switchPickyOn": "Lagun faltsua da",
-                "switchPickyOff": "Ez da lagun faltsua"
+                "switchChallengeOn": "Ikasle bakarrik",
+                "switchChallengeOff": "Ez ikasle bakarrik",
+                "switchPickyOn": "Lagun faltsua",
+                "switchPickyOff": "Ez lagun faltsua"
             },
             "unsavedTitle": "⚠️ Gorde gabeko aldaketak dituzu",
             "unsavedDesc": "Sakatu \"Gorde aldaketak\" konfigurazioa aplikatzeko eta agentea birsortzeko.",
@@ -283,6 +283,8 @@
             "loading": "Laborategiak kargatzen...",
             "noLabsTitle": "Ez dago laborategirik eskuragarri",
             "noLabsDesc": "Ez da laborategi gisa konfiguratu daitekeen 'page' motako baliabiderik aurkitu irakasgaian.",
+            "noLabsInSectionTitle": "Ez dago laborategirik atal honetan",
+            "noLabsInSectionDesc": "Atal honek ez du laborategi gisa konfiguratu daitekeen 'page' motako baliabiderik.",
             "infoTitle": "Irakasgaiaren konfigurazioa",
             "infoDesc": "Konfiguratu zein laborategi sartu eta haien <strong>derrigorrezkotasuna</strong>, <strong>hitzezko maila</strong> eta <strong>arrazoibide</strong> aukerak.",
             "infoList": {
@@ -320,7 +322,7 @@
                 "reasoningMedium": "Arrazoibide moderatua",
                 "reasoningHigh": "Arrazoibide zehatza pauso-pauso"
             },
-            "editContext": "Ikusi / Editatu testuingurua",
+            "editContext": "Testuingurua",
             "exercisesTitle": "Ariketak:",
             "noExercises": "Ez dago ariketarik laboratorio honetan.",
             "addExercise": "Ariketa gehitu",

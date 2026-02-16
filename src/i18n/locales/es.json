@@ -111,7 +111,7 @@
             "chat": "Chat",
             "exercises": "Ejercicios",
             "progress": "Mi progreso",
-            "configureCourse": "Configurar asignatura",
+            "configureCourse": "Configurar sección",
             "configureLab": "Configurar laboratorio"
         },
         "tooltips": {
@@ -264,15 +264,15 @@
             "noLabOpenDesc": "Debes abrir un laboratorio primero para poder añadir o configurar ejercicios.",
             "table": {
                 "headerName": "Nombre del ejercicio",
-                "headerChallenge": "Es solo estudiante",
-                "headerPicky": "Es falso amigo",
+                "headerChallenge": "Solo estudiante",
+                "headerPicky": "Falso amigo",
                 "headerActions": "Acciones",
                 "badgeChallenge": "Solo estudiante",
                 "badgePicky": "Falso amigo",
-                "switchChallengeOn": "Es solo estudiante",
-                "switchChallengeOff": "No es solo estudiante",
-                "switchPickyOn": "Es falso amigo",
-                "switchPickyOff": "No es falso amigo"
+                "switchChallengeOn": "Solo estudiante",
+                "switchChallengeOff": "No solo estudiante",
+                "switchPickyOn": "Falso amigo",
+                "switchPickyOff": "No falso amigo"
             },
             "unsavedTitle": "⚠️ Tienes cambios sin guardar",
             "unsavedDesc": "Haz clic en \"Guardar cambios\" para aplicar la configuración y regenerar el agente.",
@@ -286,6 +286,8 @@
             "loading": "Cargando laboratorios...",
             "noLabsTitle": "No hay laboratorios disponibles",
             "noLabsDesc": "No se encontraron recursos tipo 'página' en la asignatura que puedan configurarse como laboratorios.",
+            "noLabsInSectionTitle": "No hay laboratorios en esta sección",
+            "noLabsInSectionDesc": "Esta sección no contiene recursos tipo 'página' que puedan configurarse como laboratorios.",
             "infoTitle": "Configuración de la asignatura",
             "infoDesc": "Configura qué laboratorios incluir y sus opciones de <strong>nivel requerido</strong>, <strong>verbosidad</strong> y <strong>razonamiento</strong>.",
             "infoList": {
@@ -323,7 +325,7 @@
                 "reasoningMedium": "Razonamiento moderado",
                 "reasoningHigh": "Razonamiento detallado paso a paso"
             },
-            "editContext": "Ver / Editar contexto",
+            "editContext": "Contexto",
             "exercisesTitle": "Ejercicios:",
             "noExercises": "No hay ejercicios en este laboratorio.",
             "addExercise": "Añadir ejercicio",

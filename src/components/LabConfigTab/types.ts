@@ -5,6 +5,7 @@ export type ContextGenerationStatus = "idle" | "generating" | "completed" | "err
 
 export interface LabConfigTabProps {
     courseId: string;
+    sectionLabIds?: string[];
     onConfigUpdate?: () => void;
     isActive: boolean;
 }

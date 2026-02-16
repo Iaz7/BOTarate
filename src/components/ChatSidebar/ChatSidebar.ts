@@ -20,6 +20,8 @@ export interface ChatSidebarProps {
     onIdentifyExercises?: () => void;
     isLoadingCourse?: boolean;
     courseLoadError?: string | null;
+    pageName?: string;
+    sectionLabIds?: string[];
 }
 
 export type TabType = "chat" | "exercises" | "config" | "labs" | "progress";
@@ -36,14 +38,23 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
         hasExercisesLoaded = false,
         isLoadingCourse = false,
         courseLoadError = null,
+        pageName,
+        sectionLabIds,
     } = props;
+
+    const isInLab = !!pageId;
 
     const savedState = SidebarStateStorageManager.getSidebarState();
     const [isCollapsed, setIsCollapsed] = useState(savedState?.isCollapsed ?? false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState<string>("");
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
-    const [activeTab, setActiveTab] = useState<TabType>(savedState?.activeTab ?? "chat");
+    const [activeTab, setActiveTab] = useState<TabType>(() => {
+        // Si hay un estado guardado, usarlo
+        if (savedState?.activeTab) return savedState.activeTab;
+        // Por defecto: "chat" si estamos en lab, "labs" si no (será corregido por useEffect si el usuario es estudiante)
+        return isInLab ? "chat" : "labs";
+    });
     const [enableTransition, setEnableTransition] = useState(false);
     const [exercisesWithExplanations, setExercisesWithExplanations] = useState<string[]>([]);
     const [exercisesWithEvaluations, setExercisesWithEvaluations] = useState<string[]>([]);
@@ -63,6 +74,46 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
 
     const isChatDisabled =
         isAnyModalOpen || isGenerating || isLoadingExercises || isLabBlocked || (!!pageId && !hasExercisesLoaded) || isTeacherMode;
+
+    // Effect: Corregir pestaña activa si no es válida para el contexto actual
+    useEffect(() => {
+        // No corregir hasta que sepamos el modo real del usuario
+        if (isCheckingConfig) return;
+
+        // Determinar pestañas válidas según contexto
+        // Profesor en lab: "chat", "config"
+        // Profesor fuera de lab: "labs"
+        // Estudiante en lab: "chat", "exercises", "progress"
+        // Estudiante fuera de lab: "progress"
+
+        if (isTeacherMode) {
+            // Profesor
+            if (isInLab) {
+                // En lab: válidas son "chat" y "config"
+                if (activeTab !== "chat" && activeTab !== "config") {
+                    setActiveTab("config");
+                }
+            } else {
+                // Fuera de lab: válida es "labs"
+                if (activeTab !== "labs") {
+                    setActiveTab("labs");
+                }
+            }
+        } else {
+            // Estudiante
+            if (isInLab) {
+                // En lab: válidas son "chat", "exercises", "progress"
+                if (activeTab === "labs" || activeTab === "config") {
+                    setActiveTab("chat");
+                }
+            } else {
+                // Fuera de lab: válida es "progress"
+                if (activeTab !== "progress") {
+                    setActiveTab("progress");
+                }
+            }
+        }
+    }, [isInLab, isTeacherMode, activeTab, isCheckingConfig]);
 
     // Effect: Verificar modo y configuración
     useEffect(() => {
@@ -338,7 +389,13 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
             const newMode = await ModeManager.toggleMode();
             const newIsTeacherMode = newMode === AppMode.TEACHER;
             setIsTeacherMode(newIsTeacherMode);
-            setActiveTab("chat"); // Fuerza la pestaña de chat al cambiar el modo
+
+            // Seleccionar pestaña apropiada según contexto
+            if (newIsTeacherMode) {
+                setActiveTab(isInLab ? "config" : "labs");
+            } else {
+                setActiveTab(isInLab ? "chat" : "progress");
+            }
 
             setReloadKey(prev => prev + 1);
 
@@ -504,6 +561,9 @@ export const useChatSidebar = (props: ChatSidebarProps) => {
         isChatDisabled,
         inputRef,
         courseLoadError,
+        isInLab,
+        pageName,
+        sectionLabIds,
         // Handlers
         handleConfigLoaded,
         handleModeToggle,

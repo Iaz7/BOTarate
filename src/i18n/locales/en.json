@@ -111,7 +111,7 @@
             "chat": "Chat",
             "exercises": "Exercises",
             "progress": "My progress",
-            "configureCourse": "Configure subject",
+            "configureCourse": "Configure section",
             "configureLab": "Configure lab"
         },
         "tooltips": {
@@ -258,14 +258,14 @@
             "noLabOpenDesc": "You must open a lab first to be able to add or configure exercises.",
             "table": {
                 "headerName": "Exercise name",
-                "headerChallenge": "Is student only",
-                "headerPicky": "Is false friend",
+                "headerChallenge": "Student only",
+                "headerPicky": "False friend",
                 "headerActions": "Actions",
                 "badgeChallenge": "Student only",
                 "badgePicky": "False friend",
-                "switchChallengeOn": "Is student only",
+                "switchChallengeOn": "Student only",
                 "switchChallengeOff": "Not student only",
-                "switchPickyOn": "Is false friend",
+                "switchPickyOn": "False friend",
                 "switchPickyOff": "Not false friend"
             },
             "unsavedTitle": "⚠️ You have unsaved changes",
@@ -280,6 +280,8 @@
             "loading": "Loading labs...",
             "noLabsTitle": "No labs available",
             "noLabsDesc": "No 'page' type resources found in the subject that can be configured as labs.",
+            "noLabsInSectionTitle": "No labs in this section",
+            "noLabsInSectionDesc": "This section does not contain any 'page' type resources that can be configured as labs.",
             "infoTitle": "Subject configuration",
             "infoDesc": "Configure which labs to include and their <strong>required level</strong>, <strong>verbosity</strong> and <strong>reasoning</strong> options.",
             "infoList": {
@@ -317,7 +319,7 @@
                 "reasoningMedium": "Moderate reasoning",
                 "reasoningHigh": "Detailed step-by-step reasoning"
             },
-            "editContext": "View / Edit context",
+            "editContext": "Context",
             "exercisesTitle": "Exercises:",
             "noExercises": "No exercises in this lab.",
             "addExercise": "Add exercise",
