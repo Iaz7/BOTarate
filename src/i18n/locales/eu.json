@@ -313,6 +313,8 @@
                 "reasoningHigh": "Arrazoibide zehatza pauso-pauso"
             },
             "editContext": "Testuingurua",
+            "regenerateContext": "Testuingurua birsortu",
+            "regenerating": "Birsortzen...",
             "exercisesTitle": "Ariketak:",
             "noExercises": "Ez dago ariketarik laboratorio honetan.",
             "addExercise": "Ariketa gehitu",
@@ -382,7 +384,11 @@
                 "title": "Arrisku eremua",
                 "description": "Ezabatu luzapenak gordetako datu guztiak betirako. Ekintza hau ezin da desegin.",
                 "button": "Ezabatu datu guztiak",
-                "processing": " Ezabatzen..."
+                "processing": " Ezabatzen...",
+                "clearContextTitle": "Laborategiaren testuingurua garbitu",
+                "clearContextDescription": "Laborategien sorturiko testuingurua soilik ezabatu (ariketak eta identifikatutako datuak). Agentearen promptak eta beste konfigurazioak mantenduko dira.",
+                "clearContextButton": "Laborategiaren testuingurua garbitu",
+                "clearContextProcessing": " Garbitzeagatik..."
             },
             "messages": {
                 "exportSuccess": "Konfigurazioa ondo esportatu da",
@@ -392,11 +398,14 @@
                 "importJsonError": "Fitxategiak ez du baliozko JSONik.",
                 "invalidFile": "Hautatu baliozko JSON fitxategi bat.",
                 "clearSuccess": "Datu guztiak ondo ezabatu dira",
+                "clearContextSuccess": "Laborategiaren testuingurua ondo ezabatua da",
                 "exportError": "Ustekabeko errorea esportatzean: {{error}}",
                 "importError": "Ustekabeko errorea inportatzean: {{error}}",
-                "clearError": "Ustekabeko errorea ezabatzean: {{error}}"
+                "clearError": "Ustekabeko errorea garbitzeagatik: {{error}}",
+                "clearContextError": "Ustekabeko errorea testuinguruaren garbitzeagatik: {{error}}"
             },
-            "confirmClear": "⚠️ OHARRA: Ekintza honek gordetako konfigurazio GUZTIA ezabatuko du, barne:\n\n- Agenteen konfigurazioa\n- Identifikatutako ariketen datuak\n- Konfiguratutako laborategien datuak\n\nEkintza hau EZIN DA desegin. Ziur jarraitu nahi duzula?"
+            "confirmClear": "⚠️ OHARRA: Ekintza honek gordetako konfigurazio GUZTIA ezabatuko du, barne:\n\n- Agenteen konfigurazioa\n- Identifikatutako ariketen datuak\n- Konfiguratutako laborategien datuak\n\nEkintza hau EZIN DA desegin. Ziur jarraitu nahi duzula?",
+            "confirmClearContext": "⚠️ OHARRA: Ekintza honek laborategien testuingurua SOILIK ezabatuko du (ariketak eta identifikatutako informazioa):\n\n- Identifikatutako ariketen datuak\n- Konfiguratutako laborategien datuak\n\nAgenteen promptak eta beste ezarpenak gordeko dira.\n\nEkintza hau EZIN DA desegin. Ziur jarraitu nahi duzula?"
         },
         "devMode": {
             "title": "Garatzaileentzako aukerak",

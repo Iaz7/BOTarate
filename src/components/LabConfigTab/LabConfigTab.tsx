@@ -57,7 +57,13 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, sectionLabIds, on
         return labs.filter(lab => labIdSet.has(lab.id));
     }, [labs, sectionLabIds]);
 
-    const { handleToggleGenerateContext, handleVerbosityChange, handleReasoningChange, toggleExpand } = createHandlers(
+    const {
+        handleToggleGenerateContext,
+        handleVerbosityChange,
+        handleReasoningChange,
+        toggleExpand,
+        handleRegenerateContext,
+    } = createHandlers(
         labConfig,
         setLabConfig,
         pendingChanges,
@@ -70,6 +76,8 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, sectionLabIds, on
         contentRef,
         courseId,
         onConfigUpdate,
+        contextGenerationStatus,
+        setContextGenerationStatus,
     );
 
     const isAnyGenerating = Array.from(contextGenerationStatus.values()).some(s => s === "generating");
@@ -233,6 +241,40 @@ const LabConfigTab: React.FC<LabConfigTabProps> = ({ courseId, sectionLabIds, on
                                                     />
                                                 </svg>
                                             </span>
+                                            {/* Botón de regenerar contexto */}
+                                            {hasContext && !isGenerating && (
+                                                <button
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        handleRegenerateContext(lab.id);
+                                                    }}
+                                                    title={t("options.labConfig.regenerateContext")}
+                                                    disabled={isDisabled}
+                                                    style={{
+                                                        background: "transparent",
+                                                        border: "none",
+                                                        padding: "8px",
+                                                        cursor: isDisabled ? "not-allowed" : "pointer",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        opacity: isDisabled ? 0.5 : 1,
+                                                    }}
+                                                >
+                                                    <svg
+                                                        width="20"
+                                                        height="20"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="#6c757d"
+                                                        strokeWidth="2"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                    >
+                                                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                                                    </svg>
+                                                </button>
+                                            )}
                                             {/* Icono de error si falla */}
                                             {isError && (
                                                 <span

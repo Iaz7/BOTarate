@@ -310,6 +310,8 @@
                 "reasoningHigh": "Detailed step-by-step reasoning"
             },
             "editContext": "Context",
+            "regenerateContext": "Regenerate context",
+            "regenerating": "Regenerating...",
             "exercisesTitle": "Exercises:",
             "noExercises": "No exercises in this lab.",
             "addExercise": "Add exercise",
@@ -379,7 +381,11 @@
                 "title": "Danger zone",
                 "description": "Permanently delete all data stored by the extension. This action cannot be undone.",
                 "button": "Delete all data",
-                "processing": " Deleting..."
+                "processing": " Deleting...",
+                "clearContextTitle": "Clear lab context",
+                "clearContextDescription": "Delete only the generated context of labs (exercises and identified data). Agent prompts and other configurations will be preserved.",
+                "clearContextButton": "Clear lab context",
+                "clearContextProcessing": " Clearing..."
             },
             "messages": {
                 "exportSuccess": "Configuration exported successfully",
@@ -389,11 +395,14 @@
                 "importJsonError": "The file does not contain valid JSON.",
                 "invalidFile": "Please select a valid JSON file.",
                 "clearSuccess": "All data has been deleted successfully",
+                "clearContextSuccess": "Lab context has been deleted successfully",
                 "exportError": "Unexpected error exporting: {{error}}",
                 "importError": "Unexpected error importing: {{error}}",
-                "clearError": "Unexpected error clearing: {{error}}"
+                "clearError": "Unexpected error clearing: {{error}}",
+                "clearContextError": "Unexpected error clearing context: {{error}}"
             },
-            "confirmClear": "⚠️ WARNING: This action will delete ALL saved configuration, including:\n\n- Agent configuration\n- Identified exercise data\n- Configured lab data\n\nThis action CANNOT be undone. Are you sure you want to continue?"
+            "confirmClear": "⚠️ WARNING: This action will delete ALL saved configuration, including:\n\n- Agent configuration\n- Identified exercise data\n- Configured lab data\n\nThis action CANNOT be undone. Are you sure you want to continue?",
+            "confirmClearContext": "⚠️ WARNING: This action will delete ONLY the lab context (exercises and identified information):\n\n- Identified exercise data\n- Configured lab data\n\nAgent prompts and other settings will be preserved.\n\nThis action CANNOT be undone. Are you sure you want to continue?"
         },
         "devMode": {
             "title": "Developer options",

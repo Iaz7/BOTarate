@@ -316,6 +316,8 @@
                 "reasoningHigh": "Razonamiento detallado paso a paso"
             },
             "editContext": "Contexto",
+            "regenerateContext": "Regenerar contexto",
+            "regenerating": "Regenerando...",
             "exercisesTitle": "Ejercicios:",
             "noExercises": "No hay ejercicios en este laboratorio.",
             "addExercise": "Añadir ejercicio",
@@ -385,7 +387,11 @@
                 "title": "Zona de peligro",
                 "description": "Eliminar permanentemente todos los datos almacenados por la extensión. Esta acción no se puede deshacer.",
                 "button": "Eliminar todos los datos",
-                "processing": " Eliminando..."
+                "processing": " Eliminando...",
+                "clearContextTitle": "Limpiar contexto de laboratorios",
+                "clearContextDescription": "Elimina solo el contexto generado de los laboratorios (ejercicios y datos identificados). Los prompts de agentes y otra configuración se mantendrán.",
+                "clearContextButton": "Limpiar contexto de laboratorios",
+                "clearContextProcessing": " Limpiando..."
             },
             "messages": {
                 "exportSuccess": "Configuración exportada correctamente",
@@ -395,11 +401,14 @@
                 "importJsonError": "El archivo no contiene un JSON válido.",
                 "invalidFile": "Por favor, selecciona un archivo JSON válido.",
                 "clearSuccess": "Todos los datos han sido eliminados correctamente",
+                "clearContextSuccess": "El contexto de los laboratorios ha sido eliminado correctamente",
                 "exportError": "Error inesperado al exportar: {{error}}",
                 "importError": "Error inesperado al importar: {{error}}",
-                "clearError": "Error inesperado al limpiar: {{error}}"
+                "clearError": "Error inesperado al limpiar: {{error}}",
+                "clearContextError": "Error inesperado al limpiar el contexto: {{error}}"
             },
-            "confirmClear": "⚠️ ADVERTENCIA: Esta acción eliminará TODA la configuración guardada, incluyendo:\n\n- Configuración de agentes\n- Datos de ejercicios identificados\n- Datos de laboratorios configurados\n\nEsta acción NO SE PUEDE deshacer. ¿Estás seguro de que deseas continuar?"
+            "confirmClear": "⚠️ ADVERTENCIA: Esta acción eliminará TODA la configuración guardada, incluyendo:\n\n- Configuración de agentes\n- Datos de ejercicios identificados\n- Datos de laboratorios configurados\n\nEsta acción NO SE PUEDE deshacer. ¿Estás seguro de que deseas continuar?",
+            "confirmClearContext": "⚠️ ADVERTENCIA: Esta acción eliminará SOLO el contexto de los laboratorios (ejercicios e información identificada):\n\n- Datos de ejercicios identificados\n- Datos de laboratorios configurados\n\nLos prompts de agentes y otra configuración se mantendrán.\n\nEsta acción NO SE PUEDE deshacer. ¿Estás seguro de que deseas continuar?"
         },
         "devMode": {
             "title": "Opciones de desarrollo",
