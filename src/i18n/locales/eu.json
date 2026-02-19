@@ -34,7 +34,7 @@
             "disabledModal": "Txata desgaituta (modala irekita)...",
             "teacherMode": "Aldatu ikasle modura txata erabiltzeko...",
             "loadingExercises": "Ariketak kargatzen...",
-            "notConfigured": "Laborategia ez du irakasleak konfiguratu...",
+            "notConfigured": "BOTarate ez dago eskuragarri orrialde honetarako.",
             "default": "Idatzi zure galdera..."
         },
         "welcome": {
@@ -50,9 +50,9 @@
             "loadingExercises": "Kargatzen...",
             "searchingExercises": "Ariketak bilatzen...",
             "analyzingContent": "Orriaren edukia aztertzen ariketa eskuragarriak identifikatzeko.",
-            "notConfiguredTitle": "Laborategia ez dago konfiguratuta",
-            "notConfiguredDesc": "Irakasleak oraindik ez du laborategi hau konfiguratu. Txata desgaituta dago konfigurazioa eskuragarri egon arte.",
-            "notConfiguredAction": "Mesedez, itxaron zure irakasleak laborategi hau konfiguratu arte edo jarri harremanetan berarekin informazio gehiagorako.",
+            "notConfiguredTitle": "BOTarate ez dago eskuragarri",
+            "notConfiguredDesc": "BOTarate ez dago eskuragarri orrialde honetarako.",
+            "notConfiguredAction": "",
             "generating": "Erantzuna sortzen..."
         },
         "roles": {

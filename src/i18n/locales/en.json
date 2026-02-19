@@ -34,7 +34,7 @@
             "disabledModal": "Chat disabled (modal open)...",
             "teacherMode": "Switch to student mode to use the chat...",
             "loadingExercises": "Loading exercises...",
-            "notConfigured": "Lab not configured by teacher...",
+            "notConfigured": "BOTarate is not available for this page.",
             "default": "Type your question..."
         },
         "welcome": {
@@ -50,9 +50,9 @@
             "loadingExercises": "Loading...",
             "searchingExercises": "Searching for exercises...",
             "analyzingContent": "Analyzing page content to identify available exercises.",
-            "notConfiguredTitle": "Lab not configured",
-            "notConfiguredDesc": "The teacher has not configured this lab yet. The chat is disabled until the configuration is available.",
-            "notConfiguredAction": "Please wait for your teacher to configure this lab or contact them for more information.",
+            "notConfiguredTitle": "BOTarate not available",
+            "notConfiguredDesc": "BOTarate is not available for this page.",
+            "notConfiguredAction": "",
             "generating": "Generating response..."
         },
         "roles": {

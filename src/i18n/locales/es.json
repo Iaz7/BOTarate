@@ -34,7 +34,7 @@
             "disabledModal": "Chat deshabilitado (modal abierto)...",
             "teacherMode": "Cambia a modo alumno para usar el chat...",
             "loadingExercises": "Cargando ejercicios...",
-            "notConfigured": "Laboratorio no configurado por el profesor...",
+            "notConfigured": "BOTarate no está disponible para esa página.",
             "default": "Escribe tu pregunta..."
         },
         "welcome": {
@@ -50,9 +50,9 @@
             "loadingExercises": "Cargando...",
             "searchingExercises": "Buscando ejercicios...",
             "analyzingContent": "Analizando el contenido de la página para identificar ejercicios disponibles.",
-            "notConfiguredTitle": "Laboratorio no configurado",
-            "notConfiguredDesc": "El profesor aún no ha configurado este laboratorio. El chat está deshabilitado hasta que la configuración esté disponible.",
-            "notConfiguredAction": "Por favor, espera a que tu profesor configure este laboratorio o contáctalo para más información.",
+            "notConfiguredTitle": "BOTarate no disponible",
+            "notConfiguredDesc": "BOTarate no está disponible para esa página.",
+            "notConfiguredAction": "",
             "generating": "Generando respuesta..."
         },
         "roles": {
