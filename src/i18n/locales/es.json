@@ -203,6 +203,10 @@
                     "label": "Identificación de ejercicios",
                     "desc": "Criterios para identificar qué constituye un ejercicio y cómo debe extraerse"
                 },
+                "excludedExercises": {
+                    "label": "Ejercicios a excluir",
+                    "desc": "Descripción de los tipos o patrones de ejercicios que NO deben incluirse (por ejemplo: 'preparación del laboratorio' o 'soluciones de ejercicios')."
+                },
                 "role": {
                     "label": "Rol",
                     "desc": "Define el rol (propósito) del agente en el contexto de la asignatura"

@@ -47,9 +47,9 @@ class ExerciseAgent extends BaseAgent {
             // 2. Build system prompt using configuration
             const agentConfig = this.config.exerciseAgent;
 
-            const systemPromptTemplate = `You are a tool to extract context from labs in educational pages.
+            const systemPromptTemplate = `You are an assistant specialized in extracting laboratory exercises from educational pages.
 
-Your task is to analyze the content of an educational page, identify exercises, and extract relevant information.
+Your task is to analyze the content, identify valid exercises, and return structured information that can be saved by the extension.
 
 The current page ID is ${pageId}.
 
@@ -80,6 +80,11 @@ WORKFLOW:
 
 CRITERIA FOR IDENTIFYING EXERCISES:
 {exerciseCriteria}
+
+EXCLUDED EXERCISES (DO NOT INCLUDE):
+{excludedExercises}
+- If this section is empty, ignore this rule.
+- If an exercise title or statement matches these exclusions, skip it and do not include it in the final output.
 
 EXERCISE CONTEXT:
 - {contextDescription}
@@ -116,6 +121,7 @@ IMPORTANT: You must call postExercises exactly once at the end of the analysis.
             const systemPromptVariables = {
                 role: agentConfig.role,
                 exerciseCriteria: agentConfig.exerciseCriteria,
+                excludedExercises: agentConfig.excludedExercises,
                 contextDescription: agentConfig.contextDescription,
                 conceptsFieldDescription: agentConfig.conceptsFieldDescription,
                 conceptsExamples: agentConfig.conceptsExamples,

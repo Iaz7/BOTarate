@@ -200,6 +200,10 @@
                     "label": "Ariketen identifikazioa",
                     "desc": "Ariketa bat zer den eta nola atera behar den identifikatzeko irizpideak"
                 },
+                "excludedExercises": {
+                    "label": "Baztertzeko ariketak",
+                    "desc": "Sartu EZ diren ariketa motak edo patroiak deskribatu (adibidez: 'laborategiaren prestaketa' edo 'ariketen soluzioak')."
+                },
                 "role": {
                     "label": "Rola",
                     "desc": "Irakasgaiaren testuinguruan agentearen helburua/rola definitzen du"

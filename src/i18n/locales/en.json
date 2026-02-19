@@ -197,6 +197,10 @@
                     "label": "Exercise identification",
                     "desc": "Criteria for identifying what constitutes an exercise and how it should be extracted"
                 },
+                "excludedExercises": {
+                    "label": "Exercises to exclude",
+                    "desc": "Describe the types or patterns of exercises that should NOT be included (e.g., 'lab preparation' or 'exercise solutions')."
+                },
                 "role": {
                     "label": "Role",
                     "desc": "Defines the role/purpose of the agent in the context of the subject"

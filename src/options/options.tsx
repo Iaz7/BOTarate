@@ -458,6 +458,13 @@ const Options: React.FC = () => {
                             description={t("options.agents.fields.exerciseCriteria.desc")}
                             rows={6}
                         />
+                        <ConfigTextArea
+                            label={t("options.agents.fields.excludedExercises.label")}
+                            value={agentConfig.exerciseAgent.excludedExercises}
+                            onChange={value => updateAgentField("exerciseAgent", "excludedExercises", value)}
+                            description={t("options.agents.fields.excludedExercises.desc")}
+                            rows={4}
+                        />
                     </div>
                 );
             case "evaluation":
