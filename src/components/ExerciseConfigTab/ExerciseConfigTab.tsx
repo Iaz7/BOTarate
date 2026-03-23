@@ -6,6 +6,7 @@ import LabContextModal from "../LabContextModal";
 import { useExerciseConfig } from "./hooks";
 import { ExerciseConfigTabProps } from "./types";
 import { getDefaultFlags } from "./utils";
+import "./ExerciseConfigTab.css";
 
 const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
     const { t } = useTranslation();
@@ -198,16 +199,16 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
                                         </div>
                                     </td>
                                     <td className="text-center" style={{ verticalAlign: "middle" }}>
-                                        <div className="d-flex justify-content-center align-items-center">
+                                        <div className="form-check form-switch d-inline-flex align-items-center m-0 exercise-switch-wrapper">
                                             <input
-                                                className="form-check-input"
+                                                className="form-check-input exercise-switch-input"
                                                 type="checkbox"
                                                 role="switch"
                                                 id={`challenge-switch-${exercise.name}`}
                                                 checked={isChallenge}
                                                 onChange={() => handleToggleChallenge(exercise.name)}
                                                 disabled={isSaving}
-                                                style={{ cursor: "pointer", margin: 0 }}
+                                                style={{ cursor: "pointer" }}
                                             />
                                             <label
                                                 className="form-check-label visually-hidden"
@@ -220,16 +221,16 @@ const ExerciseConfigTab: React.FC<ExerciseConfigTabProps> = props => {
                                         </div>
                                     </td>
                                     <td className="text-center" style={{ verticalAlign: "middle" }}>
-                                        <div className="d-flex justify-content-center align-items-center">
+                                        <div className="form-check form-switch d-inline-flex align-items-center m-0 exercise-switch-wrapper">
                                             <input
-                                                className="form-check-input"
+                                                className="form-check-input exercise-switch-input"
                                                 type="checkbox"
                                                 role="switch"
                                                 id={`picky-switch-${exercise.name}`}
                                                 checked={isPicky}
                                                 onChange={() => handleTogglePicky(exercise.name)}
                                                 disabled={isSaving}
-                                                style={{ cursor: "pointer", margin: 0 }}
+                                                style={{ cursor: "pointer" }}
                                             />
                                             <label
                                                 className="form-check-label visually-hidden"
