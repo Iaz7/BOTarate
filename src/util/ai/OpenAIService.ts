@@ -82,7 +82,8 @@ class OpenAIService {
         userMessage?: string,
         systemPrompt?: string,
         tools?: any[],
-        onToolCalls?: (calls: ToolCall[]) => void
+        onToolCalls?: (calls: ToolCall[]) => void,
+        terminalToolNames: string[] = []
     ): Promise<string> {
         const result = await this.generateResponseWithTools(userMessage, systemPrompt, tools);
 
@@ -101,13 +102,34 @@ class OpenAIService {
 
         // Execute all tool calls
         for (const call of result.calls) {
+            const isTerminalTool = terminalToolNames.includes(call.function.name);
+
+            if (isTerminalTool) {
+                // Execute terminal tool and stop immediately without feeding tool result back to the LLM.
+                try {
+                    const args = JSON.parse(call.function.arguments);
+                    await toolExecutor(call.function.name, args);
+                } catch (error) {
+                    console.error(`Error executing terminal tool ${call.function.name}:`, error);
+                }
+
+                return '';
+            }
+
             await this.executeToolCall(call, toolExecutor);
         }
 
         // Recursively call to get final response
         // Important: pass the same list of tools to avoid the next iteration
         // using the full `TOOLS` set by default.
-        return this.processResponseWithTools(toolExecutor, undefined, undefined, tools, onToolCalls);
+        return this.processResponseWithTools(
+            toolExecutor,
+            undefined,
+            undefined,
+            tools,
+            onToolCalls,
+            terminalToolNames
+        );
     }
 
     private async generateResponseWithTools(
