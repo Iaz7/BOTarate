@@ -45,24 +45,40 @@ class OpenAIService {
         this.openai.baseURL = ConfigManager.getSelectedProvider().baseUrl;
     }
 
+    private static getOpenRouterRoutingPreferences(): { provider: { sort: 'throughput' } } | {} {
+        const selectedProvider = ConfigManager.getSelectedProvider();
+        if (selectedProvider.name !== 'OpenRouter') {
+            return {};
+        }
+
+        return {
+            provider: {
+                sort: 'throughput'
+            }
+        };
+    }
+
     // Gets model list from the specified provider, or from the selected provider by default
     static async getModelList(provider: AIProvider | undefined = undefined): Promise<string[]> {
         if (provider != undefined) {
-            this.openai.baseURL = provider?.baseUrl;
-            this.openai.apiKey = provider?.key;
+            this.openai.baseURL = provider.baseUrl;
+            this.openai.apiKey = provider.key;
         }
 
-        const list = await this.openai.models.list();
+        try {
+            const list = await this.openai.models.list();
 
-        let modelList: string[] = [];
-        for await (const model of list) {
-            modelList.push(model.id);
+            let modelList: string[] = [];
+            for await (const model of list) {
+                modelList.push(model.id);
+            }
+            console.log(this.openai.baseURL);
+            console.log(modelList);
+
+            return modelList;
+        } finally {
+            this.loadProviderConfig(); // Restore selected provider
         }
-        console.log(this.openai.baseURL);
-        console.log(modelList);
-
-        this.loadProviderConfig(); // Restore selected provider
-        return modelList;
     }
 
     resetConversation(): void {
@@ -169,9 +185,10 @@ class OpenAIService {
 
         const response = await OpenAIService.openai.chat.completions.create({
             model: ConfigManager.getSelectedModel(),
-            messages: this.conversationHistory,
+            messages: this.conversationHistory as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
             tools: tools ?? TOOLS,
             tool_choice: 'auto',
+            ...OpenAIService.getOpenRouterRoutingPreferences(),
         });
 
         const choice = response.choices[0];
@@ -287,7 +304,7 @@ class OpenAIService {
         // Build API parameters
         const apiParams: any = {
             model: modelName,
-            messages: this.conversationHistory,
+            messages: this.conversationHistory as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
             response_format: responseFormat,
         };
 
@@ -310,6 +327,8 @@ class OpenAIService {
         }
 
         // Use native OpenAI API for structured responses
+        Object.assign(apiParams, OpenAIService.getOpenRouterRoutingPreferences());
+
         const completion = await OpenAIService.openai.chat.completions.create(apiParams);
 
         const content = completion.choices[0]?.message?.content;
@@ -377,7 +396,8 @@ class OpenAIService {
                     ]
                 }
             ],
-            max_tokens: 1024
+            max_tokens: 1024,
+            ...this.getOpenRouterRoutingPreferences()
         });
 
         const content = response.choices[0]?.message?.content;
